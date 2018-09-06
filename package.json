@@ -1,0 +1,35 @@
+{
+  "name": "twilio-server",
+  "version": "1.0.0",
+  "description": "unopinionated Node.js Twilio API abstraction server",
+  "main": "index.js",
+  "scripts": {
+    "test": "test",
+    "dev": "webpack --mode development --progress --watch",
+    "build": "webpack --mode production"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DCtheTall/twilio-server.git"
+  },
+  "keywords": [
+    "twilio",
+    "SMS",
+    "node.js",
+    "twilio",
+    "api"
+  ],
+  "author": "Dylan Cutler",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DCtheTall/twilio-server/issues"
+  },
+  "homepage": "https://github.com/DCtheTall/twilio-server#readme",
+  "dependencies": {},
+  "devDependencies": {
+    "awesome-typescript-loader": "^5.2.0",
+    "typescript": "^3.0.3",
+    "webpack": "^4.17.2",
+    "webpack-cli": "^3.1.0"
+  }
+}
