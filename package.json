@@ -2,7 +2,8 @@
   "name": "twilio-server",
   "version": "1.0.0",
   "description": "unopinionated Node.js Twilio API abstraction server",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "test": "test",
     "dev": "webpack --mode development --progress --watch",
@@ -25,11 +26,18 @@
     "url": "https://github.com/DCtheTall/twilio-server/issues"
   },
   "homepage": "https://github.com/DCtheTall/twilio-server#readme",
-  "dependencies": {},
+  "dependencies": {
+    "twilio": "^3.20.0"
+  },
   "devDependencies": {
-    "awesome-typescript-loader": "^5.2.0",
+    "@types/es6-promise": "^3.3.0",
+    "@types/node": "^10.10.2",
+    "@types/twilio": "0.0.10",
+    "dotenv": "^6.0.0",
+    "ts-loader": "^5.2.1",
     "typescript": "^3.0.3",
     "webpack": "^4.17.2",
-    "webpack-cli": "^3.1.0"
+    "webpack-cli": "^3.1.0",
+    "webpack-node-externals": "^1.7.2"
   }
 }
