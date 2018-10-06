@@ -8,4 +8,4 @@ const tc = new TwilioController({
   messageServiceId: process.env.MESSAGE_SERVICE_ID,
 });
 
-tc.sendTextMessage('+12034820254', 'Testing again');
+tc.sendTextMessage(process.env.DEV_PHONE_NUMBER, 'Testing again');
