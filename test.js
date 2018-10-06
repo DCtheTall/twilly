@@ -1,12 +1,6 @@
 require('dotenv').load(); // TODO uninstall this
 
-const { TwilioController } = require('./dist');
-
-const tc = new TwilioController({
-  accountSid: process.env.ACCOUNT_SID,
-  authToken: process.env.AUTH_TOKEN,
-  messageServiceId: process.env.MESSAGE_SERVICE_ID,
-});
+const { twilly } = require('./dist');
 
 // TODO uninstall these
 const app = require('express')();
@@ -16,7 +10,13 @@ app.use(require('morgan')('dev'));
 app.use(bp.urlencoded({ extended: false, limit: '2mb' }));
 app.use(bp.json({ limit: '5mb' }));
 
-app.post('/sms', tc.handleSmsMessage);
+app.use('/twilly', twilly({
+  accountSid: process.env.ACCOUNT_SID,
+  authToken: process.env.AUTH_TOKEN,
+  messageServiceId: process.env.MESSAGE_SERVICE_ID,
+
+  inboundMessagePath: '/sms',
+}));
 app.get('/', (req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/html' });
   res.send('<html><body>Hello world!</body></html>')

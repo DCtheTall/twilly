@@ -7,6 +7,8 @@ What should people who consume this module be able to do?
 - Ability to text on behalf of the Twilio number to customer phone
 - Be notified when any user sends a text message
 - Control who is able to access types of notifications
+- Be able to log each incoming and out going message
+- Be able to log information about each interaction in order to query separately
 
 Why would I choose to develop using this instead of a site w a GUI?
 - Easy to use (small learning curve)
