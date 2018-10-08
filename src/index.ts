@@ -1,13 +1,21 @@
-import { Request, Response, Router } from 'express';
+import { Router } from 'express';
 import * as cookieParser from 'cookie-parser';
 
 import TwilioController, { TwilioControllerParams } from './TwilioController';
 import { getCookieSecret } from './util';
 
+import InteractionController from './InteractionController';
+import Interaction from './InteractionController/Interaction';
+
+
+export { default as Interaction } from './InteractionController/Interaction';
+
 
 export interface TwillyParams extends TwilioControllerParams {
   inboundMessagePath: string;
-  cookieSecret: string;
+  cookieSecret?: string;
+  cookieKey?: string;
+  interactions: Interaction[],
 }
 
 
@@ -19,6 +27,9 @@ export function twilly({
   messageServiceId,
 
   cookieSecret = null,
+  cookieKey = null,
+
+  interactions,
 }: TwillyParams): Router {
   const tc = new TwilioController({
     accountSid,
@@ -26,6 +37,7 @@ export function twilly({
     messageServiceId,
   });
   const router = Router();
+  const interactionController = new InteractionController(interactions);
 
   if (!cookieSecret) {
     // If no cookieSecret is provided, generate a hash from the Twilio credentials

@@ -18,7 +18,9 @@ Why would I choose to develop using this instead of a site w a GUI?
 
 ## 2. General architecture of library, what will be responsible for what?
 
-User story map should help get my thoughts organized for this. I know I
-will need to experiment with SMS cookies so that's a start.
-
-### Twilio Docs
+Interaction schema:
+- figure out how to automate simple actions like sending
+a reply, answering a question, make an async action, make list of actions from FlowXO
+- figure out how to resolve the progress through the interaction, previous interaction
+- figure out how to resolve session state from cookie during interaction
+- figure out way to define interactions for lib users in a simple way
