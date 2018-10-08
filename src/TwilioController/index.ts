@@ -1,15 +1,20 @@
+import * as Twilio from 'twilio';
 import * as TwilioClient from 'twilio/lib/rest/Twilio';
-import * as MessagingResponse from 'twilio/lib/twiml/MessagingResponse';
 import { Request, Response } from 'express';
 
-import { bootstrapClient } from './client';
-import { XmlContentTypeHeader } from './RequestHeader';
+import { XmlContentTypeHeader } from './headers';
+import { TwilioWebhookRequestBody } from './TwilioWebhookRequest';
+
+
+const EMPTY_TWIML_RESPONSE = '<?xml version="1.0" encoding="UTF-8"?><Response />';
+
 
 export interface TwilioControllerParams {
   accountSid: string;
   authToken: string;
   messageServiceId: string;
 }
+
 
 export default class TwilioController {
   private readonly twilio: TwilioClient;
@@ -20,15 +25,23 @@ export default class TwilioController {
     authToken,
     messageServiceId,
   }: TwilioControllerParams) {
-    this.twilio = bootstrapClient(accountSid, authToken);
+    this.twilio = Twilio(accountSid, authToken);
     this.messageServiceId = messageServiceId;
   }
 
-  public handleSmsMessage(_: Request, res: Response): void {
-    const twiml = new MessagingResponse();
-    twiml.message('Testing handleSmsMessage');
+  private setCookie(req: Request) {
+
+  }
+
+  private sendEmptyResponse(req: Request, res: Response): void {
     res.writeHead(200, XmlContentTypeHeader);
-    res.end(twiml.toString());
+    res.end(EMPTY_TWIML_RESPONSE);
+  }
+
+  public handleSmsMessage(req: Request, res: Response): void {
+    // TODO handle getting multiple segments
+    const body = <TwilioWebhookRequestBody>req.body;
+    this.sendEmptyResponse(req, res);
   }
 
   public async sendSmsMessage(
@@ -41,7 +54,6 @@ export default class TwilioController {
         body,
         messagingServiceSid: this.messageServiceId,
       });
-      // log message instance results
     } catch (err) {
       // TODO error handling
     }

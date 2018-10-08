@@ -14,13 +14,12 @@ app.use('/twilly', twilly({
   accountSid: process.env.ACCOUNT_SID,
   authToken: process.env.AUTH_TOKEN,
   messageServiceId: process.env.MESSAGE_SERVICE_ID,
-
   inboundMessagePath: '/sms',
 }));
 app.get('/', (req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/html' });
-  res.send('<html><body>Hello world!</body></html>')
-})
+  res.end('<html><body>Hello world!</body></html>');
+});
 
 require('http')
   .createServer(app)
