@@ -1,12 +1,12 @@
-export type numberlike = string | number;
+export type Numberlike = string | number;
 
 export interface TwilioWebhookRequestBody {
   ToCountry: string,
   ToState: string,
   SmsMessageSid: string,
-  NumMedia: numberlike,
+  NumMedia: Numberlike,
   ToCity: string,
-  FromZip: numberlike,
+  FromZip: Numberlike,
   SmsSid: string,
   FromState: string,
   SmsStatus: string,
@@ -15,8 +15,8 @@ export interface TwilioWebhookRequestBody {
   FromCountry: string,
   To: string,
   MessagingServiceSid: string,
-  ToZip: numberlike,
-  NumSegments: numberlike,
+  ToZip: Numberlike,
+  NumSegments: Numberlike,
   MessageSid: string,
   AccountSid: string,
   From: string,

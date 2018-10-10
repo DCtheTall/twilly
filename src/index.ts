@@ -1,21 +1,30 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import * as cookieParser from 'cookie-parser';
 
-import TwilioController, { TwilioControllerParams } from './TwilioController';
-import { getCookieSecret } from './util';
+import { getSha256Hash } from './util';
 
-import InteractionController from './InteractionController';
-import Interaction from './InteractionController/Interaction';
-
-
-export { default as Interaction } from './InteractionController/Interaction';
+import TwilioController, { TwilioControllerOpts } from './TwilioController';
+import InteractionController, { InteractionMap } from './InteractionController';
 
 
-export interface TwillyParams extends TwilioControllerParams {
-  inboundMessagePath: string;
+export { default as TwillyInteraction } from './InteractionController/TwillyInteraction';
+export { default as TwilioController } from './TwilioController';
+
+
+export interface TwillyParams extends TwilioControllerOpts {
   cookieSecret?: string;
-  cookieKey?: string;
-  interactions: Interaction[],
+  inboundMessagePath: string;
+  interactions: InteractionMap,
+}
+
+
+function handleIncomingSmsWebhook(
+  ic: InteractionController,
+  tc: TwilioController,
+  req: Request,
+  res: Response,
+) {
+  ic.deriveStateFromSmsCookie(req);
 }
 
 
@@ -31,20 +40,23 @@ export function twilly({
 
   interactions,
 }: TwillyParams): Router {
+  if (!cookieSecret) { // If no cookieSecret is provided, generate a hash from the Twilio credentials
+    cookieSecret = getSha256Hash(accountSid, authToken);
+  }
+  if (!cookieKey) {
+    cookieKey = getSha256Hash(accountSid, accountSid).slice(0, 10);
+  }
+
+  const ic = new InteractionController(cookieKey, interactions);
   const tc = new TwilioController({
     accountSid,
     authToken,
     messageServiceId,
+    cookieKey,
   });
   const router = Router();
-  const interactionController = new InteractionController(interactions);
-
-  if (!cookieSecret) {
-    // If no cookieSecret is provided, generate a hash from the Twilio credentials
-    cookieSecret = getCookieSecret(accountSid, authToken);
-  }
 
   router.use(cookieParser(cookieSecret));
-  router.post(inboundMessagePath, tc.handleSmsMessage.bind(tc));
+  router.post(inboundMessagePath, handleIncomingSmsWebhook.bind(null, ic, tc));
   return router;
 }

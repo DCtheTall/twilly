@@ -2,7 +2,7 @@ export interface InteractionParams {
   name: string;
 }
 
-export default class Interaction {
+export default class TwillyInteraction {
   public readonly name: string;
 
   constructor({
