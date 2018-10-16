@@ -1,14 +1,18 @@
 import * as Twilio from 'twilio';
 import * as TwilioClient from 'twilio/lib/rest/Twilio';
 import * as MessagingResponse from 'twilio/lib/twiml/MessagingResponse';
-import { Request, Response } from 'express';
+import {
+  Request,
+  Response,
+} from 'express';
 
 import { XmlContentTypeHeader } from './headers';
 import { TwilioWebhookRequestBody } from './TwilioWebhookRequest';
-import InteractionController from '../InteractionController';
+import SmsCookie from '../SmsCookie';
 
 
-const EMPTY_TWIML_RESPONSE = '<?xml version="1.0" encoding="UTF-8"?><Response />';
+const EMPTY_TWIML_RESPONSE =
+  '<?xml version="1.0" encoding="UTF-8"?><Response />';
 
 
 export interface TwilioControllerOpts {
@@ -35,14 +39,6 @@ export default class TwilioController {
     this.cookieKey = cookieKey;
   }
 
-  private getSmsCookeFromRequest(req: Request) {
-    return req.cookies[this.cookieKey];
-  }
-
-  private setSmsCookie(res: Response, payload: string) {
-    res.cookie(this.cookieKey, payload);
-  }
-
   private writeSuccessResponse(res: Response, msg: string) {
     res.writeHead(200, XmlContentTypeHeader);
     res.end(msg);
@@ -52,17 +48,31 @@ export default class TwilioController {
     this.writeSuccessResponse(res, EMPTY_TWIML_RESPONSE);
   }
 
-  private sendSmsResponse(res: Response, msg: string): void {
+  // TODO set private?
+  public sendSmsResponse(res: Response, msg: string): void {
     const msgResponse = new MessagingResponse();
     msgResponse.message(msg);
     this.writeSuccessResponse(res, msgResponse.toString());
   }
 
+  public getSmsCookeFromRequest(req: Request): SmsCookie {
+    return req.cookies[this.cookieKey];
+  }
+
+  public setSmsCookie(res: Response, payload: SmsCookie) {
+    res.cookie(this.cookieKey, payload);
+  }
+
+  public clearSmsCookie(res: Response) {
+    res.clearCookie(this.cookieKey);
+  }
+
   public handleSmsMessage(req: Request, res: Response): void {
-    // TODO handle getting multiple segments
     const body = <TwilioWebhookRequestBody>req.body;
-    console.log(this.getSmsCookeFromRequest(req));
-    this.sendSmsResponse(res, 'test');
+    if (body.NumSegments > 1) {
+      // TODO figure out how to handle this
+    }
+    this.sendSmsResponse(res, 'worked');
   }
 
   public async sendSmsMessage(

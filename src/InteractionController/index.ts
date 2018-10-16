@@ -1,10 +1,10 @@
-import { Request } from 'express';
-
-import TwillyInteraction from './TwillyInteraction';
-import SmsCookie from './SmsCookie';
+import SmsCookie from '../SmsCookie';
+import TwillyInteraction from '../Interactions/TwillyInteraction';
 
 
-export type InteractionMap = { [index: string]: TwillyInteraction };
+export type InteractionMap = {
+  [index: string]: TwillyInteraction;
+};
 
 
 export default class InteractionController {
@@ -17,23 +17,18 @@ export default class InteractionController {
           `Unexpected value in provided interactions at key: ${name}`);
       }
     });
-    if (!interactions['*']) {
-      // TODO typed errors?
-      throw new Error(
-        'No catch-all interaction (name: \'*\') found, catch-all is required.');
-    }
   }
 
   constructor(
-    private readonly cookieKey: string,
+    private readonly rootInteraction: TwillyInteraction,
     private readonly interactions: InteractionMap,
   ) {
     InteractionController.validateInteractionMap(interactions);
   }
 
-  deriveStateFromSmsCookie(req: Request): void {
-    const smsCookie =
-      <SmsCookie>JSON.parse(String(req.cookies[this.cookieKey]));
-
+  public deriveActionFromState(state: SmsCookie) {
+    if (state === undefined) {
+      // TODO design
+    }
   }
 }
