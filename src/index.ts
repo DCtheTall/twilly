@@ -4,18 +4,18 @@ import * as cookieParser from 'cookie-parser';
 import { getSha256Hash } from './util';
 
 import TwilioController, { TwilioControllerOpts } from './TwilioController';
-import InteractionController, { InteractionMap } from './InteractionController';
-import TwillyInteraction from './Interactions/TwillyInteraction';
+import InteractionController from './InteractionController';
+import { Flow, FlowSchema } from './Flows';
 
 
-export { default as TwillyInteraction } from './Interactions/TwillyInteraction';
+export { default as Flow } from './Flows/Flow';
 
 
 export interface TwillyParams extends TwilioControllerOpts {
   cookieSecret?: string;
   inboundMessagePath: string;
-  rootInteraction: TwillyInteraction,
-  interactions?: InteractionMap,
+  rootInteraction: Flow,
+  interactions?: FlowSchema,
 }
 
 
@@ -27,8 +27,7 @@ function handleIncomingSmsWebhook(
 ) {
   const state = tc.getSmsCookeFromRequest(req);
 
-  // TODO remove this
-  tc.handleSmsMessage(req, res);
+  tc.sendEmptyResponse(res);
 }
 
 

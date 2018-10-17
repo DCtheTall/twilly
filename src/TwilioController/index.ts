@@ -8,7 +8,7 @@ import {
 
 import { XmlContentTypeHeader } from './headers';
 import { TwilioWebhookRequestBody } from './TwilioWebhookRequest';
-import SmsCookie from '../SmsCookie';
+import { SmsCookie } from '../SmsCookie';
 
 
 const EMPTY_TWIML_RESPONSE =
@@ -44,7 +44,7 @@ export default class TwilioController {
     res.end(msg);
   }
 
-  private sendEmptyResponse(res: Response): void {
+  public sendEmptyResponse(res: Response): void {
     this.writeSuccessResponse(res, EMPTY_TWIML_RESPONSE);
   }
 

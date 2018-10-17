@@ -1,17 +1,18 @@
-import SmsCookie from '../SmsCookie';
-import TwillyInteraction from '../Interactions/TwillyInteraction';
-
-
-export type InteractionMap = {
-  [index: string]: TwillyInteraction;
-};
+import { SmsCookie } from '../SmsCookie';
+import {
+  Flow,
+  FlowSchema,
+  ROOT,
+} from '../Flows';
 
 
 export default class InteractionController {
-  static validateInteractionMap(interactions: InteractionMap) {
+  public readonly [ROOT]: Flow;
+
+  static validateInteractionMap(interactions: FlowSchema) {
     Object.keys(interactions).forEach((name: string) => {
       const interaction = interactions[name];
-      if (!(interaction instanceof TwillyInteraction)) {
+      if (!(interaction instanceof Flow)) {
         // TODO typed error?
         throw new Error(
           `Unexpected value in provided interactions at key: ${name}`);
@@ -20,9 +21,10 @@ export default class InteractionController {
   }
 
   constructor(
-    private readonly rootInteraction: TwillyInteraction,
-    private readonly interactions: InteractionMap,
+    private readonly root: Flow,
+    private readonly interactions: FlowSchema,
   ) {
+    this[ROOT] = root;
     InteractionController.validateInteractionMap(interactions);
   }
 

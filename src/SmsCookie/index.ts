@@ -1,6 +1,6 @@
-export default interface SmsCookie {
-  interaction: {
-    id: string;
-    name: string;
-  };
+export interface SmsCookie {
+  interactionId: string;
+  currentFlow: string;
+  currentFlowStep: string;
+  // TODO context for current interaction
 }
