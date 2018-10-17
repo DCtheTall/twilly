@@ -1,31 +1,28 @@
 import { SmsCookie } from '../SmsCookie';
 import {
+  ROOT,
   Flow,
   FlowSchema,
-  ROOT,
+  EvaluatedSchema,
+  evaluateSchema,
 } from '../Flows';
 
 
-export default class InteractionController {
-  public readonly [ROOT]: Flow;
+const SCHEMA = Symbol('schema');
 
-  static validateInteractionMap(interactions: FlowSchema) {
-    Object.keys(interactions).forEach((name: string) => {
-      const interaction = interactions[name];
-      if (!(interaction instanceof Flow)) {
-        // TODO typed error?
-        throw new Error(
-          `Unexpected value in provided interactions at key: ${name}`);
-      }
-    });
-  }
+
+export default class InteractionController {
+  private readonly [ROOT]: Flow;
+  private [SCHEMA]: EvaluatedSchema;
 
   constructor(
-    private readonly root: Flow,
-    private readonly interactions: FlowSchema,
+    root: Flow,
+    schema?: FlowSchema,
   ) {
     this[ROOT] = root;
-    InteractionController.validateInteractionMap(interactions);
+    if (schema) {
+      this[SCHEMA] = evaluateSchema(schema);
+    }
   }
 
   public deriveActionFromState(state: SmsCookie) {

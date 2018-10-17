@@ -1,4 +1,3 @@
-export const FLOW = Symbol('flow');
 export const ROOT = Symbol('sarsaparilla');
 
 
@@ -8,7 +7,6 @@ export interface FlowParams {
 
 
 export default class Flow {
-  public readonly [FLOW]: boolean = true;
   public readonly name: string;
 
   constructor({

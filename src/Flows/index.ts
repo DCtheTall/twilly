@@ -1,4 +1,5 @@
-export * from './Flow';
 export { default as Flow } from './Flow';
-export * from './FlowSchema';
+export * from './Flow';
+
 export { default as FlowSchema } from './FlowSchema';
+export * from './FlowSchema/evaluate';
