@@ -1,17 +1,11 @@
-export const ROOT = Symbol('sarsaparilla');
-
-
-export interface FlowParams {
-  name: string;
-}
+import { FLOW_NAME } from '../symbols';
 
 
 export default class Flow {
-  public readonly name: string;
-
-  constructor({
-    name,
-  }: FlowParams) {
-    this.name = name;
+  public readonly [FLOW_NAME]: string;
+  constructor(
+    name: string,
+  ) {
+    this[FLOW_NAME] = name;
   }
 }

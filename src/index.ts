@@ -4,51 +4,52 @@ import * as cookieParser from 'cookie-parser';
 import { getSha256Hash } from './util';
 
 import TwilioController, { TwilioControllerOpts } from './TwilioController';
-import InteractionController from './InteractionController';
+import FlowController from './FlowController';
 import { Flow, FlowSchema } from './Flows';
 
+export { Flow, FlowSchema } from './Flows';
 
-export { default as Flow } from './Flows/Flow';
 
-
-export interface TwillyParams extends TwilioControllerOpts {
+interface TwillyParams extends TwilioControllerOpts {
   cookieSecret?: string;
   inboundMessagePath: string;
-  rootInteraction: Flow,
-  interactions?: FlowSchema,
+  rootFlow: Flow,
+  flowSchema?: FlowSchema,
 }
 
 
 function handleIncomingSmsWebhook(
-  ic: InteractionController,
+  fc: FlowController,
   tc: TwilioController,
   req: Request,
   res: Response,
 ) {
   const state = tc.getSmsCookeFromRequest(req);
 
+  fc.deriveActionFromState(state);
   tc.sendEmptyResponse(res);
 }
 
 
 export function twilly({
-  inboundMessagePath,
-
   accountSid,
   authToken,
   messageServiceId,
 
+  rootFlow,
+  flowSchema,
+
   cookieSecret = null,
   cookieKey = null,
-
-  rootInteraction,
-  interactions,
 }: TwillyParams): Router {
   if (!cookieKey) {
     cookieKey = getSha256Hash(accountSid, accountSid).slice(0, 10);
   }
+  if (!cookieSecret) { // If no cookieSecret is provided, generate a hash from the Twilio credentials
+    cookieSecret = getSha256Hash(accountSid, authToken);
+  }
 
-  const ic = new InteractionController(rootInteraction, interactions);
+  const ic = new FlowController(rootFlow, flowSchema);
   const tc = new TwilioController({
     accountSid,
     authToken,
@@ -57,10 +58,7 @@ export function twilly({
   });
   const router = Router();
 
-  if (!cookieSecret) { // If no cookieSecret is provided, generate a hash from the Twilio credentials
-    cookieSecret = getSha256Hash(accountSid, authToken);
-  }
   router.use(cookieParser(cookieSecret));
-  router.post(inboundMessagePath, handleIncomingSmsWebhook.bind(null, ic, tc));
+  router.post('/', handleIncomingSmsWebhook.bind(null, ic, tc));
   return router;
 }
