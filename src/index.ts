@@ -1,33 +1,46 @@
-import { Router, Request, Response } from 'express';
+import { Router, Response } from 'express';
 import * as cookieParser from 'cookie-parser';
 
 import { getSha256Hash } from './util';
 
-import TwilioController, { TwilioControllerOpts } from './TwilioController';
+import TwilioController, {
+  TwilioControllerOpts,
+  TwilioWebhookRequest,
+} from './TwilioController';
 import FlowController from './FlowController';
 import { Flow, FlowSchema } from './Flows';
 
 export { Flow, FlowSchema } from './Flows';
 
 
+type UserContextGetter = (from: string) => any;
+
+
 interface TwillyParams extends TwilioControllerOpts {
-  cookieSecret?: string;
   inboundMessagePath: string;
   rootFlow: Flow,
   flowSchema?: FlowSchema,
+  cookieSecret?: string;
+  getUserContext?: UserContextGetter;
 }
 
 
-function handleIncomingSmsWebhook(
+async function handleIncomingSmsWebhook(
+  getUserContext: UserContextGetter,
   fc: FlowController,
   tc: TwilioController,
-  req: Request,
+  req: TwilioWebhookRequest,
   res: Response,
 ) {
-  const state = tc.getSmsCookeFromRequest(req);
+  try {
+    const userCtx = await getUserContext(req.body.From);
+    const state = tc.getSmsCookeFromRequest(req);
 
-  fc.deriveActionFromState(state);
-  tc.sendEmptyResponse(res);
+    fc.deriveActionFromState(state);
+    tc.sendEmptyResponse(res);
+  } catch (err) {
+    // TODO errors?
+  }
 }
 
 
@@ -41,6 +54,8 @@ export function twilly({
 
   cookieSecret = null,
   cookieKey = null,
+
+  getUserContext = (from: string) => null,
 }: TwillyParams): Router {
   if (!cookieKey) {
     cookieKey = getSha256Hash(accountSid, accountSid).slice(0, 10);
@@ -59,6 +74,6 @@ export function twilly({
   const router = Router();
 
   router.use(cookieParser(cookieSecret));
-  router.post('/', handleIncomingSmsWebhook.bind(null, ic, tc));
+  router.post('/', handleIncomingSmsWebhook.bind(null, getUserContext, ic, tc));
   return router;
 }

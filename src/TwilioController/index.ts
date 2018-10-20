@@ -7,8 +7,10 @@ import {
 } from 'express';
 
 import { XmlContentTypeHeader } from './headers';
-import { TwilioWebhookRequestBody } from './TwilioWebhookRequest';
+import { TwilioWebhookRequestBody, TwilioWebhookRequest } from './TwilioWebhookRequest';
 import { SmsCookie } from '../SmsCookie';
+
+export * from './TwilioWebhookRequest';
 
 
 const EMPTY_TWIML_RESPONSE =
@@ -55,7 +57,7 @@ export default class TwilioController {
     this.writeSuccessResponse(res, msgResponse.toString());
   }
 
-  public getSmsCookeFromRequest(req: Request): SmsCookie {
+  public getSmsCookeFromRequest(req: TwilioWebhookRequest): SmsCookie {
     return req.cookies[this.cookieKey];
   }
 

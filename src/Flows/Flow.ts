@@ -1,11 +1,11 @@
-import { FLOW_NAME } from '../symbols';
+import { NAME } from '../symbols';
 
 
 export default class Flow {
-  public readonly [FLOW_NAME]: string;
+  public readonly [NAME]: string;
   constructor(
     name: string,
   ) {
-    this[FLOW_NAME] = name;
+    this[NAME] = name;
   }
 }

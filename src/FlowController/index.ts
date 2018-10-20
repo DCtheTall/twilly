@@ -1,4 +1,4 @@
-import { FLOW_NAME } from '../symbols';
+import { NAME } from '../symbols';
 
 import { SmsCookie } from '../SmsCookie';
 import {
@@ -30,7 +30,7 @@ export default class FlowController {
       currFlow = this.root;
     } else {
       currFlow =
-        state.currentFlow === this.root[FLOW_NAME] ?
+        state.currentFlow === this.root[NAME] ?
           this.root : this.root[state.currentFlow];
     }
 

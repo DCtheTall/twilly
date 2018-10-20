@@ -1,24 +1,33 @@
-export type Numberlike = string | number;
+import { SmsCookie } from "../SmsCookie";
+
+
+type Numberlike = string | number;
+
 
 export interface TwilioWebhookRequestBody {
+  ApiVersion: string,
+  AccountSid: string,
+  Body: string,
+  From: string,
+  FromCity: string,
+  FromCountry: string,
+  FromState: string,
+  FromZip: Numberlike,
+  MessageSid: string,
+  MessagingServiceSid: string,
+  NumMedia: Numberlike,
+  NumSegments: Numberlike,
+  SmsMessageSid: string,
+  SmsSid: string,
+  SmsStatus: string,
+  To: string,
   ToCountry: string,
   ToState: string,
-  SmsMessageSid: string,
-  NumMedia: Numberlike,
   ToCity: string,
-  FromZip: Numberlike,
-  SmsSid: string,
-  FromState: string,
-  SmsStatus: string,
-  FromCity: string,
-  Body: string,
-  FromCountry: string,
-  To: string,
-  MessagingServiceSid: string,
   ToZip: Numberlike,
-  NumSegments: Numberlike,
-  MessageSid: string,
-  AccountSid: string,
-  From: string,
-  ApiVersion: string,
+}
+
+export interface TwilioWebhookRequest {
+  cookies: { [index: string]: SmsCookie };
+  body: TwilioWebhookRequestBody;
 }

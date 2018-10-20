@@ -1,4 +1,4 @@
-import { FLOW_NAME } from '../../symbols';
+import { NAME } from '../../symbols';
 
 import Flow from '../Flow';
 import FlowSchema from './';
@@ -24,7 +24,7 @@ export function evaluateSchema(
   initialResult: EvaluatedSchema = EMPTY_MAP,
   visited: F = EMPTY_SET,
 ): EvaluatedSchema {
-  initialResult.set(root[FLOW_NAME], root);
+  initialResult.set(root[NAME], root);
   const evaluated = Object.keys(G.schema).reduce(
     (acc: EvaluatedSchema, k: string): EvaluatedSchema =>
       {
@@ -34,11 +34,11 @@ export function evaluateSchema(
           visited.add(o);
           evaluateSchema(root, o, acc, visited);
         } else { // Type checking by FlowSchema constructor ensures this must be a Flow instance
-          if (acc.has(o[FLOW_NAME])) {
+          if (acc.has(o[NAME])) {
             throw new TypeError(
-              `All Flows must have unique names. Unexpected duplicate name: ${o[FLOW_NAME]}`);
+              `All Flows must have unique names. Unexpected duplicate name: ${o[NAME]}`);
           }
-          acc.set(o[FLOW_NAME], o);
+          acc.set(o[NAME], o);
         }
         return acc;
       }, initialResult);
