@@ -1,4 +1,4 @@
-import { NAME } from '../../symbols';
+import { NAME, FLOW_LENGTH } from '../../symbols';
 
 import Flow from '../Flow';
 import FlowSchema from './';
@@ -37,6 +37,11 @@ export function evaluateSchema(
           if (acc.has(o[NAME])) {
             throw new TypeError(
               `All Flows must have unique names. Unexpected duplicate name: ${o[NAME]}`);
+          }
+          if (o[FLOW_LENGTH] === 0) {
+            // TODO reuse in FlowController
+            throw new TypeError(
+              'All Flows must perform at least one action');
           }
           acc.set(o[NAME], o);
         }

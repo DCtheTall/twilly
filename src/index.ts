@@ -33,10 +33,10 @@ async function handleIncomingSmsWebhook(
   res: Response,
 ) {
   try {
-    const userCtx = await getUserContext(req.body.From);
     const state = tc.getSmsCookeFromRequest(req);
+    const userCtx = await getUserContext(req.body.From);
 
-    fc.deriveActionFromState(state);
+    fc.deriveActionFromState(state, userCtx);
     tc.sendSmsResponse(res, 'Hello world!');
   } catch (err) {
     // TODO errors?

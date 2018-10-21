@@ -7,6 +7,9 @@ const app = require('express')();
 const bp = require('body-parser');
 
 const root = new Flow('root');
+root.addAction((userContext) => {
+  console.log('Hello world!');
+});
 
 app.use(require('morgan')('dev'));
 app.use(bp.urlencoded({ extended: false, limit: '2mb' }));
@@ -16,6 +19,12 @@ app.use('/twilly', twilly({
   authToken: process.env.AUTH_TOKEN,
   messageServiceId: process.env.MESSAGE_SERVICE_ID,
   rootFlow: root,
+  getUserContext(from) {
+    return Promise.resolve({
+      name: 'Dylan',
+      number: from,
+    });
+  }
 }));
 app.get('/', (req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/html' });

@@ -1,6 +1,7 @@
 export interface SmsCookie {
+  from: string;
   interactionId: string;
-  currentFlow: string;
-  currentFlowStep: string;
-  // TODO context for current interaction
+  currFlow: string;
+  currFlowAction: string | number;
+  flowCtx: any; // TODO make type for this
 }

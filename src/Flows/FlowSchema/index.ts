@@ -6,8 +6,11 @@ export interface FlowSchemaParams {
 }
 
 
+const FlowSchemaValidateInput = Symbol('validateInput');
+
+
 export default class FlowSchema {
-  static validateInput(schema: FlowSchemaParams) {
+  static [FlowSchemaValidateInput](schema: FlowSchemaParams) {
     Object.keys(schema).forEach(
       (key: string) => {
         const u = schema[key];
@@ -21,6 +24,6 @@ export default class FlowSchema {
   constructor(
     public readonly schema: FlowSchemaParams,
   ) {
-    FlowSchema.validateInput(schema);
+    FlowSchema[FlowSchemaValidateInput](schema);
   }
 }

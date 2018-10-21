@@ -1,11 +1,13 @@
-import { NAME } from '../symbols';
+import { NAME, FLOW_LENGTH } from '../symbols';
 
+import { Action } from '../Actions';
 import { SmsCookie } from '../SmsCookie';
 import {
   Flow,
   FlowSchema,
   EvaluatedSchema,
   evaluateSchema,
+  FlowAction,
 } from '../Flows';
 
 
@@ -17,23 +19,29 @@ export default class FlowController {
     root: Flow,
     schema?: FlowSchema,
   ) {
+    if (root[FLOW_LENGTH] === 0) {
+      throw new TypeError(
+        'All Flows must perform at least one action');
+    }
     this.root = root;
     if (schema) {
       this.schema = evaluateSchema(root, schema);
     }
   }
 
-  public deriveActionFromState(state: SmsCookie) {
+  public deriveActionFromState(state: SmsCookie, userCtx: any): Action {
     let currFlow: Flow;
+    let currFlowAction: FlowAction;
 
     if (state === undefined) {
       currFlow = this.root;
+      currFlowAction = this.root.selectAction(0);
     } else {
       currFlow =
-        state.currentFlow === this.root[NAME] ?
-          this.root : this.root[state.currentFlow];
+        state.currFlow === this.root[NAME] ?
+          this.root : this.schema[state.currFlow];
+      currFlowAction = currFlow.selectAction(Number(state.currFlowAction));
     }
-
-    console.log(currFlow);
+    return currFlowAction(state.flowCtx, userCtx);
   }
 }
