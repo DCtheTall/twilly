@@ -1,20 +1,15 @@
 import * as Twilio from 'twilio';
 import * as TwilioClient from 'twilio/lib/rest/Twilio';
-import * as MessagingResponse from 'twilio/lib/twiml/MessagingResponse';
 import {
   Request,
   Response,
 } from 'express';
 
-import { XmlContentTypeHeader } from './headers';
 import { TwilioWebhookRequestBody, TwilioWebhookRequest } from './TwilioWebhookRequest';
 import { SmsCookie } from '../SmsCookie';
+import TwimlResponse from './TwimlResponse';
 
 export * from './TwilioWebhookRequest';
-
-
-const EMPTY_TWIML_RESPONSE =
-  '<?xml version="1.0" encoding="UTF-8"?><Response />';
 
 
 export interface TwilioControllerOpts {
@@ -41,20 +36,12 @@ export default class TwilioController {
     this.cookieKey = cookieKey;
   }
 
-  private writeSuccessResponse(res: Response, msg: string) {
-    res.writeHead(200, XmlContentTypeHeader);
-    res.end(msg);
-  }
-
   public sendEmptyResponse(res: Response): void {
-    this.writeSuccessResponse(res, EMPTY_TWIML_RESPONSE);
+    return new TwimlResponse(res).send();
   }
 
-  // TODO set private?
   public sendSmsResponse(res: Response, msg: string): void {
-    const msgResponse = new MessagingResponse();
-    msgResponse.message(msg);
-    this.writeSuccessResponse(res, msgResponse.toString());
+    return new TwimlResponse(res).setMessage(msg).send();
   }
 
   public getSmsCookeFromRequest(req: TwilioWebhookRequest): SmsCookie {
@@ -67,14 +54,6 @@ export default class TwilioController {
 
   public clearSmsCookie(res: Response) {
     res.clearCookie(this.cookieKey);
-  }
-
-  public handleSmsMessage(req: Request, res: Response): void {
-    const body = <TwilioWebhookRequestBody>req.body;
-    if (body.NumSegments > 1) {
-      // TODO figure out how to handle this
-    }
-    this.sendSmsResponse(res, 'worked');
   }
 
   public async sendSmsMessage(

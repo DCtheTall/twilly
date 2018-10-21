@@ -37,9 +37,10 @@ async function handleIncomingSmsWebhook(
     const state = tc.getSmsCookeFromRequest(req);
 
     fc.deriveActionFromState(state);
-    tc.sendEmptyResponse(res);
+    tc.sendSmsResponse(res, 'Hello world!');
   } catch (err) {
     // TODO errors?
+    throw err;
   }
 }
 
