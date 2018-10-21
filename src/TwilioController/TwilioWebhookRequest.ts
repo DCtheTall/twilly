@@ -1,4 +1,4 @@
-import { Request } from 'express';
+import { Request as ExpressRequest } from 'express';
 
 import { SmsCookie } from "../SmsCookie";
 
@@ -29,7 +29,7 @@ export interface TwilioWebhookRequestBody {
   ToZip: Numberlike,
 }
 
-export interface TwilioWebhookRequest extends Request {
+export interface TwilioWebhookRequest extends ExpressRequest {
   cookies: { [index: string]: SmsCookie };
   body: TwilioWebhookRequestBody;
 }

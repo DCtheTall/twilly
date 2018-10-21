@@ -1,13 +1,13 @@
 import * as Twilio from 'twilio';
 import * as TwilioClient from 'twilio/lib/rest/Twilio';
-import {
-  Request,
-  Response,
-} from 'express';
+import { Response } from 'express';
 
-import { TwilioWebhookRequestBody, TwilioWebhookRequest } from './TwilioWebhookRequest';
+import { HALTING_ACTION } from '../symbols';
+
+import { TwilioWebhookRequest } from './TwilioWebhookRequest';
 import { SmsCookie } from '../SmsCookie';
 import TwimlResponse from './TwimlResponse';
+import { Action, Message, Reply } from '../Actions';
 
 export * from './TwilioWebhookRequest';
 
@@ -36,11 +36,11 @@ export default class TwilioController {
     this.cookieKey = cookieKey;
   }
 
-  public sendEmptyResponse(res: Response): void {
+  private sendEmptyResponse(res: Response): void {
     return new TwimlResponse(res).send();
   }
 
-  public sendSmsResponse(res: Response, msg: string): void {
+  private sendSmsResponse(res: Response, msg: string): void {
     return new TwimlResponse(res).setMessage(msg).send();
   }
 
@@ -66,9 +66,37 @@ export default class TwilioController {
         body,
         messagingServiceSid: this.messageServiceId,
       });
+      // TODO collect metadata for cookie
     } catch (err) {
       // TODO error handling
       throw err;
+    }
+  }
+
+  public async handleAction(
+    req: TwilioWebhookRequest,
+    res: Response,
+    action: Action,
+  ): Promise<void> {
+    try {
+      switch (true) {
+        case action instanceof Reply:
+          await this.sendSmsMessage(req.body.From, (<Reply>action).body);
+
+        case action instanceof Message:
+          await this.sendSmsMessage((<Message>action).to, (<Message>action).body);
+          break;
+
+        default:
+          break;
+      }
+
+      if (action[HALTING_ACTION]) { // can potentially have this send replies later
+        this.sendEmptyResponse(res);
+      }
+    } catch (err) {
+      // TODO err handling
+      this.sendEmptyResponse(res);
     }
   }
 }

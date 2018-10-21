@@ -1,15 +1,14 @@
 require('dotenv').load(); // TODO uninstall this
 
-const { twilly, Flow } = require('./dist');
+const { twilly, Flow, Reply } = require('./dist');
 const app = require('express')();
 
 // TODO uninstall these
 const bp = require('body-parser');
 
 const root = new Flow('root');
-root.addAction((userContext) => {
-  console.log('Hello world!');
-});
+root.addAction(
+  (_, usr) => new Reply('test', `Hello ${usr.name}!`));
 
 app.use(require('morgan')('dev'));
 app.use(bp.urlencoded({ extended: false, limit: '2mb' }));
@@ -18,13 +17,10 @@ app.use('/twilly', twilly({
   accountSid: process.env.ACCOUNT_SID,
   authToken: process.env.AUTH_TOKEN,
   messageServiceId: process.env.MESSAGE_SERVICE_ID,
-  rootFlow: root,
+  root,
   getUserContext(from) {
-    return Promise.resolve({
-      name: 'Dylan',
-      number: from,
-    });
-  }
+    return Promise.resolve({ name: 'Dylan' });
+  },
 }));
 app.get('/', (req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/html' });

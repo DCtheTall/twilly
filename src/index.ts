@@ -10,7 +10,13 @@ import TwilioController, {
 import FlowController from './FlowController';
 import { Flow, FlowSchema } from './Flows';
 
+
 export { Flow, FlowSchema } from './Flows';
+export {
+  Message,
+  Reply,
+} from './Actions';
+
 
 
 type UserContextGetter = (from: string) => any;
@@ -18,8 +24,8 @@ type UserContextGetter = (from: string) => any;
 
 interface TwillyParams extends TwilioControllerOpts {
   inboundMessagePath: string;
-  rootFlow: Flow,
-  flowSchema?: FlowSchema,
+  root: Flow,
+  schema?: FlowSchema,
   cookieSecret?: string;
   getUserContext?: UserContextGetter;
 }
@@ -35,9 +41,9 @@ async function handleIncomingSmsWebhook(
   try {
     const state = tc.getSmsCookeFromRequest(req);
     const userCtx = await getUserContext(req.body.From);
+    const action = await fc.deriveActionFromState(state, userCtx);
 
-    fc.deriveActionFromState(state, userCtx);
-    tc.sendSmsResponse(res, 'Hello world!');
+    tc.handleAction(req, res, action);
   } catch (err) {
     // TODO errors?
     throw err;
@@ -50,8 +56,8 @@ export function twilly({
   authToken,
   messageServiceId,
 
-  rootFlow,
-  flowSchema,
+  root,
+  schema,
 
   cookieSecret = null,
   cookieKey = null,
@@ -65,7 +71,7 @@ export function twilly({
     cookieSecret = getSha256Hash(accountSid, authToken);
   }
 
-  const ic = new FlowController(rootFlow, flowSchema);
+  const ic = new FlowController(root, schema);
   const tc = new TwilioController({
     accountSid,
     authToken,

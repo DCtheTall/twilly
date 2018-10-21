@@ -29,7 +29,7 @@ export default class FlowController {
     }
   }
 
-  public deriveActionFromState(state: SmsCookie, userCtx: any): Action {
+  public async deriveActionFromState(state: SmsCookie, userCtx: any): Promise<Action> {
     let currFlow: Flow;
     let currFlowAction: FlowAction;
 
@@ -42,6 +42,13 @@ export default class FlowController {
           this.root : this.schema[state.currFlow];
       currFlowAction = currFlow.selectAction(Number(state.currFlowAction));
     }
-    return currFlowAction(state.flowCtx, userCtx);
+    let action: Action;
+    try {
+      action = await currFlowAction({}, userCtx);
+    } catch (err) {
+      // TODO err handling
+      throw err;
+    }
+    return action;
   }
 }

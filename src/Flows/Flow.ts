@@ -5,8 +5,12 @@ import { Action } from '../Actions';
 export type FlowAction = (context: any, userContext?: any) => Action;
 
 
+const FlowActionNames = Symbol('actionNames');
+
+
 export default class Flow {
   private readonly actions: FlowAction[];
+  private readonly [FlowActionNames]: Set<string>;
 
   public readonly [NAME]: string;
 
@@ -15,6 +19,7 @@ export default class Flow {
   ) {
     this[NAME] = name;
     this.actions = [];
+    this[FlowActionNames] = new Set<string>();
   }
 
   get [FLOW_LENGTH]() {

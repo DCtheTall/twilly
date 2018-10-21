@@ -7,22 +7,15 @@ import FlowSchema from './';
 export type EvaluatedSchema = Map<string, Flow>;
 
 
-type F = Set<FlowSchema>;
-
 const EMPTY_MAP = <EvaluatedSchema>(new Map());
-const EMPTY_SET = <F>(new Set());
+const EMPTY_SET = new Set<FlowSchema>();
 
 
-/**
- *
- * @param schema the flow schema being evaluated
- * @returns a schema evaluated using DFS to create a flat map of interactions
- */
 export function evaluateSchema(
   root: Flow,
   G: FlowSchema,
   initialResult: EvaluatedSchema = EMPTY_MAP,
-  visited: F = EMPTY_SET,
+  visited: Set<FlowSchema> = EMPTY_SET,
 ): EvaluatedSchema {
   initialResult.set(root[NAME], root);
   const evaluated = Object.keys(G.schema).reduce(
