@@ -1,22 +1,29 @@
-import { HALTING_ACTION } from '../symbols';
+import { HALTING_ACTION, NAME } from '../symbols';
 
-import Action from './Action';
+import Action, { ActionContext } from './Action';
+import { SmsCookie } from '../SmsCookie';
 
 
 const MessageTo = Symbol('to');
 const MessageBody = Symbol('body');
 
 
+export interface MessageContext extends ActionContext {
+  body: string;
+  to: string;
+  messageSid: string;
+}
+
+
 export default class Messsage extends Action {
-  private [MessageTo]: string;
+  private [MessageTo]: string | string[];
   private [MessageBody]: string;
 
   constructor(
-    name: string,
-    to: string,
+    to: string | string,
     body: string,
   ) {
-    super(name);
+    super();
     this[MessageTo] = to;
     this[MessageBody] = body;
     this[HALTING_ACTION] = false;
@@ -28,5 +35,16 @@ export default class Messsage extends Action {
 
   get body() {
     return this[MessageBody];
+  }
+
+  public getContext(): MessageContext {
+    return {
+      body: this[MessageBody],
+      name: this[NAME],
+      messageSid: '',
+      to: Array.isArray(this[MessageTo]) ?
+        (<string[]>this[MessageTo]).join(';')
+        : <string>this[MessageTo],
+    };
   }
 }

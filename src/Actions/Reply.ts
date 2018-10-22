@@ -1,11 +1,35 @@
-import { HALTING_ACTION } from '../symbols';
+import { HALTING_ACTION, NAME } from '../symbols';
 
-import Message from './Message';
+import Action, { ActionContext } from './Action';
 
 
-export default class Reply extends Message {
-  constructor(name: string, body: string) {
-    super(name, null, body);
+const ReplyBody = Symbol('body');
+
+
+export interface ReplyContext extends ActionContext {
+  body: string;
+  messageSid: string;
+}
+
+
+export default class Reply extends Action {
+  private [ReplyBody]: string;
+
+  constructor(body: string) {
+    super();
+    this[ReplyBody] = body;
     this[HALTING_ACTION] = false;
+  }
+
+  get body(): string {
+    return this[ReplyBody];
+  }
+
+  public getContext(): ReplyContext {
+    return {
+      body: this[ReplyBody],
+      name: this[NAME],
+      messageSid: '',
+    };
   }
 }

@@ -1,11 +1,20 @@
 import { NAME, HALTING_ACTION } from '../symbols';
 
 
-export default class Action {
-  public readonly [NAME]: string;
-  public [HALTING_ACTION]: boolean;
+export interface ActionContext {
+  name: string;
+}
 
-  constructor(name: string) {
+
+export default class Action {
+  public [HALTING_ACTION]: boolean;
+  private [NAME]: string;
+
+  public setName(name: string) {
     this[NAME] = name;
+  }
+
+  public getContext(): ActionContext {
+    return { name: this[NAME] };
   }
 }

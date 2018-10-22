@@ -7,8 +7,10 @@ const app = require('express')();
 const bp = require('body-parser');
 
 const root = new Flow('root');
-root.addAction(
-  (_, usr) => new Reply('test', `Hello ${usr.name}!`));
+root.addActions({
+  test: (_, usr) => new Reply(`Hello, ${usr.name}`),
+  test2: (_, usr) => new Reply(`Hello again, ${usr.name}`),
+});
 
 app.use(require('morgan')('dev'));
 app.use(bp.urlencoded({ extended: false, limit: '2mb' }));

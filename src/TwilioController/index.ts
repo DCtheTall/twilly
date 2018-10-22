@@ -5,7 +5,7 @@ import { Response } from 'express';
 import { HALTING_ACTION } from '../symbols';
 
 import { TwilioWebhookRequest } from './TwilioWebhookRequest';
-import { SmsCookie } from '../SmsCookie';
+import { SmsCookie, createSmsCookie } from '../SmsCookie';
 import TwimlResponse from './TwimlResponse';
 import { Action, Message, Reply } from '../Actions';
 
@@ -36,7 +36,7 @@ export default class TwilioController {
     this.cookieKey = cookieKey;
   }
 
-  private sendEmptyResponse(res: Response): void {
+  public sendEmptyResponse(res: Response): void {
     return new TwimlResponse(res).send();
   }
 
@@ -45,7 +45,9 @@ export default class TwilioController {
   }
 
   public getSmsCookeFromRequest(req: TwilioWebhookRequest): SmsCookie {
-    return req.cookies[this.cookieKey];
+    const state = req.cookies[this.cookieKey];
+    if (state) return state;
+    return createSmsCookie(req);
   }
 
   public setSmsCookie(res: Response, payload: SmsCookie) {
@@ -59,14 +61,14 @@ export default class TwilioController {
   public async sendSmsMessage(
     to: string,
     body: string,
-  ): Promise<void> {
+  ): Promise<string> {
     try {
       const data = await this.twilio.messages.create({
         to,
         body,
         messagingServiceSid: this.messageServiceId,
       });
-      // TODO collect metadata for cookie
+      return data.sid;
     } catch (err) {
       // TODO error handling
       throw err;
@@ -79,24 +81,31 @@ export default class TwilioController {
     action: Action,
   ): Promise<void> {
     try {
+      let sid: string;
+
       switch (true) {
         case action instanceof Reply:
-          await this.sendSmsMessage(req.body.From, (<Reply>action).body);
+          sid = await this.sendSmsMessage(req.body.From, (<Reply>action).body);
+          break;
 
         case action instanceof Message:
-          await this.sendSmsMessage((<Message>action).to, (<Message>action).body);
+          if (Array.isArray((<Message>action).to)) {
+            sid = (await Promise.all(
+              (<string[]>(<Message>action).to).map(
+                (to: string): Promise<string> =>
+                  this.sendSmsMessage(to, (<Message>action).body)))).join(';');
+          } else {
+            sid = await this.sendSmsMessage(
+              <string>(<Message>action).to, (<Message>action).body);
+          }
           break;
 
         default:
           break;
       }
-
-      if (action[HALTING_ACTION]) { // can potentially have this send replies later
-        this.sendEmptyResponse(res);
-      }
     } catch (err) {
       // TODO err handling
-      this.sendEmptyResponse(res);
+      throw err;
     }
   }
 }

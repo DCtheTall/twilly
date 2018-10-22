@@ -4,6 +4,7 @@ import Flow from '../Flow';
 import FlowSchema from './';
 
 
+export const ROOT = '__ROOT__';
 export type EvaluatedSchema = Map<string, Flow>;
 
 

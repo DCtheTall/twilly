@@ -9,7 +9,7 @@ import TwilioController, {
 } from './TwilioController';
 import FlowController from './FlowController';
 import { Flow, FlowSchema } from './Flows';
-
+import { HALTING_ACTION, NAME } from './symbols';
 
 export { Flow, FlowSchema } from './Flows';
 export {
@@ -22,14 +22,6 @@ export {
 type UserContextGetter = (from: string) => any;
 
 
-interface TwillyParams extends TwilioControllerOpts {
-  inboundMessagePath: string;
-  root: Flow,
-  schema?: FlowSchema,
-  cookieSecret?: string;
-  getUserContext?: UserContextGetter;
-}
-
 
 async function handleIncomingSmsWebhook(
   getUserContext: UserContextGetter,
@@ -39,15 +31,36 @@ async function handleIncomingSmsWebhook(
   res: Response,
 ) {
   try {
-    const state = tc.getSmsCookeFromRequest(req);
     const userCtx = await getUserContext(req.body.From);
-    const action = await fc.deriveActionFromState(state, userCtx);
 
-    tc.handleAction(req, res, action);
+    let state = tc.getSmsCookeFromRequest(req);
+    let action = await fc.deriveActionFromState(state, userCtx);
+
+    while (action) {
+      await tc.handleAction(req, res, action);
+      state = await fc.deriveNextStateFromAction(state, action);
+      if (action[HALTING_ACTION] || !state) break;
+      action = await fc.deriveActionFromState(state, userCtx);
+    }
+    if (state && action) {
+      tc.setSmsCookie(res, state);
+    } else {
+      tc.clearSmsCookie(res);
+    }
+    tc.sendEmptyResponse(res);
   } catch (err) {
     // TODO errors?
     throw err;
   }
+}
+
+
+interface TwillyParams extends TwilioControllerOpts {
+  inboundMessagePath: string;
+  root: Flow,
+  schema?: FlowSchema,
+  cookieSecret?: string;
+  getUserContext?: UserContextGetter;
 }
 
 

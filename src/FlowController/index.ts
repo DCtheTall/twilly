@@ -1,7 +1,7 @@
-import { NAME, FLOW_LENGTH } from '../symbols';
+import { NAME, FLOW_LENGTH, SET_FLOW_NAME } from '../symbols';
 
 import { Action } from '../Actions';
-import { SmsCookie } from '../SmsCookie';
+import { SmsCookie, createSmsCookie } from '../SmsCookie';
 import {
   Flow,
   FlowSchema,
@@ -29,26 +29,45 @@ export default class FlowController {
     }
   }
 
-  public async deriveActionFromState(state: SmsCookie, userCtx: any): Promise<Action> {
+  public async deriveActionFromState(
+    state: SmsCookie,
+    userCtx: any,
+  ): Promise<Action> {
+    if (!state) {
+      return null;
+    }
+
+    const i = Number(state.currFlowAction);
+
     let currFlow: Flow;
     let currFlowAction: FlowAction;
-
-    if (state === undefined) {
-      currFlow = this.root;
-      currFlowAction = this.root.selectAction(0);
-    } else {
-      currFlow =
-        state.currFlow === this.root[NAME] ?
-          this.root : this.schema[state.currFlow];
-      currFlowAction = currFlow.selectAction(Number(state.currFlowAction));
-    }
     let action: Action;
+
+    if (!state.currFlow || state.currFlow === this.root[NAME]) {
+      currFlow = this.root;
+    } else {
+      currFlow = this.schema[state.currFlow];
+    }
+    currFlowAction = currFlow.selectAction(i);
+    if (!currFlowAction) return null;
     try {
-      action = await currFlowAction({}, userCtx);
+      action = await currFlowAction(state.flowCtx, userCtx);
+      action.setName(currFlow.selectName(i));
     } catch (err) {
       // TODO err handling
       throw err;
     }
     return action;
+  }
+
+  public async deriveNextStateFromAction(
+    state: SmsCookie,
+    action: Action,
+  ): Promise<SmsCookie> {
+    if (!action) return null;
+
+    state.flowCtx[action[NAME]] = action.getContext();
+    state.currFlowAction = Number(state.currFlowAction) + 1;
+    return state;
   }
 }
