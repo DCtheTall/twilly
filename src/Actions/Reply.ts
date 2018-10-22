@@ -1,4 +1,4 @@
-import { HALTING_ACTION, NAME } from '../symbols';
+import { HALTING_ACTION, NAME, MESSAGING_SID } from '../symbols';
 
 import Action, { ActionContext } from './Action';
 
@@ -29,7 +29,7 @@ export default class Reply extends Action {
     return {
       body: this[ReplyBody],
       name: this[NAME],
-      messageSid: '',
+      messageSid: this[MESSAGING_SID],
     };
   }
 }

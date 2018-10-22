@@ -3,3 +3,5 @@ export * from './Flow';
 
 export { default as FlowSchema } from './FlowSchema';
 export * from './FlowSchema/evaluate';
+
+export { default as FlowController } from './Controller';

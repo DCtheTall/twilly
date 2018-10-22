@@ -36,12 +36,12 @@ export default class TwilioController {
     this.cookieKey = cookieKey;
   }
 
-  public sendEmptyResponse(res: Response): void {
-    return new TwimlResponse(res).send();
-  }
-
   private sendSmsResponse(res: Response, msg: string): void {
     return new TwimlResponse(res).setMessage(msg).send();
+  }
+
+  public sendEmptyResponse(res: Response): void {
+    return new TwimlResponse(res).send();
   }
 
   public getSmsCookeFromRequest(req: TwilioWebhookRequest): SmsCookie {
@@ -86,6 +86,7 @@ export default class TwilioController {
       switch (true) {
         case action instanceof Reply:
           sid = await this.sendSmsMessage(req.body.From, (<Reply>action).body);
+          action.setMessageSid(sid);
           break;
 
         case action instanceof Message:
@@ -98,6 +99,7 @@ export default class TwilioController {
             sid = await this.sendSmsMessage(
               <string>(<Message>action).to, (<Message>action).body);
           }
+          action.setMessageSid(sid);
           break;
 
         default:

@@ -7,9 +7,9 @@ import TwilioController, {
   TwilioControllerOpts,
   TwilioWebhookRequest,
 } from './TwilioController';
-import FlowController from './FlowController';
+import { FlowController } from './Flows';
 import { Flow, FlowSchema } from './Flows';
-import { HALTING_ACTION, NAME } from './symbols';
+import { HALTING_ACTION } from './symbols';
 
 export { Flow, FlowSchema } from './Flows';
 export {
@@ -42,7 +42,7 @@ async function handleIncomingSmsWebhook(
       if (action[HALTING_ACTION] || !state) break;
       action = await fc.deriveActionFromState(state, userCtx);
     }
-    if (state && action) {
+    if (state) {
       tc.setSmsCookie(res, state);
     } else {
       tc.clearSmsCookie(res);

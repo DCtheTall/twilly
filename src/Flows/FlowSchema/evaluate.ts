@@ -1,7 +1,7 @@
 import { NAME, FLOW_LENGTH } from '../../symbols';
 
 import Flow from '../Flow';
-import FlowSchema from './';
+import FlowSchema from '.';
 
 
 export const ROOT = '__ROOT__';

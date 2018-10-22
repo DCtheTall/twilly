@@ -1,7 +1,6 @@
-import { HALTING_ACTION, NAME } from '../symbols';
+import { HALTING_ACTION, NAME, MESSAGING_SID } from '../symbols';
 
 import Action, { ActionContext } from './Action';
-import { SmsCookie } from '../SmsCookie';
 
 
 const MessageTo = Symbol('to');
@@ -29,11 +28,11 @@ export default class Messsage extends Action {
     this[HALTING_ACTION] = false;
   }
 
-  get to() {
+  get to(): string | string[] {
     return this[MessageTo];
   }
 
-  get body() {
+  get body(): string {
     return this[MessageBody];
   }
 
@@ -41,7 +40,7 @@ export default class Messsage extends Action {
     return {
       body: this[MessageBody],
       name: this[NAME],
-      messageSid: '',
+      messageSid: this[MESSAGING_SID],
       to: Array.isArray(this[MessageTo]) ?
         (<string[]>this[MessageTo]).join(';')
         : <string>this[MessageTo],

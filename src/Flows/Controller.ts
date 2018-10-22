@@ -1,7 +1,7 @@
-import { NAME, FLOW_LENGTH, SET_FLOW_NAME } from '../symbols';
+import { NAME, FLOW_LENGTH } from '../symbols';
 
 import { Action } from '../Actions';
-import { SmsCookie, createSmsCookie } from '../SmsCookie';
+import { SmsCookie } from '../SmsCookie';
 import {
   Flow,
   FlowSchema,
@@ -52,6 +52,9 @@ export default class FlowController {
     if (!currFlowAction) return null;
     try {
       action = await currFlowAction(state.flowCtx, userCtx);
+      if (!(action instanceof Action)) {
+        return null;
+      }
       action.setName(currFlow.selectName(i));
     } catch (err) {
       // TODO err handling
@@ -66,8 +69,18 @@ export default class FlowController {
   ): Promise<SmsCookie> {
     if (!action) return null;
 
+    let currFlow: Flow;
+
+    if (!state.currFlow || state.currFlow === this.root[NAME]) {
+      currFlow = this.root;
+    } else {
+      currFlow = this.schema[state.currFlow];
+    }
     state.flowCtx[action[NAME]] = action.getContext();
     state.currFlowAction = Number(state.currFlowAction) + 1;
+    if (state.currFlowAction === currFlow[FLOW_LENGTH]) {
+      return null;
+    }
     return state;
   }
 }
