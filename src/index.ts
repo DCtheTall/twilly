@@ -1,4 +1,7 @@
-import { Router, Response } from 'express';
+import {
+  Router,
+  Response,
+} from 'express';
 import * as cookieParser from 'cookie-parser';
 
 import { getSha256Hash } from './util';
@@ -11,9 +14,13 @@ import { FlowController } from './Flows';
 import { Flow, FlowSchema } from './Flows';
 import { HALTING_ACTION } from './symbols';
 
-export { Flow, FlowSchema } from './Flows';
+export {
+  Flow,
+  FlowSchema,
+} from './Flows';
 export {
   Message,
+  Trigger,
   Reply,
 } from './Actions';
 
@@ -49,7 +56,8 @@ async function handleIncomingSmsWebhook(
     tc.sendEmptyResponse(res);
   } catch (err) {
     // TODO errors?
-    throw err;
+    console.log(err);
+    tc.sendEmptyResponse(res);
   }
 }
 

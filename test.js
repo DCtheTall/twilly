@@ -1,15 +1,16 @@
 require('dotenv').load(); // TODO uninstall this
 
-const { twilly, Flow, Reply } = require('./dist');
+const { twilly, Flow, FlowSchema, Reply, Trigger } = require('./dist');
 const app = require('express')();
 
 // TODO uninstall these
 const bp = require('body-parser');
 
-const root = new Flow('root');
-root.addActions({
-  test: (_, usr) => new Reply(`Hello, ${usr.name}`),
-  test2: (_, usr) => new Reply(`Hello again, ${usr.name}`),
+const root = new Flow('root').addAction('trigger', () => new Trigger('test'));
+
+const schema = new FlowSchema({
+  test: new Flow('test').addAction('trigger', () => new Trigger('test2')),
+  test2: new Flow('test2').addAction('reply', () => new Reply('Worked!')),
 });
 
 app.use(require('morgan')('dev'));
@@ -20,8 +21,9 @@ app.use('/twilly', twilly({
   authToken: process.env.AUTH_TOKEN,
   messageServiceId: process.env.MESSAGE_SERVICE_ID,
   root,
-  getUserContext(from) {
-    return Promise.resolve({ name: 'Dylan' });
+  schema,
+  getUserContext(fromNumber) {
+    return Promise.resolve({ name: fromNumber });
   },
 }));
 app.get('/', (req, res) => {

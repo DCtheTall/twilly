@@ -1,4 +1,7 @@
-import { HALTING_ACTION, NAME, MESSAGING_SID } from '../symbols';
+import {
+  HALTING_ACTION,
+  MESSAGING_SID,
+} from '../symbols';
 
 import Action, { ActionContext } from './Action';
 
@@ -21,6 +24,17 @@ export default class Messsage extends Action {
     to: string | string[],
     body: string,
   ) {
+    if (
+      typeof to !== 'string'
+      && (!(to.every && to.every((s: string) => typeof s === 'string')))
+    ) {
+      throw new TypeError(
+        'Message constructor expects a string or an array of strings as the first argument');
+    }
+    if (typeof body !== 'string') {
+      throw new TypeError(
+        'Message constructor expects a string as the second argument');
+    }
     super();
     this[MessageTo] = Array.isArray(to) ? to : [to];
     this[MessageBody] = body;

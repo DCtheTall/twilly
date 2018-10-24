@@ -41,7 +41,7 @@ export function evaluateSchema(
         }
         return acc;
       }, initialResult);
-  if (Object.keys(evaluated).length === 0) {
+  if (evaluated.size === 0) {
     throw new TypeError(
       'All FlowSchemas must contain at least one Flow object');
   }

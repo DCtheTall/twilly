@@ -1,19 +1,22 @@
 import { NAME, FLOW_LENGTH } from '../symbols';
 import { Action } from '../Actions';
+import { InteractionContext } from '../SmsCookie';
 
-export type FlowActionGetter = (context: any, userContext?: any) => Action;
+
+export type FlowActionResolver =
+  (context: InteractionContext, userContext?: any) => Action | Promise<Action>;
 
 
-interface FlowActionInstruction {
+interface FlowAction {
   name: string;
-  getAction: FlowActionGetter;
+  resolve: FlowActionResolver;
 }
 
 const FlowActions = Symbol('actions');
 const FlowActionNames = Symbol('actionNames');
 
 export default class Flow {
-  private readonly [FlowActions]: FlowActionInstruction[];
+  private readonly [FlowActions]: FlowAction[];
   private readonly [FlowActionNames]: Set<string>;
 
   public readonly [NAME]: string;
@@ -28,26 +31,27 @@ export default class Flow {
     return this[FlowActions].length;
   }
 
-  public addAction(name: string, getAction: FlowActionGetter): Flow {
+  public addAction(name: string, resolve: FlowActionResolver): Flow {
     if (this[FlowActionNames].has(name)) {
       throw new TypeError(
         `Every Flow's action names must be unique. Unexpected duplicate name: ${name}`);
     }
     this[FlowActionNames].add(name);
-    this[FlowActions].push({ name, getAction });
+    this[FlowActions].push({ name, resolve });
     return this;
   }
 
-  public addActions(actions: { [index: string]: FlowActionGetter }): Flow {
-    Object.keys(actions).map(
-      (key: string) => this.addAction(key, actions[key]));
+  public addActions(actions: FlowAction[]): Flow {
+    actions.map(
+      (flowAction: FlowAction) =>
+        this.addAction(flowAction.name, flowAction.resolve));
     return this;
   }
 
-  public selectActionGetter(i: number): FlowActionGetter {
+  public selectActionResolver(i: number): FlowActionResolver {
     const flowEntry = this[FlowActions][i];
     if (!flowEntry) return null;
-    return flowEntry.getAction;
+    return flowEntry.resolve;
   }
 
   public selectName(i: number): string {

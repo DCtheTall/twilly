@@ -1,14 +1,20 @@
-import { NAME, FLOW_LENGTH } from '../symbols';
+import {
+  NAME,
+  FLOW_LENGTH,
+} from '../symbols';
 
-import { Action } from '../Actions';
-import { SmsCookie } from '../SmsCookie';
 import {
   Flow,
   FlowSchema,
   EvaluatedSchema,
   evaluateSchema,
-  FlowActionGetter,
-} from '../Flows';
+  FlowActionResolver,
+} from '.';
+import {
+  Action,
+  Trigger,
+} from '../Actions';
+import { SmsCookie } from '../SmsCookie';
 
 
 export default class FlowController {
@@ -40,20 +46,20 @@ export default class FlowController {
     const i = Number(state.currFlowAction);
 
     let currFlow: Flow;
-    let getNextAction: FlowActionGetter;
+    let resolveNextAction: FlowActionResolver;
     let action: Action;
 
     if (!state.currFlow || state.currFlow === this.root[NAME]) {
       currFlow = this.root;
     } else {
-      currFlow = this.schema[state.currFlow];
+      currFlow = this.schema.get(state.currFlow);
     }
 
-    getNextAction = currFlow.selectActionGetter(i);
-    if (!getNextAction) return null;
+    resolveNextAction = currFlow.selectActionResolver(i);
+    if (!resolveNextAction) return null;
 
     try {
-      action = await getNextAction(state.flowContext, userCtx);
+      action = await resolveNextAction(state.context, userCtx);
       if (!(action instanceof Action)) {
         return null;
       }
@@ -73,16 +79,34 @@ export default class FlowController {
 
     let currFlow: Flow;
 
-    if (!state.currFlow || (state.currFlow === this.root[NAME])) {
+    if (
+      (!state.currFlow) ||
+      (state.currFlow === this.root[NAME])
+    ) {
       currFlow = this.root;
     } else {
-      currFlow = this.schema[state.currFlow];
+      currFlow = this.schema.get(state.currFlow);
     }
+
+    if (!state.context[currFlow[NAME]]) {
+      state.context[currFlow[NAME]] = {};
+    }
+    state.context[currFlow[NAME]][action[NAME]] = action.getContext();
+
+    if (action instanceof Trigger) {
+      if (currFlow === this.root && (!this.schema)) {
+        throw new TypeError(
+          'Cannot use Trigger action without a defined Flow schema');
+      }
+      state.currFlow = this.schema.get(action.flowName)[NAME];
+      state.currFlowAction = 0;
+      return state;
+    }
+
+    state.currFlowAction = Number(state.currFlowAction) + 1;
     if (state.currFlowAction === currFlow[FLOW_LENGTH]) {
       return null;
     }
-    state.flowContext[action[NAME]] = action.getContext();
-    state.currFlowAction = Number(state.currFlowAction) + 1;
     return state;
   }
 }

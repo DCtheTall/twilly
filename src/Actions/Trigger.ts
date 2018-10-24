@@ -1,0 +1,34 @@
+import { HALTING_ACTION } from '../symbols';
+
+import Action, {
+  ActionContext,
+  GetActionContext,
+} from './Action';
+
+
+export interface TriggerContext extends ActionContext {
+  flowName: string;
+}
+
+
+const TriggerFlowName = Symbol('flowName');
+
+export default class Trigger extends Action {
+  private readonly [TriggerFlowName]: string;
+
+  constructor(flowName: string) {
+    if (typeof flowName !== 'string') {
+      throw new TypeError(
+        'Trigger constructor expects a string as the second argument');
+    }
+    super();
+    this[HALTING_ACTION] = false;
+    this[TriggerFlowName] = flowName;
+    this[GetActionContext] =
+      (): TriggerContext => ({ flowName });
+  }
+
+  get flowName(): string {
+    return this[TriggerFlowName];
+  }
+}

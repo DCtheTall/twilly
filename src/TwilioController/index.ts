@@ -57,12 +57,22 @@ export default class TwilioController {
   }
 
   public async sendSmsMessage(
-    to: string,
+    to: string | string[],
     body: string,
-  ): Promise<string> {
+  ): Promise<string | string[]> {
+    if (Array.isArray(to)) {
+      const data = await Promise.all(
+        to.map((dst: string) =>
+          this.twilio.messages.create({
+            to: dst,
+            body,
+            messagingServiceSid: this.messageServiceId,
+          })));
+      return data.map(m => m.sid);
+    }
     try {
       const data = await this.twilio.messages.create({
-        to,
+        to: <string>to,
         body,
         messagingServiceSid: this.messageServiceId,
       });
@@ -79,25 +89,23 @@ export default class TwilioController {
     action: Action,
   ): Promise<void> {
     try {
-      let sid: string;
+      let sid: string | string[];
 
-      switch (true) {
-        case action instanceof Reply:
-          sid = await this.sendSmsMessage(req.body.From, (<Reply>action).body);
+      switch (action.constructor) {
+        case Reply:
+         sid = <string>(await this.sendSmsMessage(
+           req.body.From,
+           (<Reply>action).body,
+          ));
           action.setMessageSid(sid);
           break;
 
-        case action instanceof Message:
-          if (Array.isArray((<Message>action).to)) {
-            sid = (await Promise.all(
-              (<string[]>(<Message>action).to).map(
-                (to: string): Promise<string> =>
-                  this.sendSmsMessage(to, (<Message>action).body)))).join(';');
-          } else {
-            sid = await this.sendSmsMessage(
-              <string>(<Message>action).to, (<Message>action).body);
-          }
-          action.setMessageSid(sid);
+        case Message:
+          sid = <string[]>(await this.sendSmsMessage(
+            (<Message>action).to,
+            (<Message>action).body,
+          ));
+          (<Message>action).setMessageSids(sid);
           break;
 
         default:

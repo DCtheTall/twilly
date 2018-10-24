@@ -8,6 +8,6 @@ export default function createSmsCookie(req: TwilioWebhookRequest): SmsCookie {
     interactionId: uniqueString(),
     currFlow: null,
     currFlowAction: 0,
-    flowCtx: {},
+    context: {},
   };
 }

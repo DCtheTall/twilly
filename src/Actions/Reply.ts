@@ -1,4 +1,4 @@
-import { HALTING_ACTION, NAME, MESSAGING_SID } from '../symbols';
+import { HALTING_ACTION } from '../symbols';
 
 import Action, { ActionContext, GetActionContext } from './Action';
 
@@ -14,11 +14,15 @@ export default class Reply extends Action {
   private [ReplyBody]: string;
 
   constructor(body: string) {
+    if (typeof body !== 'string') {
+      throw new TypeError(
+        'Reply constructor expects a string as the first argument');
+    }
     super();
     this[HALTING_ACTION] = false;
     this[ReplyBody] = body;
     this[GetActionContext] =
-      (): ReplyContext => ({ body: this[ReplyBody] });
+      (): ReplyContext => ({ body });
   }
 
   get body(): string {
