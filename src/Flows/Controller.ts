@@ -7,7 +7,7 @@ import {
   FlowSchema,
   EvaluatedSchema,
   evaluateSchema,
-  FlowAction,
+  FlowActionGetter,
 } from '../Flows';
 
 
@@ -40,7 +40,7 @@ export default class FlowController {
     const i = Number(state.currFlowAction);
 
     let currFlow: Flow;
-    let currFlowAction: FlowAction;
+    let getNextAction: FlowActionGetter;
     let action: Action;
 
     if (!state.currFlow || state.currFlow === this.root[NAME]) {
@@ -48,10 +48,12 @@ export default class FlowController {
     } else {
       currFlow = this.schema[state.currFlow];
     }
-    currFlowAction = currFlow.selectAction(i);
-    if (!currFlowAction) return null;
+
+    getNextAction = currFlow.selectActionGetter(i);
+    if (!getNextAction) return null;
+
     try {
-      action = await currFlowAction(state.flowCtx, userCtx);
+      action = await getNextAction(state.flowContext, userCtx);
       if (!(action instanceof Action)) {
         return null;
       }
@@ -67,20 +69,20 @@ export default class FlowController {
     state: SmsCookie,
     action: Action,
   ): Promise<SmsCookie> {
-    if (!action) return null;
+    if (!(action instanceof Action)) return null;
 
     let currFlow: Flow;
 
-    if (!state.currFlow || state.currFlow === this.root[NAME]) {
+    if (!state.currFlow || (state.currFlow === this.root[NAME])) {
       currFlow = this.root;
     } else {
       currFlow = this.schema[state.currFlow];
     }
-    state.flowCtx[action[NAME]] = action.getContext();
-    state.currFlowAction = Number(state.currFlowAction) + 1;
     if (state.currFlowAction === currFlow[FLOW_LENGTH]) {
       return null;
     }
+    state.flowContext[action[NAME]] = action.getContext();
+    state.currFlowAction = Number(state.currFlowAction) + 1;
     return state;
   }
 }

@@ -9,26 +9,25 @@ const MessageBody = Symbol('body');
 
 export interface MessageContext extends ActionContext {
   body: string;
-  to: string;
-  messageSid: string;
+  to: string[];
 }
 
 
 export default class Messsage extends Action {
-  private [MessageTo]: string | string[];
+  private [MessageTo]: string[];
   private [MessageBody]: string;
 
   constructor(
-    to: string | string,
+    to: string | string[],
     body: string,
   ) {
     super();
-    this[MessageTo] = to;
+    this[MessageTo] = Array.isArray(to) ? to : [to];
     this[MessageBody] = body;
     this[HALTING_ACTION] = false;
   }
 
-  get to(): string | string[] {
+  get to(): string[] {
     return this[MessageTo];
   }
 
@@ -39,11 +38,11 @@ export default class Messsage extends Action {
   public getContext(): MessageContext {
     return {
       body: this[MessageBody],
-      name: this[NAME],
-      messageSid: this[MESSAGING_SID],
-      to: Array.isArray(this[MessageTo]) ?
-        (<string[]>this[MessageTo]).join(';')
-        : <string>this[MessageTo],
+      to: this.to,
     };
+  }
+
+  public setMessageSids(sids: string[]) {
+    this[MESSAGING_SID] = sids;
   }
 }

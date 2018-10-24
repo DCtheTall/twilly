@@ -2,8 +2,6 @@ import * as Twilio from 'twilio';
 import * as TwilioClient from 'twilio/lib/rest/Twilio';
 import { Response } from 'express';
 
-import { HALTING_ACTION } from '../symbols';
-
 import { TwilioWebhookRequest } from './TwilioWebhookRequest';
 import { SmsCookie, createSmsCookie } from '../SmsCookie';
 import TwimlResponse from './TwimlResponse';

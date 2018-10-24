@@ -8,5 +8,5 @@ export interface SmsCookie {
   interactionId: string;
   currFlow: string;
   currFlowAction: string | number;
-  flowCtx: { [index: string]: ActionContext }; // TODO make type for this
+  flowContext: { [index: string]: ActionContext }; // TODO make type for this
 }

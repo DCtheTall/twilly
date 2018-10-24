@@ -1,27 +1,24 @@
 import { NAME, FLOW_LENGTH } from '../symbols';
 import { Action } from '../Actions';
 
-
-const FlowActionNames = Symbol('actionNames');
-const FlowActions = Symbol('actions');
+export type FlowActionGetter = (context: any, userContext?: any) => Action;
 
 
-export type FlowAction = (context: any, userContext?: any) => Action;
-interface FlowActionEntry {
+interface FlowActionInstruction {
   name: string;
-  action: FlowAction;
+  getAction: FlowActionGetter;
 }
 
+const FlowActions = Symbol('actions');
+const FlowActionNames = Symbol('actionNames');
 
 export default class Flow {
-  private readonly [FlowActions]: FlowActionEntry[];
+  private readonly [FlowActions]: FlowActionInstruction[];
   private readonly [FlowActionNames]: Set<string>;
 
   public readonly [NAME]: string;
 
-  constructor(
-    name: string,
-  ) {
+  constructor(name: string) {
     this[NAME] = name;
     this[FlowActions] = [];
     this[FlowActionNames] = new Set<string>();
@@ -31,31 +28,31 @@ export default class Flow {
     return this[FlowActions].length;
   }
 
-  public selectAction(i: number): FlowAction {
+  public addAction(name: string, getAction: FlowActionGetter): Flow {
+    if (this[FlowActionNames].has(name)) {
+      throw new TypeError(
+        `Every Flow's action names must be unique. Unexpected duplicate name: ${name}`);
+    }
+    this[FlowActionNames].add(name);
+    this[FlowActions].push({ name, getAction });
+    return this;
+  }
+
+  public addActions(actions: { [index: string]: FlowActionGetter }): Flow {
+    Object.keys(actions).map(
+      (key: string) => this.addAction(key, actions[key]));
+    return this;
+  }
+
+  public selectActionGetter(i: number): FlowActionGetter {
     const flowEntry = this[FlowActions][i];
     if (!flowEntry) return null;
-    return flowEntry.action;
+    return flowEntry.getAction;
   }
 
   public selectName(i: number): string {
     const flowEntry = this[FlowActions][i];
     if (!flowEntry) return null;
     return flowEntry.name;
-  }
-
-  public addAction(name: string, action: FlowAction): Flow {
-    if (this[FlowActionNames].has(name)) {
-      throw new TypeError(
-        `Every Flow's action names must be unique. Unexpected duplicate name: ${name}`);
-    }
-    this[FlowActionNames].add(name);
-    this[FlowActions].push({ name, action });
-    return this;
-  }
-
-  public addActions(actions: { [index: string]: FlowAction }): Flow {
-    Object.keys(actions).map(
-      (key: string) => this.addAction(key, actions[key]));
-    return this;
   }
 }

@@ -18,9 +18,7 @@ export {
 } from './Actions';
 
 
-
 type UserContextGetter = (from: string) => any;
-
 
 
 async function handleIncomingSmsWebhook(
@@ -36,8 +34,9 @@ async function handleIncomingSmsWebhook(
     let state = tc.getSmsCookeFromRequest(req);
     let action = await fc.deriveActionFromState(state, userCtx);
 
-    while (action) {
+    while (action !== null) {
       await tc.handleAction(req, res, action);
+
       state = await fc.deriveNextStateFromAction(state, action);
       if (action[HALTING_ACTION] || !state) break;
       action = await fc.deriveActionFromState(state, userCtx);
@@ -53,7 +52,6 @@ async function handleIncomingSmsWebhook(
     throw err;
   }
 }
-
 
 interface TwillyParams extends TwilioControllerOpts {
   inboundMessagePath: string;
