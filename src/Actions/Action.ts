@@ -1,6 +1,3 @@
-import { NAME, MESSAGING_SID } from '../symbols';
-
-
 export interface ActionContext {
   messagingSid?: string | string[];
   name?: string;
@@ -10,22 +7,34 @@ export interface ActionContext {
 
 export const GetActionContext = Symbol('getContext');
 
+
+const ActionName = Symbol('name');
+const ActionMessageSid = Symbol('sid');
+
 export default class Action {
-  private [NAME]: string;
-  private [MESSAGING_SID]: string | string[];
+  private [ActionName]: string;
+  private [ActionMessageSid]: string | string[];
 
   public [GetActionContext]: () => ActionContext;
 
   private addTypeToContext(o: ActionContext): ActionContext {
     const result = {
       type: this.constructor.name,
-      name: this[NAME],
+      name: this[ActionName],
       ...o,
     };
-    if (this[MESSAGING_SID]) {
-      result.messagingSid = this[MESSAGING_SID];
+    if (this[ActionMessageSid]) {
+      result.messagingSid = this[ActionMessageSid];
     }
     return result;
+  }
+
+  get name(): string {
+    return this[ActionName];
+  }
+
+  get sid(): string | string[] {
+    return this[ActionMessageSid];
   }
 
   public getContext(): ActionContext {
@@ -33,10 +42,10 @@ export default class Action {
   }
 
   public setMessageSid(sid: string) {
-    this[MESSAGING_SID] = sid;
+    this[ActionMessageSid] = sid;
   }
 
   public setName(name: string) {
-    this[NAME] = name;
+    this[ActionName] = name;
   }
 }

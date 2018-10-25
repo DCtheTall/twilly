@@ -1,6 +1,7 @@
 import { ActionContext } from '../Actions';
 
 export { default as createSmsCookie } from './create';
+export { default as updateContext } from './updateContext';
 
 
 type ContextMap<T> = { [index: string]: T };
@@ -11,9 +12,13 @@ export type InteractionContext = ContextMap<FlowContext>;
 
 
 export interface SmsCookie {
+  context: InteractionContext;
   from: string;
+  flow: string;
+  flowAction: string | number;
   interactionId: string;
-  currFlow: string;
-  currFlowAction: string | number;
-  context: InteractionContext; // TODO make type for this
+  question: {
+    isAnswering: boolean;
+    attempts: string[];
+  };
 }

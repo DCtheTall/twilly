@@ -1,6 +1,6 @@
 import { MESSAGING_SID } from '../symbols';
 
-import Action, { ActionContext } from './Action';
+import Action, { ActionContext, GetActionContext } from './Action';
 
 
 const MessageTo = Symbol('to');
@@ -34,8 +34,12 @@ export default class Messsage extends Action {
         'Message constructor expects a string as the second argument');
     }
     super();
+
     this[MessageTo] = Array.isArray(to) ? to : [to];
     this[MessageBody] = body;
+
+    this[GetActionContext] =
+      (): MessageContext => ({ to: this.to, body });
   }
 
   get to(): string[] {

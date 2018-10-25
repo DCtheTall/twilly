@@ -1,20 +1,17 @@
 import {
-  NAME,
-  FLOW_LENGTH,
-} from '../symbols';
-
-import {
   Flow,
   FlowSchema,
   EvaluatedSchema,
   evaluateSchema,
-  FlowActionResolver,
 } from '.';
 import {
   Action,
   Trigger,
 } from '../Actions';
-import { SmsCookie } from '../SmsCookie';
+import {
+  SmsCookie,
+  updateContext,
+} from '../SmsCookie';
 
 
 export default class FlowController {
@@ -25,7 +22,7 @@ export default class FlowController {
     root: Flow,
     schema?: FlowSchema,
   ) {
-    if (root[FLOW_LENGTH] === 0) {
+    if (root.length === 0) {
       throw new TypeError(
         'All Flows must perform at least one action');
     }
@@ -33,6 +30,20 @@ export default class FlowController {
     if (schema) {
       this.schema = evaluateSchema(root, schema);
     }
+  }
+
+  private getCurrentFlow(state: SmsCookie): Flow {
+    let result: Flow;
+
+    if (
+      (!state.flow) ||
+      (state.flow === this.root.name)
+    ) {
+      result = this.root;
+    } else {
+      result = this.schema.get(state.flow);
+    }
+    return result;
   }
 
   public async deriveActionFromState(
@@ -43,32 +54,23 @@ export default class FlowController {
       return null;
     }
 
-    const i = Number(state.currFlowAction);
+    const i = Number(state.flowAction);
+    const currFlow = this.getCurrentFlow(state);
+    const resolveNextAction = currFlow.selectActionResolver(i);
 
-    let currFlow: Flow;
-    let resolveNextAction: FlowActionResolver;
-    let action: Action;
-
-    if (!state.currFlow || state.currFlow === this.root[NAME]) {
-      currFlow = this.root;
-    } else {
-      currFlow = this.schema.get(state.currFlow);
-    }
-
-    resolveNextAction = currFlow.selectActionResolver(i);
     if (!resolveNextAction) return null;
-
     try {
-      action = await resolveNextAction(state.context, userCtx);
+      const action = await resolveNextAction(state.context, userCtx);
+
       if (!(action instanceof Action)) {
         return null;
       }
       action.setName(currFlow.selectName(i));
+      return action;
     } catch (err) {
       // TODO err handling
       throw err;
     }
-    return action;
   }
 
   public async deriveNextStateFromAction(
@@ -77,34 +79,31 @@ export default class FlowController {
   ): Promise<SmsCookie> {
     if (!(action instanceof Action)) return null;
 
-    let currFlow: Flow;
-
-    if (
-      (!state.currFlow) ||
-      (state.currFlow === this.root[NAME])
-    ) {
-      currFlow = this.root;
-    } else {
-      currFlow = this.schema.get(state.currFlow);
-    }
-
-    if (!state.context[currFlow[NAME]]) {
-      state.context[currFlow[NAME]] = {};
-    }
-    state.context[currFlow[NAME]][action[NAME]] = action.getContext();
+    const currFlow = this.getCurrentFlow(state);
+    const newState = updateContext(state, currFlow, action);
 
     if (action instanceof Trigger) {
-      if (currFlow === this.root && (!this.schema)) {
+      const newFlow =
+        action.flowName === this.root.name ?
+          this.root : this.schema.get(action.flowName);
+
+      if (!newFlow) {
+        // TODO typed error
+        throw new Error(
+          'Trigger constructors expect a name of an existing Flow');
+      }
+      if ((currFlow === this.root) && (!this.schema)) {
         throw new TypeError(
           'Cannot use Trigger action without a defined Flow schema');
       }
-      state.currFlow = this.schema.get(action.flowName)[NAME];
-      state.currFlowAction = 0;
+
+      state.flow = this.schema.get(action.flowName).name;
+      state.flowAction = 0;
       return state;
     }
 
-    state.currFlowAction = Number(state.currFlowAction) + 1;
-    if (state.currFlowAction === currFlow[FLOW_LENGTH]) {
+    state.flowAction = Number(state.flowAction) + 1;
+    if (state.flowAction === currFlow.length) {
       return null;
     }
     return state;

@@ -72,11 +72,13 @@ export default class Question extends Action {
         'Multiple choice Questions must include a \'choices\' option, an array of functions of a string which return a boolen');
     }
     super();
-    this[GetActionContext] = this.getQuestionContext.bind(this);
+
     this[QuestionBody] = body;
     this[QuestionChoices] = choices;
     this[QuestionType] = type;
     this[QuestionAnswerValidator] = validateAnswer;
+
+    this[GetActionContext] = this.getQuestionContext.bind(this);
   }
 
   private getQuestionContext(): QuestionContext {

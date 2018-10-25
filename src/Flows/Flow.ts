@@ -1,4 +1,3 @@
-import { NAME, FLOW_LENGTH } from '../symbols';
 import { Action } from '../Actions';
 import { InteractionContext } from '../SmsCookie';
 
@@ -12,6 +11,7 @@ interface FlowAction {
   resolve: FlowActionResolver;
 }
 
+const FlowName = Symbol('name');
 const FlowActions = Symbol('actions');
 const FlowActionNames = Symbol('actionNames');
 
@@ -19,16 +19,20 @@ export default class Flow {
   private readonly [FlowActions]: FlowAction[];
   private readonly [FlowActionNames]: Set<string>;
 
-  public readonly [NAME]: string;
+  public readonly [FlowName]: string;
 
   constructor(name: string) {
-    this[NAME] = name;
+    this[FlowName] = name;
     this[FlowActions] = [];
     this[FlowActionNames] = new Set<string>();
   }
 
-  get [FLOW_LENGTH]() {
+  get length() {
     return this[FlowActions].length;
+  }
+
+  get name() {
+    return this[FlowName];
   }
 
   public addAction(name: string, resolve: FlowActionResolver): Flow {

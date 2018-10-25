@@ -7,7 +7,7 @@ import * as cookieParser from 'cookie-parser';
 import { getSha256Hash } from './util';
 
 import TwilioController, {
-  TwilioControllerOpts,
+  TwilioControllerArgs,
   TwilioWebhookRequest,
 } from './TwilioController';
 import { FlowController } from './Flows';
@@ -62,7 +62,7 @@ async function handleIncomingSmsWebhook(
   }
 }
 
-interface TwillyParams extends TwilioControllerOpts {
+interface TwillyParams extends TwilioControllerArgs {
   inboundMessagePath: string;
   root: Flow,
   schema?: FlowSchema,
@@ -87,7 +87,7 @@ export function twilly({
   if (!cookieKey) {
     cookieKey = getSha256Hash(accountSid, accountSid).slice(0, 10);
   }
-  if (!cookieSecret) { // If no cookieSecret is provided, generate a hash from the Twilio credentials
+  if (!cookieSecret) {
     cookieSecret = getSha256Hash(accountSid, authToken);
   }
 

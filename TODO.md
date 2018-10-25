@@ -7,6 +7,7 @@
 [x] Trigger another interaction
 
 ## Future TODOs
+- Get replies or questions to send xml response
 - Logging interactions (working on it with context)
 - Two-way customer service channel
 - On-message notify

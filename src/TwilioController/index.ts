@@ -3,14 +3,22 @@ import * as TwilioClient from 'twilio/lib/rest/Twilio';
 import { Response } from 'express';
 
 import { TwilioWebhookRequest } from './TwilioWebhookRequest';
-import { SmsCookie, createSmsCookie } from '../SmsCookie';
+import {
+  SmsCookie,
+  createSmsCookie,
+} from '../SmsCookie';
 import TwimlResponse from './TwimlResponse';
-import { Action, Message, Reply } from '../Actions';
+import {
+  Action,
+  Message,
+  Question,
+  Reply,
+} from '../Actions';
 
 export * from './TwilioWebhookRequest';
 
 
-export interface TwilioControllerOpts {
+export interface TwilioControllerArgs {
   accountSid: string;
   authToken: string;
   messageServiceId: string;
@@ -28,7 +36,7 @@ export default class TwilioController {
       authToken,
       messageServiceId,
       cookieKey,
-  }: TwilioControllerOpts) {
+  }: TwilioControllerArgs) {
     this.twilio = Twilio(accountSid, authToken);
     this.messageServiceId = messageServiceId;
     this.cookieKey = cookieKey;
@@ -92,20 +100,23 @@ export default class TwilioController {
       let sid: string | string[];
 
       switch (action.constructor) {
-        case Reply:
-         sid = <string>(await this.sendSmsMessage(
-           req.body.From,
-           (<Reply>action).body,
-          ));
-          action.setMessageSid(sid);
-          break;
-
         case Message:
           sid = <string[]>(await this.sendSmsMessage(
             (<Message>action).to,
             (<Message>action).body,
           ));
           (<Message>action).setMessageSids(sid);
+          break;
+
+        case Question:
+          break;
+
+        case Reply:
+          sid = <string>(await this.sendSmsMessage(
+            req.body.From,
+            (<Reply>action).body,
+          ));
+          action.setMessageSid(sid);
           break;
 
         default:
