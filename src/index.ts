@@ -12,7 +12,7 @@ import TwilioController, {
 } from './TwilioController';
 import { FlowController } from './Flows';
 import { Flow, FlowSchema } from './Flows';
-import { HALTING_ACTION } from './symbols';
+import { Question } from './Actions';
 
 export {
   Flow,
@@ -20,6 +20,7 @@ export {
 } from './Flows';
 export {
   Message,
+  Question,
   Trigger,
   Reply,
 } from './Actions';
@@ -45,7 +46,7 @@ async function handleIncomingSmsWebhook(
       await tc.handleAction(req, res, action);
 
       state = await fc.deriveNextStateFromAction(state, action);
-      if (action[HALTING_ACTION] || !state) break;
+      if ((action instanceof Question) || !state) break;
       action = await fc.deriveActionFromState(state, userCtx);
     }
     if (state) {

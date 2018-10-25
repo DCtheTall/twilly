@@ -1,5 +1,3 @@
-import { HALTING_ACTION } from '../symbols';
-
 import Action, { ActionContext, GetActionContext } from './Action';
 
 
@@ -19,7 +17,6 @@ export default class Reply extends Action {
         'Reply constructor expects a string as the first argument');
     }
     super();
-    this[HALTING_ACTION] = false;
     this[ReplyBody] = body;
     this[GetActionContext] =
       (): ReplyContext => ({ body });

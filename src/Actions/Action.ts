@@ -1,4 +1,4 @@
-import { NAME, HALTING_ACTION, MESSAGING_SID } from '../symbols';
+import { NAME, MESSAGING_SID } from '../symbols';
 
 
 export interface ActionContext {
@@ -14,7 +14,6 @@ export default class Action {
   private [NAME]: string;
   private [MESSAGING_SID]: string | string[];
 
-  public [HALTING_ACTION]: boolean;
   public [GetActionContext]: () => ActionContext;
 
   private addTypeToContext(o: ActionContext): ActionContext {

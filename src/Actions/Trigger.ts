@@ -1,5 +1,3 @@
-import { HALTING_ACTION } from '../symbols';
-
 import Action, {
   ActionContext,
   GetActionContext,
@@ -22,7 +20,6 @@ export default class Trigger extends Action {
         'Trigger constructor expects a string as the second argument');
     }
     super();
-    this[HALTING_ACTION] = false;
     this[TriggerFlowName] = flowName;
     this[GetActionContext] =
       (): TriggerContext => ({ flowName });

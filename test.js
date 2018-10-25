@@ -9,7 +9,7 @@ const bp = require('body-parser');
 const root = new Flow('root').addAction('trigger', () => new Trigger('test'));
 
 const schema = new FlowSchema({
-  test: new Flow('test').addAction('trigger', () => new Trigger('test2')),
+  test: new Flow('test').addAction('trigger', () => null),
   test2: new Flow('test2').addAction('reply', () => new Reply('Worked!')),
 });
 
