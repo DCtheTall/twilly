@@ -23,7 +23,7 @@ export default class Messsage extends Action {
   ) {
     if (
       typeof to !== 'string'
-      && (!(to.hasOwnProperty('every')
+      && (!(Array.isArray(to)
         && to.every((s: string) => typeof s === 'string')))
     ) {
       throw new TypeError(
