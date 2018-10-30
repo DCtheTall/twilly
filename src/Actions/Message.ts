@@ -1,6 +1,8 @@
-import { MESSAGING_SID } from '../symbols';
-
-import Action, { ActionContext, GetActionContext } from './Action';
+import Action, {
+  ActionContext,
+  ActionMessageSid,
+  GetActionContext,
+} from './Action';
 
 
 const MessageTo = Symbol('to');
@@ -58,6 +60,6 @@ export default class Messsage extends Action {
   }
 
   public setMessageSids(sids: string[]) {
-    this[MESSAGING_SID] = sids;
+    this[ActionMessageSid] = sids;
   }
 }

@@ -6,10 +6,10 @@ export interface ActionContext {
 
 
 export const GetActionContext = Symbol('getContext');
+export const ActionMessageSid = Symbol('sid');
 
 
 const ActionName = Symbol('name');
-const ActionMessageSid = Symbol('sid');
 
 export default class Action {
   private [ActionName]: string;

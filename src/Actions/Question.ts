@@ -25,20 +25,23 @@ type AnswerValidator = (answer?: string) => (boolean | Promise<boolean>);
 
 
 export interface QuestionOptions {
+  choices?: AnswerValidator[];
+  maxAttempts?: number;
   type?: QuestionTypes;
   validateAnswer?: AnswerValidator;
-  choices?: AnswerValidator[];
 }
 
 const defaultOptions = <QuestionOptions>{
+  maxAttempts: 1,
   type: QuestionTypes[TextQuestion],
 };
 
 
-const QuestionBody = Symbol('body');
-const QuestionType = Symbol('type');
 const QuestionAnswerValidator = Symbol('answerValidator');
+const QuestionBody = Symbol('body');
 const QuestionChoices = Symbol('choices');
+const QuestionMaxAttempts = Symbol('maxAttempts');
+const QuestionType = Symbol('type');
 
 export default class Question extends Action {
   static MultipleChoice: number =
@@ -47,17 +50,19 @@ export default class Question extends Action {
   static Text: number =
     QuestionTypes[TextQuestion];
 
-  private [QuestionBody]: string;
-  private [QuestionType]: number;
   private [QuestionAnswerValidator]: AnswerValidator;
+  private [QuestionBody]: string;
   private [QuestionChoices]: AnswerValidator[];
+  private [QuestionMaxAttempts]: number;
+  private [QuestionType]: number;
 
   constructor(
     body: string,
     {
+      choices = [],
+      maxAttempts = 1,
       type = QuestionTypes[TextQuestion],
       validateAnswer = () => true,
-      choices = [],
     }: QuestionOptions = defaultOptions,
   ) {
     if (
@@ -71,12 +76,17 @@ export default class Question extends Action {
       throw new TypeError(
         'Multiple choice Questions must include a \'choices\' option, an array of functions of a string which return a boolen');
     }
+    if (isNaN(maxAttempts)) {
+      throw new TypeError(
+        `Question maxAttempts option must be a number.`);
+    }
     super();
 
+    this[QuestionAnswerValidator] = validateAnswer;
     this[QuestionBody] = body;
     this[QuestionChoices] = choices;
+    this[QuestionMaxAttempts] = Number(maxAttempts);
     this[QuestionType] = type;
-    this[QuestionAnswerValidator] = validateAnswer;
 
     this[GetActionContext] = this.getQuestionContext.bind(this);
   }
@@ -94,6 +104,10 @@ export default class Question extends Action {
 
   get choices(): AnswerValidator[] {
     return this[QuestionChoices];
+  }
+
+  get maxAttempts(): number {
+    return this[QuestionMaxAttempts];
   }
 
   get type(): number {

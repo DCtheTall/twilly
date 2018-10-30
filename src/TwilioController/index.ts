@@ -51,9 +51,8 @@ export default class TwilioController {
   }
 
   public getSmsCookeFromRequest(req: TwilioWebhookRequest): SmsCookie {
-    const state = req.cookies[this.cookieKey];
-    if (state) return state;
-    return createSmsCookie(req);
+    return req.cookies[this.cookieKey]
+      || createSmsCookie(req);
   }
 
   public setSmsCookie(res: Response, payload: SmsCookie) {

@@ -10,6 +10,8 @@ import {
 } from '../Actions';
 import {
   SmsCookie,
+  handleTrigger,
+  incrementFlowAction,
   updateContext,
 } from '../SmsCookie';
 
@@ -28,6 +30,8 @@ export default class FlowController {
     }
     this.root = root;
     if (schema) {
+      // DFS of schema to get each user-defined flow
+      // uniqueness of each flow name is guaranteed or it will throw err
       this.schema = evaluateSchema(root, schema);
     }
   }
@@ -54,9 +58,9 @@ export default class FlowController {
       return null;
     }
 
-    const i = Number(state.flowAction);
+    const key = Number(state.flowKey);
     const currFlow = this.getCurrentFlow(state);
-    const resolveNextAction = currFlow.selectActionResolver(i);
+    const resolveNextAction = currFlow.selectActionResolver(key);
 
     if (!resolveNextAction) return null;
     try {
@@ -65,7 +69,7 @@ export default class FlowController {
       if (!(action instanceof Action)) {
         return null;
       }
-      action.setName(currFlow.selectName(i));
+      action.setName(currFlow.selectName(key));
       return action;
     } catch (err) {
       // TODO err handling
@@ -80,13 +84,11 @@ export default class FlowController {
     if (!(action instanceof Action)) return null;
 
     const currFlow = this.getCurrentFlow(state);
-    const newState = updateContext(state, currFlow, action);
 
     if (action instanceof Trigger) {
       const newFlow =
         action.flowName === this.root.name ?
           this.root : this.schema.get(action.flowName);
-
       if (!newFlow) {
         // TODO typed error
         throw new Error(
@@ -96,16 +98,11 @@ export default class FlowController {
         throw new TypeError(
           'Cannot use Trigger action without a defined Flow schema');
       }
-
-      state.flow = this.schema.get(action.flowName).name;
-      state.flowAction = 0;
-      return state;
+      return handleTrigger(
+        updateContext(state, currFlow, action), action);
     }
 
-    state.flowAction = Number(state.flowAction) + 1;
-    if (state.flowAction === currFlow.length) {
-      return null;
-    }
-    return state;
+    return updateContext(
+      incrementFlowAction(state, currFlow), currFlow, action);
   }
 }

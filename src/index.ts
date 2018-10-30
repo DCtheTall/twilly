@@ -5,7 +5,6 @@ import {
 import * as cookieParser from 'cookie-parser';
 
 import { getSha256Hash } from './util';
-
 import TwilioController, {
   TwilioControllerArgs,
   TwilioWebhookRequest,
@@ -13,6 +12,7 @@ import TwilioController, {
 import { FlowController } from './Flows';
 import { Flow, FlowSchema } from './Flows';
 import { Question } from './Actions';
+import { handleQuestion } from './SmsCookie';
 
 export {
   Flow,
@@ -49,11 +49,15 @@ async function handleIncomingSmsWebhook(
       if ((action instanceof Question) || !state) break;
       action = await fc.deriveActionFromState(state, userCtx);
     }
-    if (state) {
+
+    if (state && action instanceof Question) {
+      tc.setSmsCookie(res, handleQuestion(state, action));
+    } else if (state) {
       tc.setSmsCookie(res, state);
     } else {
       tc.clearSmsCookie(res);
     }
+
     tc.sendEmptyResponse(res);
   } catch (err) {
     // TODO errors?

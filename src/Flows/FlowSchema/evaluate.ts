@@ -1,5 +1,3 @@
-import { NAME, FLOW_LENGTH } from '../../symbols';
-
 import Flow from '../Flow';
 import FlowSchema from '.';
 
@@ -18,26 +16,27 @@ export function evaluateSchema(
   initialResult: EvaluatedSchema = EMPTY_MAP,
   visited: Set<FlowSchema> = EMPTY_SET,
 ): EvaluatedSchema {
-  initialResult.set(root[NAME], root);
+  initialResult.set(root.name, root);
   const evaluated = Object.keys(G.schema).reduce(
     (acc: EvaluatedSchema, k: string): EvaluatedSchema =>
       {
-        const o = G.schema[k];
-        if (o instanceof FlowSchema) {
-          if (visited.has(o)) return;
-          visited.add(o);
-          evaluateSchema(root, o, acc, visited);
+        const flow = G.schema[k];
+
+        if (flow instanceof FlowSchema) {
+          if (visited.has(flow)) return;
+          visited.add(flow);
+          evaluateSchema(root, flow, acc, visited);
         } else { // Type checking by FlowSchema constructor ensures this must be a Flow instance
-          if (acc.has(o[NAME])) {
+          if (acc.has(flow.name)) {
             throw new TypeError(
-              `All Flows must have unique names. Unexpected duplicate name: ${o[NAME]}`);
+              `All Flows must have unique names. Unexpected duplicate name: ${flow.name}`);
           }
-          if (o[FLOW_LENGTH] === 0) {
+          if (flow.length === 0) {
             // TODO reuse in FlowController
             throw new TypeError(
               'All Flows must perform at least one action');
           }
-          acc.set(o[NAME], o);
+          acc.set(flow.name, flow);
         }
         return acc;
       }, initialResult);
