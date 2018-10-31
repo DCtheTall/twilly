@@ -44,13 +44,9 @@ export function createSmsCookie(req: TwilioWebhookRequest): SmsCookie {
 }
 
 
-export function handleQuestion(state: SmsCookie, question: Question): SmsCookie {
-  if (state.question.isAnswering) {
-    if (state.question.attempts.length > question.maxAttempts) {
-      // TODO
-    }
-  }
-
+export function startQuestion(
+  state: SmsCookie,
+): SmsCookie {
   return {
     ...state,
     question: {
@@ -76,7 +72,7 @@ export function incrementFlowAction(state: SmsCookie, flow: Flow): SmsCookie {
   if (newState.flowKey === flow.length) {
     return null;
   }
-  return state;
+  return newState;
 }
 
 
@@ -85,14 +81,15 @@ export function updateContext(
   flow: Flow,
   action: Action,
 ): SmsCookie {
-  return {
-    ...state,
-    context: {
-      ...state.context,
-      [flow.name]: {
-        ...state.context[flow.name],
-        [action.name]: action.getContext(),
-      }
-    },
-  };
+  return state &&
+    {
+      ...state,
+      context: {
+        ...state.context,
+        [flow.name]: {
+          ...state.context[flow.name],
+          [action.name]: action.getContext(),
+        }
+      },
+    };
 }

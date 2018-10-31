@@ -10,9 +10,11 @@ import TwilioController, {
   TwilioWebhookRequest,
 } from './TwilioController';
 import { FlowController } from './Flows';
-import { Flow, FlowSchema } from './Flows';
+import {
+  Flow,
+  FlowSchema,
+} from './Flows';
 import { Question } from './Actions';
-import { handleQuestion } from './SmsCookie';
 
 export {
   Flow,
@@ -40,19 +42,16 @@ async function handleIncomingSmsWebhook(
     const userCtx = await getUserContext(req.body.From);
 
     let state = tc.getSmsCookeFromRequest(req);
-    let action = await fc.deriveActionFromState(state, userCtx);
+    let action = await fc.deriveActionFromState(req, state, userCtx);
 
     while (action !== null) {
-      await tc.handleAction(req, res, action);
-
-      state = await fc.deriveNextStateFromAction(state, action);
-      if ((action instanceof Question) || !state) break;
-      action = await fc.deriveActionFromState(state, userCtx);
+      await tc.handleAction(req, state, action);
+      state = await fc.deriveNextStateFromAction(req, state, action);
+      if ((!state) || (action instanceof Question && (!action.isAnswered))) break;
+      action = await fc.deriveActionFromState(req, state, userCtx);
     }
 
-    if (state && action instanceof Question) {
-      tc.setSmsCookie(res, handleQuestion(state, action));
-    } else if (state) {
+    if (state) {
       tc.setSmsCookie(res, state);
     } else {
       tc.clearSmsCookie(res);

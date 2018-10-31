@@ -12,6 +12,7 @@ import {
   Action,
   Message,
   Question,
+  QuestionGetBody,
   Reply,
 } from '../Actions';
 
@@ -46,21 +47,58 @@ export default class TwilioController {
     return new TwimlResponse(res).setMessage(msg).send();
   }
 
-  public sendEmptyResponse(res: Response): void {
-    return new TwimlResponse(res).send();
+  public clearSmsCookie(res: Response) {
+    res.clearCookie(this.cookieKey);
   }
 
   public getSmsCookeFromRequest(req: TwilioWebhookRequest): SmsCookie {
-    return req.cookies[this.cookieKey]
-      || createSmsCookie(req);
+    return req.cookies[this.cookieKey] || createSmsCookie(req);
   }
 
-  public setSmsCookie(res: Response, payload: SmsCookie) {
-    res.cookie(this.cookieKey, payload);
+  public async handleAction(
+    req: TwilioWebhookRequest,
+    state: SmsCookie,
+    action: Action,
+  ): Promise<void> {
+    try {
+      let sid: string | string[];
+
+      switch (action.constructor) {
+        case Message:
+          sid = <string[]>(await this.sendSmsMessage(
+            (<Message>action).to,
+            (<Message>action).body,
+          ));
+          (<Message>action).setMessageSids(sid);
+          break;
+
+        case Question:
+          if ((<Question>action).isAnswered) break;
+          sid = <string>(await this.sendSmsMessage(
+            req.body.From,
+            (<Question>action)[QuestionGetBody](state),
+          ));
+          break;
+
+        case Reply:
+          sid = <string>(await this.sendSmsMessage(
+            req.body.From,
+            (<Reply>action).body,
+          ));
+          action.setMessageSid(sid);
+          break;
+
+        default:
+          break;
+      }
+    } catch (err) {
+      // TODO err handling
+      throw err;
+    }
   }
 
-  public clearSmsCookie(res: Response) {
-    res.clearCookie(this.cookieKey);
+  public sendEmptyResponse(res: Response): void {
+    return new TwimlResponse(res).send();
   }
 
   public async sendSmsMessage(
@@ -90,40 +128,7 @@ export default class TwilioController {
     }
   }
 
-  public async handleAction(
-    req: TwilioWebhookRequest,
-    res: Response,
-    action: Action,
-  ): Promise<void> {
-    try {
-      let sid: string | string[];
-
-      switch (action.constructor) {
-        case Message:
-          sid = <string[]>(await this.sendSmsMessage(
-            (<Message>action).to,
-            (<Message>action).body,
-          ));
-          (<Message>action).setMessageSids(sid);
-          break;
-
-        case Question:
-          break;
-
-        case Reply:
-          sid = <string>(await this.sendSmsMessage(
-            req.body.From,
-            (<Reply>action).body,
-          ));
-          action.setMessageSid(sid);
-          break;
-
-        default:
-          break;
-      }
-    } catch (err) {
-      // TODO err handling
-      throw err;
-    }
+  public setSmsCookie(res: Response, payload: SmsCookie) {
+    res.cookie(this.cookieKey, payload);
   }
 }

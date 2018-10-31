@@ -1,9 +1,15 @@
-import Action, { ActionContext, GetActionContext } from "./Action";
+import Action, {
+  ActionContext,
+  GetActionContext,
+} from "./Action";
+import { SmsCookie } from '../SmsCookie';
 
 
 export interface QuestionContext extends ActionContext {
+  answer: string | number;
   body: string;
   type: string;
+  wasAnswered: boolean;
 }
 
 
@@ -26,22 +32,27 @@ type AnswerValidator = (answer?: string) => (boolean | Promise<boolean>);
 
 export interface QuestionOptions {
   choices?: AnswerValidator[];
-  maxAttempts?: number;
+  maxRetries?: number;
   type?: QuestionTypes;
   validateAnswer?: AnswerValidator;
 }
 
 const defaultOptions = <QuestionOptions>{
-  maxAttempts: 1,
+  maxRetries: 1,
   type: QuestionTypes[TextQuestion],
 };
 
 
+const QuestionAnswer = Symbol('answer');
 const QuestionAnswerValidator = Symbol('answerValidator');
 const QuestionBody = Symbol('body');
 const QuestionChoices = Symbol('choices');
-const QuestionMaxAttempts = Symbol('maxAttempts');
+const QuestionIsAnswered = Symbol('isAnswered');
+const QuestionMaxRetries = Symbol('maxRetries');
 const QuestionType = Symbol('type');
+
+export const QuestionGetBody = Symbol('getBody');
+export const QuestionSetAnswer = Symbol('setAnswer');
 
 export default class Question extends Action {
   static MultipleChoice: number =
@@ -50,17 +61,19 @@ export default class Question extends Action {
   static Text: number =
     QuestionTypes[TextQuestion];
 
+  private [QuestionAnswer]: string | number;
   private [QuestionAnswerValidator]: AnswerValidator;
   private [QuestionBody]: string;
   private [QuestionChoices]: AnswerValidator[];
-  private [QuestionMaxAttempts]: number;
+  private [QuestionIsAnswered]: boolean;
+  private [QuestionMaxRetries]: number;
   private [QuestionType]: number;
 
   constructor(
     body: string,
     {
       choices = [],
-      maxAttempts = 1,
+      maxRetries = 2,
       type = QuestionTypes[TextQuestion],
       validateAnswer = () => true,
     }: QuestionOptions = defaultOptions,
@@ -76,26 +89,33 @@ export default class Question extends Action {
       throw new TypeError(
         'Multiple choice Questions must include a \'choices\' option, an array of functions of a string which return a boolen');
     }
-    if (isNaN(maxAttempts)) {
+    if (isNaN(maxRetries)) {
       throw new TypeError(
-        `Question maxAttempts option must be a number.`);
+        `Question maxRetries option must be a number.`);
     }
     super();
 
+    this[QuestionAnswer] = null;
     this[QuestionAnswerValidator] = validateAnswer;
     this[QuestionBody] = body;
     this[QuestionChoices] = choices;
-    this[QuestionMaxAttempts] = Number(maxAttempts);
+    this[QuestionIsAnswered] = false;
+    this[QuestionMaxRetries] = Number(maxRetries);
     this[QuestionType] = type;
-
     this[GetActionContext] = this.getQuestionContext.bind(this);
   }
 
   private getQuestionContext(): QuestionContext {
     return {
+      answer: this.answer,
       body: this.body,
       type: QuestionTypeMap[this.type],
+      wasAnswered: this.isAnswered,
     };
+  }
+
+  get answer(): string | number {
+    return this[QuestionAnswer];
   }
 
   get body(): string {
@@ -106,8 +126,12 @@ export default class Question extends Action {
     return this[QuestionChoices];
   }
 
-  get maxAttempts(): number {
-    return this[QuestionMaxAttempts];
+  get isAnswered(): boolean {
+    return this[QuestionIsAnswered];
+  }
+
+  get maxRetries(): number {
+    return this[QuestionMaxRetries];
   }
 
   get type(): number {
@@ -116,5 +140,17 @@ export default class Question extends Action {
 
   get validateAnswer(): AnswerValidator {
     return this[QuestionAnswerValidator];
+  }
+
+  public [QuestionGetBody](state: SmsCookie): string {
+    if (state.question.isAnswering) {
+      return 'Hi'
+    }
+    return this.body;
+  }
+
+  public [QuestionSetAnswer](answer: string | number) {
+    this[QuestionIsAnswered] = true;
+    this[QuestionAnswer] = answer;
   }
 }

@@ -6,14 +6,18 @@ import {
 } from '.';
 import {
   Action,
+  Question,
   Trigger,
+  QuestionSetAnswer,
 } from '../Actions';
 import {
   SmsCookie,
   handleTrigger,
   incrementFlowAction,
   updateContext,
+  startQuestion,
 } from '../SmsCookie';
+import { TwilioWebhookRequest } from '../TwilioController';
 
 
 export default class FlowController {
@@ -37,20 +41,17 @@ export default class FlowController {
   }
 
   private getCurrentFlow(state: SmsCookie): Flow {
-    let result: Flow;
-
     if (
       (!state.flow) ||
       (state.flow === this.root.name)
     ) {
-      result = this.root;
-    } else {
-      result = this.schema.get(state.flow);
+      return this.root;
     }
-    return result;
+    return this.schema.get(state.flow);
   }
 
   public async deriveActionFromState(
+    req: TwilioWebhookRequest,
     state: SmsCookie,
     userCtx: any,
   ): Promise<Action> {
@@ -65,6 +66,14 @@ export default class FlowController {
     if (!resolveNextAction) return null;
     try {
       const action = await resolveNextAction(state.context, userCtx);
+      if (action instanceof Question && state.question.isAnswering) {
+        if (await action.validateAnswer(req.body.Body)) {
+          action[QuestionSetAnswer](req.body.Body);
+        } else {
+          // check if max attempts reached, if so have question in exit flow state
+          // otherwise send retry message
+        }
+      }
 
       if (!(action instanceof Action)) {
         return null;
@@ -78,6 +87,7 @@ export default class FlowController {
   }
 
   public async deriveNextStateFromAction(
+    req: TwilioWebhookRequest,
     state: SmsCookie,
     action: Action,
   ): Promise<SmsCookie> {
@@ -85,23 +95,42 @@ export default class FlowController {
 
     const currFlow = this.getCurrentFlow(state);
 
-    if (action instanceof Trigger) {
-      const newFlow =
-        action.flowName === this.root.name ?
-          this.root : this.schema.get(action.flowName);
-      if (!newFlow) {
-        // TODO typed error
-        throw new Error(
-          'Trigger constructors expect a name of an existing Flow');
-      }
-      if ((currFlow === this.root) && (!this.schema)) {
-        throw new TypeError(
-          'Cannot use Trigger action without a defined Flow schema');
-      }
-      return handleTrigger(
-        updateContext(state, currFlow, action), action);
-    }
+    switch (action.constructor) {
+      case Trigger:
+        return ((): SmsCookie => {
+          const newFlow =
+            (<Trigger>action).flowName === this.root.name ?
+              this.root : this.schema.get((<Trigger>action).flowName);
+          if (!newFlow) {
+            // TODO typed error
+            throw new Error(
+              'Trigger constructors expect a name of an existing Flow');
+          }
+          if ((currFlow === this.root) && (!this.schema)) {
+            throw new TypeError(
+              'Cannot use Trigger action without a defined Flow schema');
+          }
+          return handleTrigger(
+            updateContext(state, currFlow, action), <Trigger>action);
+        })();
 
+      case Question:
+        return (async (): Promise<SmsCookie> => {
+          const question = <Question>action;
+          if (state.question.isAnswering) {
+            state.question.attempts.push(req.body.Body);
+          }
+          if (question.isAnswered) {
+            state.question.isAnswering = false;
+            state.question.attempts = [];
+            const tmp = updateContext(
+              incrementFlowAction(state, currFlow), currFlow, action);
+            return tmp;
+          }
+          return updateContext(
+            startQuestion(state), currFlow, action);
+        })();
+    }
     return updateContext(
       incrementFlowAction(state, currFlow), currFlow, action);
   }
