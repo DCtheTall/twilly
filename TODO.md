@@ -4,9 +4,10 @@
 [x] Get context on who the user is
 [x] Reply to the user
 [ ] Ask the user a question
-    [ ] Basic question
-    [ ] Retry question
-    [ ] exit on fail
+    [x] Basic question
+    [x] Retry question
+    [x] exit on fail
+    [ ] continue on fail option
     [ ] multiple choice
 [x] Trigger another interaction
 [ ] Exit an interaction

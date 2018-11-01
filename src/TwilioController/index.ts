@@ -12,7 +12,6 @@ import {
   Action,
   Message,
   Question,
-  QuestionGetBody,
   Reply,
 } from '../Actions';
 
@@ -73,11 +72,28 @@ export default class TwilioController {
           break;
 
         case Question:
-          if ((<Question>action).isAnswered) break;
-          sid = <string>(await this.sendSmsMessage(
-            req.body.From,
-            (<Question>action)[QuestionGetBody](state),
-          ));
+          (async () => {
+            const question = <Question>action;
+            sid = [];
+            if (question.isAnswered) return;
+            if (question.isFailed) {
+              sid.push(<string>(await this.sendSmsMessage(
+                req.body.From,
+                question.failedAnswerResponse,
+              )));
+              return;
+            }
+            if (question.shouldSendInvalidRes) {
+              sid.push(<string>(await this.sendSmsMessage(
+                req.body.From,
+                question.invalidAnswerResponse,
+              )));
+            }
+            sid.push(<string>(await this.sendSmsMessage(
+              req.body.From,
+              question.body,
+            )));
+          })();
           break;
 
         case Reply:

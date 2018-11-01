@@ -9,6 +9,8 @@ import {
   Question,
   Trigger,
   QuestionSetAnswer,
+  QuestionSetIsFailed,
+  QuestionSetShouldSendInvalidRes,
 } from '../Actions';
 import {
   SmsCookie,
@@ -66,12 +68,14 @@ export default class FlowController {
     if (!resolveNextAction) return null;
     try {
       const action = await resolveNextAction(state.context, userCtx);
+
       if (action instanceof Question && state.question.isAnswering) {
         if (await action.validateAnswer(req.body.Body)) {
           action[QuestionSetAnswer](req.body.Body);
         } else {
-          // check if max attempts reached, if so have question in exit flow state
-          // otherwise send retry message
+          action[
+            state.question.attempts.length === action.maxRetries ?
+              QuestionSetIsFailed : QuestionSetShouldSendInvalidRes]();
         }
       }
 
@@ -117,15 +121,24 @@ export default class FlowController {
       case Question:
         return (async (): Promise<SmsCookie> => {
           const question = <Question>action;
-          if (state.question.isAnswering) {
-            state.question.attempts.push(req.body.Body);
-          }
+
           if (question.isAnswered) {
             state.question.isAnswering = false;
             state.question.attempts = [];
-            const tmp = updateContext(
+            return updateContext(
               incrementFlowAction(state, currFlow), currFlow, action);
-            return tmp;
+          }
+          if (question.isFailed) {
+            return null;
+          }
+          if (state.question.isAnswering) {
+            return {
+              ...state,
+              question: {
+                ...state.question,
+                attempts: [...state.question.attempts, req.body.Body],
+              },
+            };
           }
           return updateContext(
             startQuestion(state), currFlow, action);

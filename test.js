@@ -10,7 +10,10 @@ const root = new Flow('root');
 root
   .addAction(
     'question',
-    () => new Question('What is your favorite color?'))
+    () => new Question('What is your favorite color?', {
+      validateAnswer: answer =>
+        ['red', 'blue', 'yellow', 'green'].includes(answer.toLowerCase()),
+    }))
   .addAction(
     'reply',
     ctx => new Reply(`Your favorite color is ${ctx.root.question.answer}`));
