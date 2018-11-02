@@ -11,6 +11,7 @@ import {
   QuestionSetAnswer,
   QuestionSetIsFailed,
   QuestionSetShouldSendInvalidRes,
+  QuestionShouldContinueOnFail,
 } from '../Actions';
 import {
   SmsCookie,
@@ -129,8 +130,13 @@ export default class FlowController {
               incrementFlowAction(state, currFlow), currFlow, action);
           }
           if (question.isFailed) {
+            if (question[QuestionShouldContinueOnFail]) {
+              return updateContext(
+                incrementFlowAction(state, currFlow), currFlow, action);
+            }
             return null;
           }
+
           if (state.question.isAnswering) {
             return {
               ...state,
@@ -140,6 +146,7 @@ export default class FlowController {
               },
             };
           }
+
           return updateContext(
             startQuestion(state), currFlow, action);
         })();

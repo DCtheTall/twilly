@@ -11,12 +11,17 @@ root
   .addAction(
     'question',
     () => new Question('What is your favorite color?', {
+      continueOnFailure: true,
       validateAnswer: answer =>
         ['red', 'blue', 'yellow', 'green'].includes(answer.toLowerCase()),
     }))
   .addAction(
     'reply',
-    ctx => new Reply(`Your favorite color is ${ctx.root.question.answer}`));
+    ctx =>
+      new Reply(
+        ctx.root.question.wasAnswered ?
+          `Your favorite color is ${ctx.root.question.answer}`
+          : 'Goodbye.'));
 
 app.use(require('morgan')('dev'));
 app.use(bp.urlencoded({ extended: false, limit: '2mb' }));

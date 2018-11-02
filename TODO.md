@@ -15,5 +15,6 @@
 ## Future TODOs
 - Get replies or questions to send xml response
 - On interaction end hook
-- Two-way customer service channel
 - On-message notify
+- Error handling
+- Tests

@@ -27,20 +27,19 @@ const QuestionTypeMap = {
 };
 
 
-type AnswerValidator = (answer?: string) => (boolean | Promise<boolean>);
-
-
 export interface QuestionOptions {
-  choices?: AnswerValidator[];
+  choices?: ((answer: string) => boolean)[];
+  continueOnFailure?: boolean;
   failedToAnswerResponse?: string;
   invalidAnswerResponse?: string;
   maxRetries?: number;
   type?: QuestionTypes;
-  validateAnswer?: AnswerValidator;
+  validateAnswer?: (answer: string) => boolean;
 }
 
 const defaultOptions = <QuestionOptions>{
   choices: [],
+  continueOnFailure: false,
   failedToAnswerResponse: 'Sorry, I do not understand your answer. Please try again.',
   invalidAnswerResponse: 'Hmm. I didn\'t quite understand your answer.',
   maxRetries: 1,
@@ -64,6 +63,7 @@ const QuestionType = Symbol('type');
 export const QuestionSetAnswer = Symbol('setAnswer');
 export const QuestionSetIsFailed = Symbol('setIsFailed');
 export const QuestionSetShouldSendInvalidRes = Symbol('setShouldSendInvalidRes');
+export const QuestionShouldContinueOnFail = Symbol('shouldContinueOnFailure');
 
 export default class Question extends Action {
   static MultipleChoice: number =
@@ -73,9 +73,9 @@ export default class Question extends Action {
     QuestionTypes[TextQuestion];
 
   private [QuestionAnswer]: string | number;
-  private [QuestionAnswerValidator]: AnswerValidator;
+  private [QuestionAnswerValidator]: (answer: string) => boolean;
   private [QuestionBody]: string;
-  private [QuestionChoices]: AnswerValidator[];
+  private [QuestionChoices]: ((answer: string) => boolean)[];
   private [QuestionFailedToAnswerRes]: string;
   private [QuestionInvalidAnswerRes]: string;
   private [QuestionIsAnswered]: boolean;
@@ -84,10 +84,13 @@ export default class Question extends Action {
   private [QuestionShouldSendInvalidRes]: boolean;
   private [QuestionType]: number;
 
+  public [QuestionShouldContinueOnFail]: boolean;
+
   constructor(
     body: string,
     {
       choices = defaultOptions.choices,
+      continueOnFailure = defaultOptions.continueOnFailure,
       failedToAnswerResponse = defaultOptions.failedToAnswerResponse,
       invalidAnswerResponse = defaultOptions.invalidAnswerResponse,
       maxRetries = defaultOptions.maxRetries,
@@ -96,12 +99,11 @@ export default class Question extends Action {
     }: QuestionOptions = defaultOptions,
   ) {
     if (
-      type === QuestionTypes[MutlipleChoiceQuestion]
-      && (
+      (type === QuestionTypes[MutlipleChoiceQuestion]) && (
         (!choices)
         || (!Array.isArray(choices))
-        || (!choices.every((v: AnswerValidator) => typeof v === 'function'))
-      )
+        || (!choices.every(
+          (v: (answer: string) => boolean) => typeof v === 'function')))
     ) {
       throw new TypeError(
         'Multiple choice Questions must include a \'choices\' option, an array of functions of a string which return a boolen');
@@ -120,6 +122,7 @@ export default class Question extends Action {
     this[QuestionIsAnswered] = false;
     this[QuestionMaxRetries] = Number(maxRetries);
     this[QuestionIsFailed] = false;
+    this[QuestionShouldContinueOnFail] = continueOnFailure;
     this[QuestionShouldSendInvalidRes] = false;
     this[QuestionType] = type;
     this[GetActionContext] = this.getQuestionContext.bind(this);
@@ -143,7 +146,7 @@ export default class Question extends Action {
     return this[QuestionBody];
   }
 
-  get choices(): AnswerValidator[] {
+  get choices(): ((answer: string) => boolean)[] {
     return this[QuestionChoices];
   }
 
@@ -157,6 +160,10 @@ export default class Question extends Action {
 
   get isAnswered(): boolean {
     return this[QuestionIsAnswered];
+  }
+
+  get isComplete(): boolean {
+    return this.isAnswered || this.isFailed;
   }
 
   get isFailed(): boolean {
@@ -175,7 +182,7 @@ export default class Question extends Action {
     return this[QuestionShouldSendInvalidRes];
   }
 
-  get validateAnswer(): AnswerValidator {
+  get validateAnswer(): (answer: string) => boolean {
     return this[QuestionAnswerValidator];
   }
 

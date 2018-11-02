@@ -21,6 +21,7 @@ export interface SmsCookie {
   from: string;
   flow: string;
   flowKey: string | number;
+  interactionComplete: boolean;
   interactionId: string;
   question: {
     attempts: string[];
@@ -32,6 +33,7 @@ export interface SmsCookie {
 export function createSmsCookie(req: TwilioWebhookRequest): SmsCookie {
   return {
     from: req.body.From,
+    interactionComplete: false,
     interactionId: uniqueString(),
     flow: null,
     flowKey: 0,

@@ -44,14 +44,29 @@ async function handleIncomingSmsWebhook(
     let state = tc.getSmsCookeFromRequest(req);
     let action = await fc.deriveActionFromState(req, state, userCtx);
 
+    if (!action) {
+      tc.clearSmsCookie(res);
+      tc.sendEmptyResponse(res);
+      return;
+    }
+
     while (action !== null) {
       await tc.handleAction(req, state, action);
       state = await fc.deriveNextStateFromAction(req, state, action);
-      if ((!state) || (action instanceof Question && (!action.isAnswered))) break;
+      if (
+        (state === null)
+        || (
+          action instanceof Question
+          && !action.isComplete
+        )
+      ) {
+        break;
+      }
       action = await fc.deriveActionFromState(req, state, userCtx);
+      if (action === null) state = null;
     }
 
-    if (state) {
+    if (state && !state.interactionComplete) {
       tc.setSmsCookie(res, state);
     } else {
       tc.clearSmsCookie(res);
