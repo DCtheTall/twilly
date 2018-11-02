@@ -1,31 +1,37 @@
 import {
+  EvaluatedSchema,
   Flow,
   FlowSchema,
-  EvaluatedSchema,
   evaluateSchema,
 } from '.';
 import {
   Action,
-  Question,
-  Trigger,
-  QuestionSetAnswer,
-  QuestionShouldContinueOnFail,
-  QuestionHandleInvalidAnswer,
   AnswerValidator,
+  Exit,
+  Question,
+  QuestionSetAnswer,
+  QuestionHandleInvalidAnswer,
+  QuestionShouldContinueOnFail,
+  Trigger,
 } from '../Actions';
 import {
   SmsCookie,
   handleTrigger,
   incrementFlowAction,
-  updateContext,
   startQuestion,
+  updateContext,
 } from '../SmsCookie';
 import { TwilioWebhookRequest } from '../TwilioController';
+
+
+export type ExitKeywordTest = (body: string) => (boolean | Promise<boolean>);
 
 
 export default class FlowController {
   private readonly root: Flow;
   private readonly schema: EvaluatedSchema;
+
+  private testForExit: ExitKeywordTest;
 
   constructor(
     root: Flow,
@@ -61,6 +67,9 @@ export default class FlowController {
     if (!state) {
       return null;
     }
+    if (this.testForExit && await this.testForExit(req.body.Body)) {
+      return new Exit(req.body.From);
+    }
 
     const key = Number(state.flowKey);
     const currFlow = this.getCurrentFlow(state);
@@ -75,12 +84,12 @@ export default class FlowController {
         state.question.isAnswering
       ) {
         if (
-          action.type === Question.Text &&
+          action.type === Question.Types.Text &&
           await action.validateAnswer(req.body.Body)
         ) {
           action[QuestionSetAnswer](req.body.Body);
-        } else if (action.type === Question.MultipleChoice) {
-          const choices: Array<boolean|number> =
+        } else if (action.type === Question.Types.MultipleChoice) {
+          const choices =
             await Promise.all(
               action.choices.map(
                 (validate: AnswerValidator) => validate(req.body.Body)));
@@ -113,7 +122,9 @@ export default class FlowController {
     state: SmsCookie,
     action: Action,
   ): Promise<SmsCookie> {
-    if (!(action instanceof Action)) return null;
+    if (action instanceof Exit || !(action instanceof Action)) {
+      return null;
+    }
 
     const currFlow = this.getCurrentFlow(state);
 
@@ -170,5 +181,9 @@ export default class FlowController {
     }
     return updateContext(
       incrementFlowAction(state, currFlow), currFlow, action);
+  }
+
+  public setTestForExit(testForExit: ExitKeywordTest) {
+    this.testForExit = testForExit;
   }
 }

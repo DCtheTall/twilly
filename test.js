@@ -12,7 +12,7 @@ root
     'question',
     () => new Question('What is your favorite color?', {
       continueOnFailure: true,
-      type: Question.MultipleChoice,
+      type: Question.Types.MultipleChoice,
       choices: ['red', 'blue', 'green'].map(
         color => ans => ans.toLowerCase() === color),
     }))
@@ -36,6 +36,9 @@ app.use('/twilly', twilly({
   getUserContext(fromNumber) { // can return a Promise resolving the user data
     return { name: fromNumber };
   },
+  testForExit(body) {
+    return body.toLowerCase().includes('exit');
+  }
 }));
 
 app.get('/', (req, res) => {

@@ -25,6 +25,11 @@ const QuestionTypeMap = {
   [TextQuestion]: 'text',
 };
 
+export interface QuestionTypes {
+  MultipleChoice: symbol;
+  Text: symbol;
+};
+
 
 export interface QuestionOptions {
   choices?: AnswerValidator[];
@@ -64,9 +69,10 @@ export const QuestionSetAnswer = Symbol('setAnswer');
 export const QuestionShouldContinueOnFail = Symbol('shouldContinueOnFailure');
 
 export default class Question extends Action {
-  static MultipleChoice: symbol = MutlipleChoiceQuestion;
-
-  static Text: symbol = TextQuestion;
+  static Types: QuestionTypes = {
+    MultipleChoice: MutlipleChoiceQuestion,
+    Text: TextQuestion,
+  };
 
   private [QuestionAnswer]: string | number;
   private [QuestionAnswerValidator]: AnswerValidator;

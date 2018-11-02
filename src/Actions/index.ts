@@ -1,6 +1,9 @@
 export * from './Action';
 export { default as Action } from './Action';
 
+export * from './Exit';
+export { default as Exit } from './Exit';
+
 export * from './Message';
 export { default as Message } from './Message';
 

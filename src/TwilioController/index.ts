@@ -10,6 +10,7 @@ import {
 import TwimlResponse from './TwimlResponse';
 import {
   Action,
+  Exit,
   Message,
   Question,
   Reply,
@@ -21,25 +22,29 @@ export * from './TwilioWebhookRequest';
 export interface TwilioControllerArgs {
   accountSid: string;
   authToken: string;
-  messageServiceId: string;
   cookieKey?: string;
+  messageServiceId: string;
+  sendOnExit: string;
 }
 
 
 export default class TwilioController {
-  private readonly twilio: TwilioClient;
-  private readonly messageServiceId: string;
   private readonly cookieKey: string;
+  private readonly messageServiceId: string;
+  private readonly sendOnExit: string;
+  private readonly twilio: TwilioClient;
 
   constructor({
       accountSid,
       authToken,
       messageServiceId,
       cookieKey,
+      sendOnExit,
   }: TwilioControllerArgs) {
-    this.twilio = Twilio(accountSid, authToken);
-    this.messageServiceId = messageServiceId;
     this.cookieKey = cookieKey;
+    this.messageServiceId = messageServiceId;
+    this.sendOnExit = sendOnExit;
+    this.twilio = Twilio(accountSid, authToken);
   }
 
   private sendSmsResponse(res: Response, msg: string): void {
@@ -63,6 +68,14 @@ export default class TwilioController {
       let sid: string | string[];
 
       switch (action.constructor) {
+        case Exit:
+          sid = <string>(await this.sendSmsMessage(
+            req.body.From,
+            this.sendOnExit,
+          ));
+          action.setMessageSid(sid);
+          break;
+
         case Message:
           sid = <string[]>(await this.sendSmsMessage(
             (<Message>action).to,

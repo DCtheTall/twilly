@@ -9,9 +9,10 @@ import TwilioController, {
   TwilioControllerArgs,
   TwilioWebhookRequest,
 } from './TwilioController';
-import { FlowController } from './Flows';
 import {
+  ExitKeywordTest,
   Flow,
+  FlowController,
   FlowSchema,
 } from './Flows';
 import { Question } from './Actions';
@@ -44,21 +45,14 @@ async function handleIncomingSmsWebhook(
     let state = tc.getSmsCookeFromRequest(req);
     let action = await fc.deriveActionFromState(req, state, userCtx);
 
-    if (!action) {
-      tc.clearSmsCookie(res);
-      tc.sendEmptyResponse(res);
-      return;
-    }
-
     while (action !== null) {
       await tc.handleAction(req, state, action);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       state = await fc.deriveNextStateFromAction(req, state, action);
       if (
         (state === null)
-        || (
-          action instanceof Question
-          && !action.isComplete
-        )
+        || (action instanceof Question && !action.isComplete)
       ) break;
       action = await fc.deriveActionFromState(req, state, userCtx);
       if (action === null) state = null;
@@ -79,11 +73,13 @@ async function handleIncomingSmsWebhook(
 }
 
 interface TwillyParams extends TwilioControllerArgs {
+  cookieSecret?: string;
+  getUserContext?: UserContextGetter;
   inboundMessagePath: string;
   root: Flow,
   schema?: FlowSchema,
-  cookieSecret?: string;
-  getUserContext?: UserContextGetter;
+  sendOnExit: string;
+  testForExit?: ExitKeywordTest;
 }
 
 
@@ -92,13 +88,16 @@ export function twilly({
   authToken,
   messageServiceId,
 
+  getUserContext = () => null,
+
   root,
   schema,
 
   cookieSecret = null,
   cookieKey = null,
 
-  getUserContext = () => null,
+  sendOnExit = 'Goodbye.',
+  testForExit = null,
 }: TwillyParams): Router {
   if (!cookieKey) {
     cookieKey = getSha256Hash(accountSid, accountSid).slice(0, 10);
@@ -107,16 +106,20 @@ export function twilly({
     cookieSecret = getSha256Hash(accountSid, authToken);
   }
 
-  const ic = new FlowController(root, schema);
+  const fc = new FlowController(root, schema);
   const tc = new TwilioController({
     accountSid,
     authToken,
-    messageServiceId,
     cookieKey,
+    messageServiceId,
+    sendOnExit,
   });
   const router = Router();
 
+  if (testForExit) {
+    fc.setTestForExit(testForExit);
+  }
   router.use(cookieParser(cookieSecret));
-  router.post('/', handleIncomingSmsWebhook.bind(null, getUserContext, ic, tc));
+  router.post('/', handleIncomingSmsWebhook.bind(null, getUserContext, fc, tc));
   return router;
 }
