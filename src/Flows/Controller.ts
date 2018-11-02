@@ -15,6 +15,7 @@ import {
   Trigger,
 } from '../Actions';
 import {
+  InteractionContext,
   SmsCookie,
   handleTrigger,
   incrementFlowAction,
@@ -24,13 +25,52 @@ import {
 import { TwilioWebhookRequest } from '../TwilioController';
 
 
-export type ExitKeywordTest = (body: string) => (boolean | Promise<boolean>);
+export type ExitKeywordTest =
+  (body: string) => (boolean | Promise<boolean>);
+
+export type InteractionEndHook =
+  (context: InteractionContext, user: any) => any;
 
 
 export default class FlowController {
+  static async performQuestionEvaluation(
+    req: TwilioWebhookRequest,
+    state: SmsCookie,
+    action: Action,
+  ) {
+    if (
+      !(action instanceof Question &&
+      state.question.isAnswering)
+    ) return action;
+
+    if (
+      action.type === Question.Types.Text &&
+      await action.validateAnswer(req.body.Body)
+    ) {
+      action[QuestionSetAnswer](req.body.Body);
+    } else if (action.type === Question.Types.MultipleChoice) {
+      const choices =
+        await Promise.all(
+          action.choices.map(
+            (validate: AnswerValidator) => validate(req.body.Body)));
+      const validChoices =
+        choices.map((_, i) => i).filter(i => choices[i]);
+
+      if (validChoices.length === 1) {
+        action[QuestionSetAnswer](<number>validChoices[0]);
+      } else {
+        action[QuestionHandleInvalidAnswer](state);
+      }
+    } else {
+      action[QuestionHandleInvalidAnswer](state);
+    }
+    return action;
+  }
+
   private readonly root: Flow;
   private readonly schema: EvaluatedSchema;
 
+  private onInteractionEnd: InteractionEndHook;
   private testForExit: ExitKeywordTest;
 
   constructor(
@@ -42,12 +82,18 @@ export default class FlowController {
         'All Flows must perform at least one action');
     }
     this.root = root;
+    if (schema && !(schema instanceof FlowSchema)) {
+      throw new TypeError(
+        'The twilly schema parameter must be an instance of FlowSchema');
+    }
     if (schema) {
       // DFS of schema to get each user-defined flow
       // uniqueness of each flow name is guaranteed or it will throw err
       this.schema = evaluateSchema(root, schema);
     }
   }
+
+  private completeInteraction() {}
 
   private getCurrentFlow(state: SmsCookie): Flow {
     if (
@@ -73,39 +119,15 @@ export default class FlowController {
 
     const key = Number(state.flowKey);
     const currFlow = this.getCurrentFlow(state);
-    const resolveNextAction = currFlow.selectActionResolver(key);
+    const resolveAction = currFlow.selectActionResolver(key);
 
-    if (!resolveNextAction) return null;
+    if (!resolveAction) {
+      return null;
+    }
     try {
-      const action = await resolveNextAction(state.context, userCtx);
-
-      if (
-        action instanceof Question &&
-        state.question.isAnswering
-      ) {
-        if (
-          action.type === Question.Types.Text &&
-          await action.validateAnswer(req.body.Body)
-        ) {
-          action[QuestionSetAnswer](req.body.Body);
-        } else if (action.type === Question.Types.MultipleChoice) {
-          const choices =
-            await Promise.all(
-              action.choices.map(
-                (validate: AnswerValidator) => validate(req.body.Body)));
-          const validChoices =
-            choices.map((_, i) => i).filter(i => choices[i]);
-
-          if (validChoices.length === 1) {
-            action[QuestionSetAnswer](<number>validChoices[0]);
-          } else {
-            action[QuestionHandleInvalidAnswer](state);
-          }
-        } else {
-          action[QuestionHandleInvalidAnswer](state);
-        }
-      }
-
+      const action =
+        FlowController.performQuestionEvaluation( // does nothing if action is not question
+          req, state, await resolveAction(state.context, userCtx));
       if (!(action instanceof Action)) {
         return null;
       }
@@ -181,6 +203,10 @@ export default class FlowController {
     }
     return updateContext(
       incrementFlowAction(state, currFlow), currFlow, action);
+  }
+
+  public setInteractionEndHook(hook: InteractionEndHook) {
+    this.onInteractionEnd = hook;
   }
 
   public setTestForExit(testForExit: ExitKeywordTest) {

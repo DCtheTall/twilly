@@ -7,22 +7,29 @@ const app = require('express')();
 const bp = require('body-parser');
 
 const root = new Flow('root');
-root
-  .addAction(
-    'question',
-    () => new Question('What is your favorite color?', {
+root.addActions([
+  {
+    name: 'greeting',
+    resolve: (_, user) => new Promise(r => r(new Reply('Hi ' + user.name))),
+  },
+  {
+    name: 'question',
+    resolve: () => new Question('What is your favorite color?', {
       continueOnFailure: true,
       type: Question.Types.MultipleChoice,
       choices: ['red', 'blue', 'green'].map(
-        color => ans => ans.toLowerCase() === color),
-    }))
-  .addAction(
-    'reply',
-    ctx =>
+          color => ans => ans.toLowerCase() === color)
+    }),
+  },
+  {
+    name: 'reply',
+    resolve: ctx =>
       new Reply(
         ctx.root.question.wasAnswered ?
           `Your favorite color is ${ctx.root.question.answer}`
-          : 'Goodbye.'));
+          : 'Goodbye.'),
+  },
+]);
 
 app.use(require('morgan')('dev'));
 app.use(bp.urlencoded({ extended: false, limit: '2mb' }));
@@ -34,7 +41,7 @@ app.use('/twilly', twilly({
   messageServiceId: process.env.MESSAGE_SERVICE_ID,
   root,
   getUserContext(fromNumber) { // can return a Promise resolving the user data
-    return { name: fromNumber };
+    return { name: 'Dylan' };
   },
   testForExit(body) {
     return body.toLowerCase().includes('exit');

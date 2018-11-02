@@ -10,7 +10,7 @@
     [x] continue on fail option
     [x] multiple choice
 [x] Trigger another interaction
-[ ] Exit an interaction
+[x] Exit an interaction
 [ ] On interaction end hook
 [ ] On message hook
 
