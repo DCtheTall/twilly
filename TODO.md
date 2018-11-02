@@ -7,7 +7,7 @@
     [x] Basic question
     [x] Retry question
     [x] exit on fail
-    [ ] continue on fail option
+    [x] continue on fail option
     [ ] multiple choice
 [x] Trigger another interaction
 [ ] Exit an interaction

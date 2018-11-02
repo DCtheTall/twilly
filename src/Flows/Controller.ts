@@ -9,9 +9,9 @@ import {
   Question,
   Trigger,
   QuestionSetAnswer,
-  QuestionSetIsFailed,
-  QuestionSetShouldSendInvalidRes,
   QuestionShouldContinueOnFail,
+  QuestionHandleInvalidAnswer,
+  AnswerValidator,
 } from '../Actions';
 import {
   SmsCookie,
@@ -70,13 +70,30 @@ export default class FlowController {
     try {
       const action = await resolveNextAction(state.context, userCtx);
 
-      if (action instanceof Question && state.question.isAnswering) {
-        if (await action.validateAnswer(req.body.Body)) {
+      if (
+        action instanceof Question &&
+        state.question.isAnswering
+      ) {
+        if (
+          action.type === Question.Text &&
+          await action.validateAnswer(req.body.Body)
+        ) {
           action[QuestionSetAnswer](req.body.Body);
+        } else if (action.type === Question.MultipleChoice) {
+          const choices: Array<boolean|number> =
+            await Promise.all(
+              action.choices.map(
+                (validate: AnswerValidator) => validate(req.body.Body)));
+          const validChoices =
+            choices.map((_, i) => i).filter(i => choices[i]);
+
+          if (validChoices.length === 1) {
+            action[QuestionSetAnswer](<number>validChoices[0]);
+          } else {
+            action[QuestionHandleInvalidAnswer](state);
+          }
         } else {
-          action[
-            state.question.attempts.length === action.maxRetries ?
-              QuestionSetIsFailed : QuestionSetShouldSendInvalidRes]();
+          action[QuestionHandleInvalidAnswer](state);
         }
       }
 

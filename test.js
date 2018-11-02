@@ -12,8 +12,9 @@ root
     'question',
     () => new Question('What is your favorite color?', {
       continueOnFailure: true,
-      validateAnswer: answer =>
-        ['red', 'blue', 'yellow', 'green'].includes(answer.toLowerCase()),
+      type: Question.MultipleChoice,
+      choices: ['red', 'blue', 'green'].map(
+        color => ans => ans.toLowerCase() === color),
     }))
   .addAction(
     'reply',

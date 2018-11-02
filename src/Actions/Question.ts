@@ -2,6 +2,10 @@ import Action, {
   ActionContext,
   GetActionContext,
 } from "./Action";
+import { SmsCookie } from "../SmsCookie";
+
+
+export type AnswerValidator = (answer: string) => (boolean | Promise<boolean>);
 
 
 export interface QuestionContext extends ActionContext {
@@ -16,25 +20,20 @@ export interface QuestionContext extends ActionContext {
 const MutlipleChoiceQuestion = Symbol('mutlipleChoice');
 const TextQuestion = Symbol('text');
 
-enum QuestionTypes {
-  MutlipleChoice,
-  TextQuestion,
-}
-
 const QuestionTypeMap = {
-  [QuestionTypes[MutlipleChoiceQuestion]]: 'multipleChoice',
-  [QuestionTypes[TextQuestion]]: 'text',
+  [MutlipleChoiceQuestion]: 'multipleChoice',
+  [TextQuestion]: 'text',
 };
 
 
 export interface QuestionOptions {
-  choices?: ((answer: string) => boolean)[];
+  choices?: AnswerValidator[];
   continueOnFailure?: boolean;
   failedToAnswerResponse?: string;
   invalidAnswerResponse?: string;
   maxRetries?: number;
-  type?: QuestionTypes;
-  validateAnswer?: (answer: string) => boolean;
+  type?: symbol;
+  validateAnswer?: AnswerValidator;
 }
 
 const defaultOptions = <QuestionOptions>{
@@ -43,7 +42,7 @@ const defaultOptions = <QuestionOptions>{
   failedToAnswerResponse: 'Sorry, I do not understand your answer. Please try again.',
   invalidAnswerResponse: 'Hmm. I didn\'t quite understand your answer.',
   maxRetries: 1,
-  type: QuestionTypes[TextQuestion],
+  type: TextQuestion,
   validateAnswer: () => true,
 };
 
@@ -60,29 +59,26 @@ const QuestionMaxRetries = Symbol('maxRetries');
 const QuestionShouldSendInvalidRes = Symbol('shouldSendInvalidResponse');
 const QuestionType = Symbol('type');
 
+export const QuestionHandleInvalidAnswer = Symbol('handleInvalidAnswer');
 export const QuestionSetAnswer = Symbol('setAnswer');
-export const QuestionSetIsFailed = Symbol('setIsFailed');
-export const QuestionSetShouldSendInvalidRes = Symbol('setShouldSendInvalidRes');
 export const QuestionShouldContinueOnFail = Symbol('shouldContinueOnFailure');
 
 export default class Question extends Action {
-  static MultipleChoice: number =
-    QuestionTypes[MutlipleChoiceQuestion];
+  static MultipleChoice: symbol = MutlipleChoiceQuestion;
 
-  static Text: number =
-    QuestionTypes[TextQuestion];
+  static Text: symbol = TextQuestion;
 
   private [QuestionAnswer]: string | number;
-  private [QuestionAnswerValidator]: (answer: string) => boolean;
+  private [QuestionAnswerValidator]: AnswerValidator;
   private [QuestionBody]: string;
-  private [QuestionChoices]: ((answer: string) => boolean)[];
+  private [QuestionChoices]: AnswerValidator[];
   private [QuestionFailedToAnswerRes]: string;
   private [QuestionInvalidAnswerRes]: string;
   private [QuestionIsAnswered]: boolean;
   private [QuestionIsFailed]: boolean;
   private [QuestionMaxRetries]: number;
   private [QuestionShouldSendInvalidRes]: boolean;
-  private [QuestionType]: number;
+  private [QuestionType]: symbol;
 
   public [QuestionShouldContinueOnFail]: boolean;
 
@@ -99,14 +95,15 @@ export default class Question extends Action {
     }: QuestionOptions = defaultOptions,
   ) {
     if (
-      (type === QuestionTypes[MutlipleChoiceQuestion]) && (
+      (type === MutlipleChoiceQuestion) && (
         (!choices)
         || (!Array.isArray(choices))
+        || (choices.length < 2)
         || (!choices.every(
           (v: (answer: string) => boolean) => typeof v === 'function')))
     ) {
       throw new TypeError(
-        'Multiple choice Questions must include a \'choices\' option, an array of functions of a string which return a boolen');
+        'Multiple choice Questions must include a \'choices\' option, an array of at least 2 functions of a string which return a boolen');
     }
     if (isNaN(maxRetries)) {
       throw new TypeError(
@@ -146,7 +143,7 @@ export default class Question extends Action {
     return this[QuestionBody];
   }
 
-  get choices(): ((answer: string) => boolean)[] {
+  get choices(): AnswerValidator[] {
     return this[QuestionChoices];
   }
 
@@ -174,7 +171,7 @@ export default class Question extends Action {
     return this[QuestionMaxRetries];
   }
 
-  get type(): number {
+  get type(): symbol {
     return this[QuestionType];
   }
 
@@ -182,20 +179,20 @@ export default class Question extends Action {
     return this[QuestionShouldSendInvalidRes];
   }
 
-  get validateAnswer(): (answer: string) => boolean {
+  get validateAnswer(): AnswerValidator {
     return this[QuestionAnswerValidator];
+  }
+
+  public [QuestionHandleInvalidAnswer](state: SmsCookie) {
+    if (state.question.attempts.length === this.maxRetries) {
+      this[QuestionIsFailed] = true;
+    } else {
+      this[QuestionShouldSendInvalidRes] = true;
+    }
   }
 
   public [QuestionSetAnswer](answer: string | number) {
     this[QuestionIsAnswered] = true;
     this[QuestionAnswer] = answer;
-  }
-
-  public [QuestionSetIsFailed]() {
-    this[QuestionIsFailed] = true;
-  }
-
-  public [QuestionSetShouldSendInvalidRes]() {
-    this[QuestionShouldSendInvalidRes] = true;
   }
 }

@@ -59,14 +59,12 @@ async function handleIncomingSmsWebhook(
           action instanceof Question
           && !action.isComplete
         )
-      ) {
-        break;
-      }
+      ) break;
       action = await fc.deriveActionFromState(req, state, userCtx);
       if (action === null) state = null;
     }
 
-    if (state && !state.interactionComplete) {
+    if (state) {
       tc.setSmsCookie(res, state);
     } else {
       tc.clearSmsCookie(res);
@@ -100,7 +98,7 @@ export function twilly({
   cookieSecret = null,
   cookieKey = null,
 
-  getUserContext = (from: string) => null,
+  getUserContext = () => null,
 }: TwillyParams): Router {
   if (!cookieKey) {
     cookieKey = getSha256Hash(accountSid, accountSid).slice(0, 10);
