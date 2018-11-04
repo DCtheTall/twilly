@@ -1,5 +1,5 @@
 export interface ActionContext {
-  messagingSid?: string | string[];
+  messageSid?: string | string[];
   name?: string;
   type?: string;
 }
@@ -24,7 +24,7 @@ export default class Action {
       ...o,
     };
     if (this[ActionMessageSid]) {
-      result.messagingSid = this[ActionMessageSid];
+      result.messageSid = this[ActionMessageSid];
     }
     return result;
   }
@@ -43,6 +43,10 @@ export default class Action {
 
   public setMessageSid(sid: string) {
     this[ActionMessageSid] = sid;
+  }
+
+  public setMessageSids(sids: string[]) {
+    this[ActionMessageSid] = sids;
   }
 
   public setName(name: string) {

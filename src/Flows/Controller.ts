@@ -6,17 +6,16 @@ import {
 } from '.';
 import {
   Action,
-  AnswerValidator,
   Exit,
   Question,
-  QuestionSetAnswer,
-  QuestionHandleInvalidAnswer,
   QuestionShouldContinueOnFail,
   Trigger,
+  QuestionEvaluate,
 } from '../Actions';
 import {
   InteractionContext,
   SmsCookie,
+  completeInteraction,
   handleTrigger,
   incrementFlowAction,
   startQuestion,
@@ -29,53 +28,34 @@ export type ExitKeywordTest =
   (body: string) => (boolean | Promise<boolean>);
 
 export type InteractionEndHook =
-  (context: InteractionContext, user: any) => any;
+  (context: InteractionContext, userCtx: any) => any;
+
+
+export interface FlowControllerOptions {
+  onInteractionEnd?: InteractionEndHook;
+  testForExit?: ExitKeywordTest;
+}
+
+const defaultOptions = <FlowControllerOptions>{
+  onInteractionEnd: () => null,
+  testForExit: null,
+};
 
 
 export default class FlowController {
-  static async performQuestionEvaluation(
-    req: TwilioWebhookRequest,
-    state: SmsCookie,
-    action: Action,
-  ) {
-    if (
-      !(action instanceof Question &&
-      state.question.isAnswering)
-    ) return action;
-
-    if (
-      action.type === Question.Types.Text &&
-      await action.validateAnswer(req.body.Body)
-    ) {
-      action[QuestionSetAnswer](req.body.Body);
-    } else if (action.type === Question.Types.MultipleChoice) {
-      const choices =
-        await Promise.all(
-          action.choices.map(
-            (validate: AnswerValidator) => validate(req.body.Body)));
-      const validChoices =
-        choices.map((_, i) => i).filter(i => choices[i]);
-
-      if (validChoices.length === 1) {
-        action[QuestionSetAnswer](<number>validChoices[0]);
-      } else {
-        action[QuestionHandleInvalidAnswer](state);
-      }
-    } else {
-      action[QuestionHandleInvalidAnswer](state);
-    }
-    return action;
-  }
-
   private readonly root: Flow;
   private readonly schema: EvaluatedSchema;
-
-  private onInteractionEnd: InteractionEndHook;
   private testForExit: ExitKeywordTest;
+
+  public onInteractionEnd: InteractionEndHook;
 
   constructor(
     root: Flow,
     schema?: FlowSchema,
+    {
+      onInteractionEnd = defaultOptions.onInteractionEnd,
+      testForExit = defaultOptions.testForExit,
+    }: FlowControllerOptions = defaultOptions,
   ) {
     if (root.length === 0) {
       throw new TypeError(
@@ -91,9 +71,9 @@ export default class FlowController {
       // uniqueness of each flow name is guaranteed or it will throw err
       this.schema = evaluateSchema(root, schema);
     }
+    this.onInteractionEnd = onInteractionEnd;
+    this.testForExit = testForExit;
   }
-
-  private completeInteraction() {}
 
   private getCurrentFlow(state: SmsCookie): Flow {
     if (
@@ -110,7 +90,7 @@ export default class FlowController {
     state: SmsCookie,
     userCtx: any,
   ): Promise<Action> {
-    if (!state) {
+    if (state.isComplete) {
       return null;
     }
     if (this.testForExit && await this.testForExit(req.body.Body)) {
@@ -125,9 +105,10 @@ export default class FlowController {
       return null;
     }
     try {
-      const action =
-        FlowController.performQuestionEvaluation( // does nothing if action is not question
-          req, state, await resolveAction(state.context, userCtx));
+      const action = await resolveAction(state.context, userCtx);
+      if (action instanceof Question) {
+        await action[QuestionEvaluate](req, state);
+      }
       if (!(action instanceof Action)) {
         return null;
       }
@@ -142,13 +123,23 @@ export default class FlowController {
   public async deriveNextStateFromAction(
     req: TwilioWebhookRequest,
     state: SmsCookie,
+    userCtx: any,
     action: Action,
   ): Promise<SmsCookie> {
-    if (action instanceof Exit || !(action instanceof Action)) {
-      return null;
-    }
-
     const currFlow = this.getCurrentFlow(state);
+    const partialOnInteractionEnd = // use partial application to store user context for later use
+      (ctx: InteractionContext) => this.onInteractionEnd(ctx, userCtx);
+
+    if (!(action instanceof Action)) {
+      return completeInteraction(state);
+    }
+    if (action instanceof Exit) {
+      return completeInteraction(
+        updateContext(state, currFlow, action));
+    }
+    if (!state.createdAt) {
+      state.createdAt = new Date();
+    }
 
     switch (action.constructor) {
       case Trigger:
@@ -173,43 +164,48 @@ export default class FlowController {
         return (async (): Promise<SmsCookie> => {
           const question = <Question>action;
 
+          state.question.attempts.push(req.body.Body);
           if (question.isAnswered) {
-            state.question.isAnswering = false;
-            state.question.attempts = [];
-            return updateContext(
-              incrementFlowAction(state, currFlow), currFlow, action);
+            return incrementFlowAction(
+              updateContext(
+                state,
+                currFlow,
+                action,
+              ),
+              currFlow,
+            );
           }
           if (question.isFailed) {
             if (question[QuestionShouldContinueOnFail]) {
-              return updateContext(
-                incrementFlowAction(state, currFlow), currFlow, action);
+              return incrementFlowAction(
+                updateContext(
+                  state,
+                  currFlow,
+                  action,
+                ),
+                currFlow,
+              );
             }
-            return null;
+            return completeInteraction(
+              updateContext(state, currFlow, action));
           }
-
           if (state.question.isAnswering) {
-            return {
-              ...state,
-              question: {
-                ...state.question,
-                attempts: [...state.question.attempts, req.body.Body],
-              },
-            };
+            return updateContext(state, currFlow, action);
           }
 
           return updateContext(
             startQuestion(state), currFlow, action);
         })();
+
+      default:
+        return incrementFlowAction(
+          updateContext(
+            state,
+            currFlow,
+            action,
+          ),
+          currFlow,
+        );
     }
-    return updateContext(
-      incrementFlowAction(state, currFlow), currFlow, action);
-  }
-
-  public setInteractionEndHook(hook: InteractionEndHook) {
-    this.onInteractionEnd = hook;
-  }
-
-  public setTestForExit(testForExit: ExitKeywordTest) {
-    this.testForExit = testForExit;
   }
 }

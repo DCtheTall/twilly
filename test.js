@@ -45,7 +45,11 @@ app.use('/twilly', twilly({
   },
   testForExit(body) {
     return body.toLowerCase().includes('exit');
-  }
+  },
+  onInteractionEnd(ctx, user) {
+    console.log(`Interaction with ${user.name} complete.`);
+    console.log(ctx, ctx.root.question.messageSid);
+  },
 }));
 
 app.get('/', (req, res) => {

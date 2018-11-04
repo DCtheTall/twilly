@@ -18,7 +18,7 @@ export default class Exit extends Action {
     this[GetActionContext] = this.getExitContext.bind(this);
   }
 
-  getExitContext(): ExitContext {
+  private getExitContext(): ExitContext {
     return { messageBody: this.messageBody };
   }
 }

@@ -3,13 +3,16 @@ import Action, {
   GetActionContext,
 } from "./Action";
 import { SmsCookie } from "../SmsCookie";
+import { TwilioWebhookRequest } from '../TwilioController';
 
 
-export type AnswerValidator = (answer: string) => (boolean | Promise<boolean>);
+export type AnswerValidator =
+  (answer: string) => (boolean | Promise<boolean>);
 
 
 export interface QuestionContext extends ActionContext {
   answer: string | number;
+  attempts?: string[];
   body: string;
   type: string;
   wasAnswered: boolean;
@@ -64,6 +67,7 @@ const QuestionMaxRetries = Symbol('maxRetries');
 const QuestionShouldSendInvalidRes = Symbol('shouldSendInvalidResponse');
 const QuestionType = Symbol('type');
 
+export const QuestionEvaluate = Symbol('evaluate');
 export const QuestionHandleInvalidAnswer = Symbol('handleInvalidAnswer');
 export const QuestionSetAnswer = Symbol('setAnswer');
 export const QuestionShouldContinueOnFail = Symbol('shouldContinueOnFailure');
@@ -189,8 +193,41 @@ export default class Question extends Action {
     return this[QuestionAnswerValidator];
   }
 
+  public async [QuestionEvaluate](
+    req: TwilioWebhookRequest,
+    state: SmsCookie,
+  ) {
+    if (!state.question.isAnswering) return;
+
+    if (
+      this.type === Question.Types.Text &&
+      await this.validateAnswer(req.body.Body)
+    ) {
+      this[QuestionSetAnswer](req.body.Body);
+      return;
+    }
+
+    if (this.type === Question.Types.MultipleChoice) {
+      const choices =
+        await Promise.all(
+          this.choices.map(
+            (validate: AnswerValidator) => validate(req.body.Body)));
+      const validChoices =
+        choices.map((_, i) => i)
+               .filter(i => choices[i]);
+
+      if (validChoices.length === 1) {
+        this[QuestionSetAnswer](<number>validChoices[0]);
+        return;
+      }
+    }
+
+    this[QuestionHandleInvalidAnswer](state);
+    return;
+  }
+
   public [QuestionHandleInvalidAnswer](state: SmsCookie) {
-    if (state.question.attempts.length === this.maxRetries) {
+    if (state.question.attempts.length >= this.maxRetries) {
       this[QuestionIsFailed] = true;
     } else {
       this[QuestionShouldSendInvalidRes] = true;

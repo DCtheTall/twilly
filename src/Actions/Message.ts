@@ -1,6 +1,5 @@
 import Action, {
   ActionContext,
-  ActionMessageSid,
   GetActionContext,
 } from './Action';
 
@@ -57,9 +56,5 @@ export default class Messsage extends Action {
       body: this[MessageBody],
       to: this.to,
     };
-  }
-
-  public setMessageSids(sids: string[]) {
-    this[ActionMessageSid] = sids;
   }
 }

@@ -1,7 +1,4 @@
-import {
-  Router,
-  Response,
-} from 'express';
+import { Router, Response } from 'express';
 import * as cookieParser from 'cookie-parser';
 
 import { getSha256Hash } from './util';
@@ -40,7 +37,6 @@ async function handleIncomingSmsWebhook(
   getUserContext: UserContextGetter,
   fc: FlowController,
   tc: TwilioController,
-  onInteractionEnd: InteractionEndHook,
   req: TwilioWebhookRequest,
   res: Response,
 ) {
@@ -54,19 +50,20 @@ async function handleIncomingSmsWebhook(
       await tc.handleAction(req, state, action);
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      state = await fc.deriveNextStateFromAction(req, state, action);
+      state = await fc.deriveNextStateFromAction(req, state, userCtx, action);
       if (
-        (state === null)
+        (state.isComplete)
         || (action instanceof Question && !action.isComplete)
       ) break;
       action = await fc.deriveActionFromState(req, state, userCtx);
-      if (action === null) state = null;
+      if (action === null) break
     }
 
-    if (state) {
-      tc.setSmsCookie(res, state);
-    } else {
+    if (state.isComplete) {
+      fc.onInteractionEnd(state.context, userCtx);
       tc.clearSmsCookie(res);
+    } else {
+      tc.setSmsCookie(res, state);
     }
 
     tc.sendEmptyResponse(res);
@@ -113,7 +110,10 @@ export function twilly({
     cookieSecret = getSha256Hash(accountSid, authToken);
   }
 
-  const fc = new FlowController(root, schema);
+  const fc = new FlowController(root, schema, {
+    testForExit,
+    onInteractionEnd,
+  });
   const tc = new TwilioController({
     accountSid,
     authToken,
@@ -123,11 +123,8 @@ export function twilly({
   });
   const router = Router();
 
-  if (testForExit) {
-    fc.setTestForExit(testForExit);
-  }
   router.use(cookieParser(cookieSecret));
-  router.post('/', handleIncomingSmsWebhook.bind(
-    null, getUserContext, fc, tc, onInteractionEnd));
+  router.post(
+    '/', handleIncomingSmsWebhook.bind(null, getUserContext, fc, tc));
   return router;
 }

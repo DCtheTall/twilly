@@ -81,7 +81,7 @@ export default class TwilioController {
             (<Message>action).to,
             (<Message>action).body,
           ));
-          (<Message>action).setMessageSids(sid);
+          action.setMessageSids(sid);
           break;
 
         case Question:
@@ -94,6 +94,7 @@ export default class TwilioController {
                 req.body.From,
                 question.failedAnswerResponse,
               )));
+              action.setMessageSids(sid);
               return;
             }
             if (question.shouldSendInvalidRes) {
@@ -106,6 +107,7 @@ export default class TwilioController {
               req.body.From,
               question.body,
             )));
+            action.setMessageSids(sid);
           })();
           break;
 

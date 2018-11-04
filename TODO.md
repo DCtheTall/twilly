@@ -15,6 +15,7 @@
 [ ] On message hook
 
 ## Future TODOs
-- Get replies or questions to send xml response
+- Get replies or questions to send xml response (low pri)
 - Error handling
 - Tests
+- Documentation

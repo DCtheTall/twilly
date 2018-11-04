@@ -3,6 +3,7 @@ import {
   Action,
   ActionContext,
   Question,
+  QuestionContext,
   Trigger,
 } from '../Actions';
 import { Flow } from '../Flows';
@@ -11,18 +12,19 @@ import { TwilioWebhookRequest } from '../TwilioController';
 
 type ContextMap<T> = { [index: string]: T };
 
-
 export type FlowContext<T> = ContextMap<ContextMap<T>>;
 export type InteractionContext = FlowContext<ActionContext>;
 
 
 export interface SmsCookie {
   context: InteractionContext;
+  createdAt: Date;
   from: string;
   flow: string;
   flowKey: string | number;
   interactionComplete: boolean;
   interactionId: string;
+  isComplete: boolean;
   question: {
     attempts: string[];
     isAnswering: boolean;
@@ -30,14 +32,21 @@ export interface SmsCookie {
 }
 
 
+export function completeInteraction(state: SmsCookie) {
+  return { ...state, isComplete: true };
+}
+
+
 export function createSmsCookie(req: TwilioWebhookRequest): SmsCookie {
   return {
+    context: {},
+    createdAt: null,
+    flow: null,
+    flowKey: 0,
     from: req.body.From,
     interactionComplete: false,
     interactionId: uniqueString(),
-    flow: null,
-    flowKey: 0,
-    context: {},
+    isComplete: false,
     question: {
       attempts: [],
       isAnswering: false,
@@ -68,13 +77,26 @@ export function handleTrigger(state: SmsCookie, trigger: Trigger): SmsCookie {
 }
 
 
-export function incrementFlowAction(state: SmsCookie, flow: Flow): SmsCookie {
+export function incrementFlowAction(
+  state: SmsCookie,
+  flow: Flow,
+): SmsCookie {
   const newState = { ...state };
   newState.flowKey = Number(state.flowKey) + 1;
   if (newState.flowKey === flow.length) {
-    return null;
+    return completeInteraction(state);
   }
   return newState;
+}
+
+
+function recordQuestionMessageSid(state: SmsCookie, flow: Flow, action: Question): string[] {
+  const prevSid =
+    (<string[]>((state.context[flow.name] || {})[action.name] || {}).messageSid || []);
+  return [
+    ...prevSid,
+    ...(<string[]>action.sid || []),
+  ];
 }
 
 
@@ -90,7 +112,11 @@ export function updateContext(
         ...state.context,
         [flow.name]: {
           ...state.context[flow.name],
-          [action.name]: action.getContext(),
+          [action.name]: action instanceof Question ?
+            <QuestionContext>{
+              ...action.getContext(),
+              messageSid: recordQuestionMessageSid(state, flow, action),
+            } : action.getContext(),
         }
       },
     };
