@@ -11,11 +11,11 @@
     [x] multiple choice
 [x] Trigger another interaction
 [x] Exit an interaction
-[ ] On interaction end hook
+[x] On interaction end hook
 [ ] On message hook
+[ ] Error handling
 
 ## Future TODOs
 - Get replies or questions to send xml response (low pri)
-- Error handling
 - Tests
 - Documentation

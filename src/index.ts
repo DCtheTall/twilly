@@ -13,7 +13,11 @@ import {
   FlowSchema,
   InteractionEndHook,
 } from './Flows';
-import { Question } from './Actions';
+import {
+  Message,
+  Question,
+} from './Actions';
+import { InteractionContext } from './SmsCookie';
 
 export {
   Flow,
@@ -31,10 +35,13 @@ const DEFAULT_EXIT_TEXT = 'Goodbye.';
 
 
 type UserContextGetter = (from: string) => any;
+type OnMessageHook =
+  (context: InteractionContext, user: any, messageBody: string) => any;
 
 
 async function handleIncomingSmsWebhook(
   getUserContext: UserContextGetter,
+  onMessage: OnMessageHook,
   fc: FlowController,
   tc: TwilioController,
   req: TwilioWebhookRequest,
@@ -46,9 +53,22 @@ async function handleIncomingSmsWebhook(
     let state = tc.getSmsCookeFromRequest(req);
     let action = await fc.deriveActionFromState(req, state, userCtx);
 
+    if (onMessage) {
+      try {
+        const result = await onMessage(
+          state.context, userCtx, req.body.Body);
+        if (result instanceof Message) {
+          await tc.sendOnMessageNotification(result);
+        }
+      } catch (err) {
+        // error handling
+        throw err;
+      }
+    }
+
     while (action !== null) {
       await tc.handleAction(req, state, action);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 1000)); // for preserving message order
 
       state = await fc.deriveNextStateFromAction(req, state, userCtx, action);
       if (
@@ -74,35 +94,47 @@ async function handleIncomingSmsWebhook(
   }
 }
 
-interface TwillyParams extends TwilioControllerArgs {
+interface TwillyParameters extends TwilioControllerArgs {
   cookieSecret?: string;
   getUserContext?: UserContextGetter;
   onInteractionEnd?: InteractionEndHook;
+  onMessage?: OnMessageHook;
   root: Flow,
   schema?: FlowSchema,
   sendOnExit: string;
   testForExit?: ExitKeywordTest;
 }
 
+const defaultParameters = <TwillyParameters>{
+  cookieKey: null,
+  cookieSecret: null,
+  getUserContext: <UserContextGetter>(() => null),
+  onInteractionEnd: null,
+  onMessage: null,
+  schema: null,
+  sendOnExit: DEFAULT_EXIT_TEXT,
+  testForExit: null,
+};
 
 export function twilly({
   accountSid,
   authToken,
   messageServiceId,
 
-  getUserContext = () => null,
+  cookieKey = defaultParameters.cookieKey,
+  cookieSecret = defaultParameters.cookieSecret,
 
-  onInteractionEnd = null,
+  getUserContext = defaultParameters.getUserContext,
+
+  onInteractionEnd = defaultParameters.onInteractionEnd,
+  onMessage = defaultParameters.onMessage,
 
   root,
-  schema = null,
+  schema = defaultParameters.schema,
 
-  cookieSecret = null,
-  cookieKey = null,
-
-  sendOnExit = DEFAULT_EXIT_TEXT,
-  testForExit = null,
-}: TwillyParams): Router {
+  sendOnExit = defaultParameters.sendOnExit,
+  testForExit = defaultParameters.testForExit,
+}: TwillyParameters): Router {
   if (!cookieKey) {
     cookieKey = getSha256Hash(accountSid, accountSid).slice(0, 10);
   }
@@ -125,6 +157,8 @@ export function twilly({
 
   router.use(cookieParser(cookieSecret));
   router.post(
-    '/', handleIncomingSmsWebhook.bind(null, getUserContext, fc, tc));
+    '/',
+    handleIncomingSmsWebhook.bind(
+      null, getUserContext, onMessage, fc, tc));
   return router;
 }

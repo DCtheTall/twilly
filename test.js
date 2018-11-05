@@ -1,6 +1,6 @@
 require('dotenv').load(); // TODO uninstall this
 
-const { twilly, Flow, Reply, Question } = require('./dist');
+const { twilly, Flow, Reply, Question, Message } = require('./dist');
 const app = require('express')();
 
 // TODO uninstall these
@@ -49,6 +49,10 @@ app.use('/twilly', twilly({
   onInteractionEnd(ctx, user) {
     console.log(`Interaction with ${user.name} complete.`);
     console.log(ctx, ctx.root.question.messageSid);
+  },
+  onMessage(ctx, user, body) {
+    return new Message(
+      '+12034820254', `Message from ${user.name}: ${body}`);
   },
 }));
 

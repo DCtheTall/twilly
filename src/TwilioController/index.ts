@@ -47,10 +47,6 @@ export default class TwilioController {
     this.twilio = Twilio(accountSid, authToken);
   }
 
-  private sendSmsResponse(res: Response, msg: string): void {
-    return new TwimlResponse(res).setMessage(msg).send();
-  }
-
   public clearSmsCookie(res: Response) {
     res.clearCookie(this.cookieKey);
   }
@@ -132,6 +128,15 @@ export default class TwilioController {
     return new TwimlResponse(res).send();
   }
 
+  public async sendOnMessageNotification(msg: Message) {
+    try {
+      await this.sendSmsMessage(msg.to, msg.body);
+    } catch (err) {
+      // TODO err handling
+      throw err;
+    }
+  }
+
   public async sendSmsMessage(
     to: string | string[],
     body: string,
@@ -157,6 +162,10 @@ export default class TwilioController {
       // TODO error handling
       throw err;
     }
+  }
+
+  public sendSmsResponse(res: Response, msg: string): void {
+    return new TwimlResponse(res).setMessage(msg).send();
   }
 
   public setSmsCookie(res: Response, payload: SmsCookie) {
