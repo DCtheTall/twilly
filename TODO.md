@@ -1,6 +1,6 @@
 # TODO
 
-## What are the actions I want to use for automating customer interactions?
+## Stories
 [x] Get context on who the user is
 [x] Reply to the user
 [x] Ask the user a question
@@ -12,10 +12,10 @@
 [x] Trigger another interaction
 [x] Exit an interaction
 [x] On interaction end hook
-[ ] On message hook
+[x] On message hook
 [ ] Error handling
+[ ] Testing
 
-## Future TODOs
+## Icebox
 - Get replies or questions to send xml response (low pri)
-- Tests
 - Documentation

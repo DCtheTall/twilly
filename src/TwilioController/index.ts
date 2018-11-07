@@ -15,6 +15,7 @@ import {
   Question,
   Reply,
 } from '../Actions';
+import { ErrorHandler } from '../util';
 
 export * from './TwilioWebhookRequest';
 
@@ -57,8 +58,8 @@ export default class TwilioController {
 
   public async handleAction(
     req: TwilioWebhookRequest,
-    state: SmsCookie,
     action: Action,
+    handleError: ErrorHandler,
   ): Promise<void> {
     try {
       let sid: string | string[];
@@ -119,8 +120,7 @@ export default class TwilioController {
           break;
       }
     } catch (err) {
-      // TODO err handling
-      throw err;
+      handleError(err);
     }
   }
 
@@ -128,12 +128,11 @@ export default class TwilioController {
     return new TwimlResponse(res).send();
   }
 
-  public async sendOnMessageNotification(msg: Message) {
+  public async sendOnMessageNotification(msg: Message, handleError: ErrorHandler) {
     try {
       await this.sendSmsMessage(msg.to, msg.body);
     } catch (err) {
-      // TODO err handling
-      throw err;
+      handleError(err);
     }
   }
 

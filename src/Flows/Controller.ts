@@ -22,6 +22,7 @@ import {
   updateContext,
 } from '../SmsCookie';
 import { TwilioWebhookRequest } from '../TwilioController';
+import { ErrorHandler, CaughtError } from '../util';
 
 
 export type ExitKeywordTest =
@@ -89,6 +90,7 @@ export default class FlowController {
     req: TwilioWebhookRequest,
     state: SmsCookie,
     userCtx: any,
+    handleError: ErrorHandler,
   ): Promise<Action> {
     if (state.isComplete) {
       return null;
@@ -107,7 +109,7 @@ export default class FlowController {
     try {
       const action = await resolveAction(state.context, userCtx);
       if (action instanceof Question) {
-        await action[QuestionEvaluate](req, state);
+        await action[QuestionEvaluate](req, state, handleError);
       }
       if (!(action instanceof Action)) {
         return null;
@@ -115,20 +117,16 @@ export default class FlowController {
       action.setName(currFlow.selectName(key));
       return action;
     } catch (err) {
-      // TODO err handling
-      throw err;
+      handleError(err);
     }
   }
 
-  public async deriveNextStateFromAction(
+  public deriveNextStateFromAction(
     req: TwilioWebhookRequest,
     state: SmsCookie,
-    userCtx: any,
     action: Action,
-  ): Promise<SmsCookie> {
+  ): SmsCookie {
     const currFlow = this.getCurrentFlow(state);
-    const partialOnInteractionEnd = // use partial application to store user context for later use
-      (ctx: InteractionContext) => this.onInteractionEnd(ctx, userCtx);
 
     if (!(action instanceof Action)) {
       return completeInteraction(state);
@@ -161,7 +159,7 @@ export default class FlowController {
         })();
 
       case Question:
-        return (async (): Promise<SmsCookie> => {
+        return ((): SmsCookie => {
           const question = <Question>action;
 
           state.question.attempts.push(req.body.Body);

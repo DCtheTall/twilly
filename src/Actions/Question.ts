@@ -4,6 +4,7 @@ import Action, {
 } from "./Action";
 import { SmsCookie } from "../SmsCookie";
 import { TwilioWebhookRequest } from '../TwilioController';
+import { ErrorHandler } from "../util";
 
 
 export type AnswerValidator =
@@ -196,34 +197,38 @@ export default class Question extends Action {
   public async [QuestionEvaluate](
     req: TwilioWebhookRequest,
     state: SmsCookie,
+    handleError: ErrorHandler,
   ) {
     if (!state.question.isAnswering) return;
 
-    if (
-      this.type === Question.Types.Text &&
-      await this.validateAnswer(req.body.Body)
-    ) {
-      this[QuestionSetAnswer](req.body.Body);
-      return;
-    }
-
-    if (this.type === Question.Types.MultipleChoice) {
-      const choices =
-        await Promise.all(
-          this.choices.map(
-            (validate: AnswerValidator) => validate(req.body.Body)));
-      const validChoices =
-        choices.map((_, i) => i)
-               .filter(i => choices[i]);
-
-      if (validChoices.length === 1) {
-        this[QuestionSetAnswer](<number>validChoices[0]);
+    try {
+      if (
+        this.type === Question.Types.Text &&
+        await this.validateAnswer(req.body.Body)
+      ) {
+        this[QuestionSetAnswer](req.body.Body);
         return;
       }
-    }
 
-    this[QuestionHandleInvalidAnswer](state);
-    return;
+      if (this.type === Question.Types.MultipleChoice) {
+        const choices =
+          await Promise.all(
+            this.choices.map(
+              (validate: AnswerValidator) => validate(req.body.Body)));
+        const validChoices =
+          choices.map((_, i) => i)
+                .filter(i => choices[i]);
+
+        if (validChoices.length === 1) {
+          this[QuestionSetAnswer](<number>validChoices[0]);
+          return;
+        }
+      }
+
+      this[QuestionHandleInvalidAnswer](state);
+    } catch (err) {
+      throw err;
+    }
   }
 
   public [QuestionHandleInvalidAnswer](state: SmsCookie) {

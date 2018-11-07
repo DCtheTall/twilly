@@ -43,9 +43,7 @@ app.use('/twilly', twilly({
   getUserContext(fromNumber) { // can return a Promise resolving the user data
     return { name: 'Dylan' };
   },
-  testForExit(body) {
-    return body.toLowerCase().includes('exit');
-  },
+  testForExit: /(exit)/i.test,
   onInteractionEnd(ctx, user) {
     console.log(`Interaction with ${user.name} complete.`);
     console.log(ctx, ctx.root.question.messageSid);
