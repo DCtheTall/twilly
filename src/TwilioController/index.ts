@@ -62,6 +62,7 @@ export default class TwilioController {
     handleError: ErrorHandler,
   ): Promise<void> {
     try {
+      throw new Error('Testing');
       let sid: string | string[];
 
       switch (action.constructor) {
@@ -70,7 +71,7 @@ export default class TwilioController {
             req.body.From,
             this.sendOnExit,
           ));
-          action.setMessageSid(sid);
+          action.setMessageSid(<string>sid);
           break;
 
         case Message:
@@ -78,7 +79,7 @@ export default class TwilioController {
             (<Message>action).to,
             (<Message>action).body,
           ));
-          action.setMessageSids(sid);
+          action.setMessageSids(<string[]>sid);
           break;
 
         case Question:
@@ -113,7 +114,7 @@ export default class TwilioController {
             req.body.From,
             (<Reply>action).body,
           ));
-          action.setMessageSid(sid);
+          action.setMessageSid(<string>sid);
           break;
 
         default:

@@ -5,6 +5,7 @@ import {
   OnCatchErrorHook,
   getSha256Hash,
   createHandleError,
+  CaughtError,
 } from './util';
 import TwilioController, {
   TwilioControllerArgs,
@@ -20,8 +21,12 @@ import {
 import {
   Message,
   Question,
+  Reply,
 } from './Actions';
-import { InteractionContext } from './SmsCookie';
+import {
+  InteractionContext,
+  SmsCookie,
+} from './SmsCookie';
 
 export {
   Flow,
@@ -52,12 +57,13 @@ async function handleIncomingSmsWebhook(
   req: TwilioWebhookRequest,
   res: Response,
 ) {
+  let state = <SmsCookie>{ context: null };
+  let userCtx = null;
   let handleError = createHandleError(null, null, onCatchError);
 
   try {
-    const userCtx = await getUserContext(req.body.From); // will throw any errors
-
-    let state = tc.getSmsCookeFromRequest(req);
+    userCtx = await getUserContext(req.body.From); // will throw any errors
+    state = tc.getSmsCookeFromRequest(req);
     handleError = createHandleError(state.context, userCtx, onCatchError);
     let action =
       await fc.deriveActionFromState(req, state, userCtx, handleError);
@@ -82,7 +88,8 @@ async function handleIncomingSmsWebhook(
         await fc.deriveNextStateFromAction(req, state, action);
       if (
         (state.isComplete)
-        || (action instanceof Question && !action.isComplete)
+        || (action instanceof Question
+          && !(<Question>action).isComplete)
       ) break;
       action =
         await fc.deriveActionFromState(req, state, userCtx, handleError);
@@ -98,8 +105,9 @@ async function handleIncomingSmsWebhook(
 
     tc.sendEmptyResponse(res);
   } catch (err) {
-    tc.sendEmptyResponse(res);
-    handleError(err);
+    const result = await onCatchError(state.context, userCtx, err);
+    if (result instanceof Reply) await tc.sendSmsResponse(res, result.body);
+    else tc.sendEmptyResponse(res);
   }
 }
 

@@ -16,9 +16,8 @@ root.addActions([
     name: 'question',
     resolve: () => new Question('What is your favorite color?', {
       continueOnFailure: true,
-      type: Question.Types.MultipleChoice,
-      choices: ['red', 'blue', 'green'].map(
-          color => ans => ans.toLowerCase() === color)
+      type: Question.Types.Text,
+      validateAnswer: ans => ['red', 'blue', 'green'].includes(ans.toLowerCase())
     }),
   },
   {
@@ -26,7 +25,7 @@ root.addActions([
     resolve: ctx =>
       new Reply(
         ctx.root.question.wasAnswered ?
-          `Your favorite color is ${ctx.root.question.answer}`
+          `Your favorite color is ${ctx.root.question.answer.toLowerCase()}`
           : 'Goodbye.'),
   },
 ]);
@@ -43,7 +42,7 @@ app.use('/twilly', twilly({
   getUserContext(fromNumber) { // can return a Promise resolving the user data
     return { name: 'Dylan' };
   },
-  testForExit: /(exit)/i.test,
+  testForExit: str => /(exit)/i.test(str),
   onInteractionEnd(ctx, user) {
     console.log(`Interaction with ${user.name} complete.`);
     console.log(ctx, ctx.root.question.messageSid);
@@ -52,6 +51,9 @@ app.use('/twilly', twilly({
     return new Message(
       '+12034820254', `Message from ${user.name}: ${body}`);
   },
+  onCatchError(ctx, user, err) {
+    return new Reply('Oops, something went wrong');
+  }
 }));
 
 app.get('/', (req, res) => {
