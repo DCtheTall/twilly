@@ -1,4 +1,3 @@
-import * as Twilio from 'twilio';
 import * as TwilioClient from 'twilio/lib/rest/Twilio';
 import { Response } from 'express';
 
@@ -18,6 +17,12 @@ import {
   ActionSetMessageSids,
 } from '../Actions';
 import { ErrorHandler } from '../util';
+
+
+type TwilioFactory = (accountSid: string, authToken: string) => TwilioClient;
+
+const twilio = <TwilioFactory>require('twilio');
+
 
 export * from './TwilioWebhookRequest';
 
@@ -51,7 +56,7 @@ export default class TwilioController {
     this.cookieKey = cookieKey;
     this.messageServiceId = messageServiceId;
     this.sendOnExit = sendOnExit;
-    this.twilio = Twilio(accountSid, authToken);
+    this.twilio = twilio(accountSid, authToken);
   }
 
   public clearSmsCookie(res: Response) {

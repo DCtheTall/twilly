@@ -66,7 +66,8 @@ test('Multiple choice Question should throw a TypeError if choices input is inva
     }
     expect(caught instanceof TypeError).toBeTruthy();
     expect(caught.message).toBe(
-      'Multiple choice Questions must include a \'choices\' option, an array of at least 2 functions of a string which return a boolen');
+      'Multiple choice Questions must include a \'choices\' option, '
+        + 'an array of at least 2 functions of a string which return a boolen');
   }
 
   executeTest(1);
@@ -165,12 +166,16 @@ test('Invalid maxRetries Question option should throw a TypError', () => {
 });
 
 
-test('type Question option will default to TextQuestion if the provided value is not in Question.Types', () => {
-  const type = <any>{};
-  const q = new Question(uniqueString(), { type });
+test(
+  'type Question option will default to TextQuestion '
+    + 'if the provided value is not in Question.Types',
+  () => {
+    const type = <any>{};
+    const q = new Question(uniqueString(), { type });
 
-  expect(q.type).toBe(Question.Types.Text);
-});
+    expect(q.type).toBe(Question.Types.Text);
+  },
+);
 
 
 test('validateAnswer Question option should set instance property', () => {
@@ -201,16 +206,37 @@ test('Invalid validateAnswer Question option should throw a TypError', () => {
 });
 
 
-test('An unanswered Question context should provide body, type, wasAnswered, wasFailed', () => {
+test(
+  'An unanswered Question context should provide body, '
+    + 'questionType, type, wasAnswered, wasFailed',
+  () => {
+    const body = uniqueString();
+    let q = new Question(body);
+
+    expect(q[GetContext]()).toEqual({
+      answer: null,
+      body,
+      questionType: QuestionTypeMap[Question.Types.Text],
+      wasAnswered: false,
+      wasFailed: false,
+    });
+    expect(q[ActionGetContext]()).toHaveProperty('type', 'Question');
+
+    q = new Question(body, {
+      type: Question.Types.MultipleChoice,
+      choices: [
+        () => true,
+        () => true,
+      ],
+    });
+    expect(q[GetContext]()).toHaveProperty(
+      'questionType', QuestionTypeMap[Question.Types.MultipleChoice]);
+  },
+);
+
+
+test('Question evaluating valid text answer', () => {
+  const answer = uniqueString();
   const body = uniqueString();
   const q = new Question(body);
-
-  expect(q[GetContext]()).toEqual({
-    answer: null,
-    body,
-    questionType: QuestionTypeMap[Question.Types.Text],
-    wasAnswered: false,
-    wasFailed: false,
-  });
-  expect(q[ActionGetContext]()).toHaveProperty('type', 'Question');
 });

@@ -1,7 +1,9 @@
-import * as MessagingResponse from 'twilio/lib/twiml/MessagingResponse';
 import { Response } from 'express';
+import * as MsgResponse from 'twilio/lib/twiml/MessagingResponse';
 
 import { XmlContentTypeHeader } from './headers';
+
+const MessagingResponse = require('twilio/lib/twiml/MessagingResponse');
 
 
 const EMPTY_TWIML_RESPONSE =
@@ -18,7 +20,7 @@ export default class TwimlResponse {
   }
 
   public setMessage(message: string): TwimlResponse {
-    const msgRes = new MessagingResponse();
+    const msgRes = <MsgResponse>(new MessagingResponse());
     msgRes.message(message);
     this.xml = msgRes.toString();
     return this;

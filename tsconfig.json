@@ -7,7 +7,7 @@
       "dom",
       "es6"
     ],
-    "target": "es6",
+    "target": "es2015",
     "declaration": true,
     "outDir": "./dist",
     "esModuleInterop": true

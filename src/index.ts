@@ -1,5 +1,4 @@
 import { Router, Response } from 'express';
-import * as cookieParser from 'cookie-parser';
 
 import {
   OnCatchErrorHook,
@@ -38,6 +37,8 @@ export {
   Trigger,
   Reply,
 } from './Actions';
+
+const cookieParser = require('cookie-parser');
 
 
 const DEFAULT_EXIT_TEXT = 'Goodbye.';
