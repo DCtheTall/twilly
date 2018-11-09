@@ -1,6 +1,6 @@
 import Action, {
   ActionContext,
-  GetActionContext,
+  GetContext,
 } from './Action';
 
 
@@ -15,7 +15,7 @@ export default class Exit extends Action {
   constructor(messageBody: string) {
     super();
     this.messageBody = messageBody;
-    this[GetActionContext] = this.getExitContext.bind(this);
+    this[GetContext] = this.getExitContext.bind(this);
   }
 
   private getExitContext(): ExitContext {

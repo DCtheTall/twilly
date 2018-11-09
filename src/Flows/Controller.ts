@@ -6,6 +6,7 @@ import {
 } from '.';
 import {
   Action,
+  ActionSetName,
   Exit,
   Question,
   QuestionShouldContinueOnFail,
@@ -21,8 +22,8 @@ import {
   startQuestion,
   updateContext,
 } from '../SmsCookie';
-import { TwilioWebhookRequest } from '../TwilioController';
-import { ErrorHandler, CaughtError } from '../util';
+import { TwilioWebhookRequest } from '../twllio';
+import { ErrorHandler } from '../util';
 
 
 export type ExitKeywordTest =
@@ -86,7 +87,7 @@ export default class FlowController {
     return this.schema.get(state.flow);
   }
 
-  public async deriveActionFromState(
+  public async resolveActionFromState(
     req: TwilioWebhookRequest,
     state: SmsCookie,
     userCtx: any,
@@ -114,14 +115,14 @@ export default class FlowController {
       if (!(action instanceof Action)) {
         return null;
       }
-      action.setName(currFlow.selectName(key));
+      action[ActionSetName](currFlow.selectName(key));
       return action;
     } catch (err) {
       handleError(err);
     }
   }
 
-  public deriveNextStateFromAction(
+  public resolveNextStateFromAction(
     req: TwilioWebhookRequest,
     state: SmsCookie,
     action: Action,

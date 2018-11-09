@@ -14,6 +14,8 @@ import {
   Message,
   Question,
   Reply,
+  ActionSetMessageSid,
+  ActionSetMessageSids,
 } from '../Actions';
 import { ErrorHandler } from '../util';
 
@@ -25,11 +27,15 @@ export interface TwilioControllerArgs {
   authToken: string;
   cookieKey?: string;
   messageServiceId: string;
-  sendOnExit: string;
+  sendOnExit?: string;
 }
 
 
 export default class TwilioController {
+  static create(args: TwilioControllerArgs) {
+    return new TwilioController(args);
+  }
+
   private readonly cookieKey: string;
   private readonly messageServiceId: string;
   private readonly sendOnExit: string;
@@ -70,16 +76,18 @@ export default class TwilioController {
           sid = <string>(await this.sendSmsMessage(
             req.body.From,
             this.sendOnExit,
+            handleError,
           ));
-          action.setMessageSid(<string>sid);
+          action[ActionSetMessageSid](<string>sid);
           break;
 
         case Message:
           sid = <string[]>(await this.sendSmsMessage(
             (<Message>action).to,
             (<Message>action).body,
+            handleError,
           ));
-          action.setMessageSids(<string[]>sid);
+          action[ActionSetMessageSids](<string[]>sid);
           break;
 
         case Question:
@@ -91,21 +99,24 @@ export default class TwilioController {
               sid.push(<string>(await this.sendSmsMessage(
                 req.body.From,
                 question.failedAnswerResponse,
+                handleError,
               )));
-              action.setMessageSids(sid);
+              action[ActionSetMessageSids](sid);
               return;
             }
             if (question.shouldSendInvalidRes) {
               sid.push(<string>(await this.sendSmsMessage(
                 req.body.From,
                 question.invalidAnswerResponse,
+                handleError,
               )));
             }
             sid.push(<string>(await this.sendSmsMessage(
               req.body.From,
               question.body,
+              handleError,
             )));
-            action.setMessageSids(sid);
+            action[ActionSetMessageSids](sid);
           })();
           break;
 
@@ -113,8 +124,9 @@ export default class TwilioController {
           sid = <string>(await this.sendSmsMessage(
             req.body.From,
             (<Reply>action).body,
+            handleError,
           ));
-          action.setMessageSid(<string>sid);
+          action[ActionSetMessageSid](<string>sid);
           break;
 
         default:
@@ -131,7 +143,8 @@ export default class TwilioController {
 
   public async sendOnMessageNotification(msg: Message, handleError: ErrorHandler) {
     try {
-      await this.sendSmsMessage(msg.to, msg.body);
+      await this.sendSmsMessage(
+        msg.to, msg.body, handleError);
     } catch (err) {
       handleError(err);
     }
@@ -140,6 +153,7 @@ export default class TwilioController {
   public async sendSmsMessage(
     to: string | string[],
     body: string,
+    handleError: ErrorHandler,
   ): Promise<string | string[]> {
     if (Array.isArray(to)) {
       const data = await Promise.all(
@@ -159,8 +173,7 @@ export default class TwilioController {
       });
       return data.sid;
     } catch (err) {
-      // TODO error handling
-      throw err;
+      handleError(err);
     }
   }
 

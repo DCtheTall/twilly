@@ -1,5 +1,4 @@
-const path = require('path');
-const fs = require('fs');
+const { join, resolve } = require('path');
 const nodeExternals = require('webpack-node-externals');
 
 module.exports = {
@@ -7,7 +6,7 @@ module.exports = {
   target: 'node',
   externals: [nodeExternals()],
   output: {
-    path: path.join(path.resolve('.'), 'dist/'),
+    path: join(resolve('.'), 'dist/'),
     filename: 'index.js',
     library: 'twilly',
     libraryTarget: 'commonjs2',

@@ -5,12 +5,12 @@ import {
   OnCatchErrorHook,
   getSha256Hash,
   createHandleError,
-  CaughtError,
 } from './util';
-import TwilioController, {
+import {
+  TwilioController,
   TwilioControllerArgs,
   TwilioWebhookRequest,
-} from './TwilioController';
+} from './twllio';
 import {
   ExitKeywordTest,
   Flow,
@@ -62,11 +62,13 @@ async function handleIncomingSmsWebhook(
   let handleError = createHandleError(null, null, onCatchError);
 
   try {
-    userCtx = await getUserContext(req.body.From); // will throw any errors
     state = tc.getSmsCookeFromRequest(req);
+    userCtx = await getUserContext(req.body.From); // will throw any errors not caught in promise
     handleError = createHandleError(state.context, userCtx, onCatchError);
+
     let action =
-      await fc.deriveActionFromState(req, state, userCtx, handleError);
+      await fc.resolveActionFromState(
+        req, state, userCtx, handleError);
 
     if (onMessage) {
       try {
@@ -82,17 +84,22 @@ async function handleIncomingSmsWebhook(
 
     while (action !== null) {
       await tc.handleAction(req, action, handleError);
-      await new Promise(resolve => setTimeout(resolve, 1000)); // for preserving message order
+      await new Promise(
+        resolve => setTimeout(resolve, 1000)); // for preserving message order
 
       state =
-        await fc.deriveNextStateFromAction(req, state, action);
+        await fc.resolveNextStateFromAction(req, state, action);
+
       if (
         (state.isComplete)
-        || (action instanceof Question
-          && !(<Question>action).isComplete)
+        || (
+          action instanceof Question
+          && !(<Question>action).isComplete
+        )
       ) break;
       action =
-        await fc.deriveActionFromState(req, state, userCtx, handleError);
+        await fc.resolveActionFromState(
+          req, state, userCtx, handleError);
       if (action === null) break;
     }
 
@@ -105,9 +112,14 @@ async function handleIncomingSmsWebhook(
 
     tc.sendEmptyResponse(res);
   } catch (err) {
-    const result = await onCatchError(state.context, userCtx, err);
-    if (result instanceof Reply) await tc.sendSmsResponse(res, result.body);
-    else tc.sendEmptyResponse(res);
+    const result =
+      await onCatchError(
+        state.context, userCtx, err); // will also throw any uncaught errors
+    if (result instanceof Reply) {
+      await tc.sendSmsResponse(res, result.body);
+      return;
+    }
+    tc.sendEmptyResponse(res);
   }
 }
 
@@ -119,7 +131,6 @@ interface TwillyParameters extends TwilioControllerArgs {
   onMessage?: OnMessageHook;
   root: Flow,
   schema?: FlowSchema,
-  sendOnExit: string;
   testForExit?: ExitKeywordTest;
 }
 
@@ -166,7 +177,7 @@ export function twilly({
     testForExit,
     onInteractionEnd,
   });
-  const tc = new TwilioController({
+  const tc = TwilioController.create({
     accountSid,
     authToken,
     cookieKey,

@@ -1,9 +1,9 @@
 import Action, {
   ActionContext,
-  GetActionContext,
+  GetContext,
 } from "./Action";
 import { SmsCookie } from "../SmsCookie";
-import { TwilioWebhookRequest } from '../TwilioController';
+import { TwilioWebhookRequest } from '../twllio';
 import { ErrorHandler } from "../util";
 
 
@@ -133,7 +133,7 @@ export default class Question extends Action {
     this[QuestionShouldContinueOnFail] = continueOnFailure;
     this[QuestionShouldSendInvalidRes] = false;
     this[QuestionType] = type;
-    this[GetActionContext] = this.getQuestionContext.bind(this);
+    this[GetContext] = this.getQuestionContext.bind(this);
   }
 
   private getQuestionContext(): QuestionContext {

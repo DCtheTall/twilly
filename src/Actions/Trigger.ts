@@ -1,6 +1,6 @@
 import Action, {
   ActionContext,
-  GetActionContext,
+  GetContext,
 } from './Action';
 
 
@@ -21,7 +21,7 @@ export default class Trigger extends Action {
     }
     super();
     this[TriggerFlowName] = flowName;
-    this[GetActionContext] =
+    this[GetContext] =
       (): TriggerContext => ({ flowName });
   }
 

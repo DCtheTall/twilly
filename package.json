@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "test": "test",
+    "test": "jest",
     "dev": "webpack --mode development --progress --watch",
     "build": "webpack --mode production"
   },
@@ -36,10 +36,13 @@
   "devDependencies": {
     "@types/es6-promise": "^3.3.0",
     "@types/express": "^4.16.0",
+    "@types/jest": "^23.3.9",
     "@types/twilio": "0.0.10",
     "body-parser": "^1.18.3",
     "dotenv": "^6.0.0",
+    "jest": "^23.6.0",
     "morgan": "^1.9.1",
+    "ts-jest": "^23.10.4",
     "ts-loader": "^5.2.1",
     "typescript": "^3.0.3",
     "webpack": "^4.17.2",

@@ -1,6 +1,6 @@
 import Action, {
   ActionContext,
-  GetActionContext,
+  GetContext,
 } from './Action';
 
 
@@ -39,7 +39,7 @@ export default class Messsage extends Action {
     this[MessageTo] = Array.isArray(to) ? to : [to];
     this[MessageBody] = body;
 
-    this[GetActionContext] =
+    this[GetContext] =
       (): MessageContext => ({ to: this.to, body });
   }
 

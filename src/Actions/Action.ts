@@ -1,26 +1,31 @@
 export interface ActionContext {
+  actionName?: string;
+  flowName?: string;
   messageSid?: string | string[];
-  name?: string;
   type?: string;
 }
 
 
-export const GetActionContext = Symbol('getContext');
-export const ActionMessageSid = Symbol('sid');
-
+export const GetContext = Symbol('getContext');
 
 const ActionName = Symbol('name');
+
+export const ActionGetContext = Symbol('getContext');
+export const ActionMessageSid = Symbol('messageSid');
+export const ActionSetMessageSid = Symbol('setMessageSid');
+export const ActionSetMessageSids = Symbol('setMessageSids');
+export const ActionSetName = Symbol('setName');
 
 export default class Action {
   private [ActionName]: string;
   private [ActionMessageSid]: string | string[];
 
-  public [GetActionContext]: () => ActionContext;
+  public [GetContext]: () => ActionContext;
 
   private addTypeToContext(o: ActionContext): ActionContext {
-    const result = {
+    const result = <ActionContext>{
       type: this.constructor.name,
-      name: this[ActionName],
+      actionName: this[ActionName],
       ...o,
     };
     if (this[ActionMessageSid]) {
@@ -37,19 +42,19 @@ export default class Action {
     return this[ActionMessageSid];
   }
 
-  public getContext(): ActionContext {
-    return this.addTypeToContext(this[GetActionContext]());
+  public [ActionGetContext](): ActionContext {
+    return this.addTypeToContext(this[GetContext]());
   }
 
-  public setMessageSid(sid: string) {
+  public [ActionSetMessageSid](sid: string) {
     this[ActionMessageSid] = sid;
   }
 
-  public setMessageSids(sids: string[]) {
+  public [ActionSetMessageSids](sids: string[]) {
     this[ActionMessageSid] = sids;
   }
 
-  public setName(name: string) {
+  public [ActionSetName](name: string) {
     this[ActionName] = name;
   }
 }

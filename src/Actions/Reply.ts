@@ -1,4 +1,7 @@
-import Action, { ActionContext, GetActionContext } from './Action';
+import Action, {
+  ActionContext,
+  GetContext,
+} from './Action';
 
 
 export interface ReplyContext extends ActionContext {
@@ -18,7 +21,7 @@ export default class Reply extends Action {
     }
     super();
     this[ReplyBody] = body;
-    this[GetActionContext] =
+    this[GetContext] =
       (): ReplyContext => ({ body });
   }
 

@@ -5,15 +5,13 @@ import {
   Question,
   QuestionContext,
   Trigger,
+  ActionGetContext,
 } from '../Actions';
 import { Flow } from '../Flows';
-import { TwilioWebhookRequest } from '../TwilioController';
+import { TwilioWebhookRequest } from '../twllio';
 
 
-type ContextMap<T> = { [index: string]: T };
-
-export type FlowContext<T> = ContextMap<ContextMap<T>>;
-export type InteractionContext = FlowContext<ActionContext>;
+export type InteractionContext = ActionContext[];
 
 
 export interface SmsCookie {
@@ -39,7 +37,7 @@ export function completeInteraction(state: SmsCookie) {
 
 export function createSmsCookie(req: TwilioWebhookRequest): SmsCookie {
   return {
-    context: {},
+    context: [],
     createdAt: null,
     flow: null,
     flowKey: 0,
@@ -108,16 +106,14 @@ export function updateContext(
   return state &&
     {
       ...state,
-      context: {
-        ...state.context,
-        [flow.name]: {
-          ...state.context[flow.name],
-          [action.name]: action instanceof Question ?
-            <QuestionContext>{
-              ...action.getContext(),
-              messageSid: recordQuestionMessageSid(state, flow, action),
-            } : action.getContext(),
-        }
-      },
+    context: [
+      ...state.context,
+      (action instanceof Question ?
+        <QuestionContext>{
+          flowName: flow.name,
+          ...action[ActionGetContext](),
+          messageSid: recordQuestionMessageSid(state, flow, action),
+        } : action[ActionGetContext]()),
+      ],
     };
 }
