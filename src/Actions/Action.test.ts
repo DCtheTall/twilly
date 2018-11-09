@@ -53,9 +53,8 @@ test('Action should be able to get context', () => {
 
   const ctx = action[ActionGetContext]();
 
-  expect(ctx).toEqual({
-    actionName: name,
-    type: 'Action',
-    messageSid: sids,
-  });
+  expect(ctx).toHaveProperty('actionName', name);
+  expect(ctx).toHaveProperty('type', 'Action');
+  expect(ctx).toHaveProperty('createdAt');
+  expect(ctx.createdAt instanceof Date).toBe(true);
 });

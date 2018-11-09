@@ -1,4 +1,5 @@
 export interface ActionContext {
+  createdAt?: Date;
   actionName?: string;
   flowName?: string;
   messageSid?: string | string[];
@@ -24,6 +25,7 @@ export default class Action {
 
   private addTypeToContext(o: ActionContext): ActionContext {
     const result = <ActionContext>{
+      createdAt: new Date(),
       type: this.constructor.name,
       actionName: this[ActionName],
       ...o,

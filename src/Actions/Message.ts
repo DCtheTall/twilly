@@ -14,7 +14,7 @@ export interface MessageContext extends ActionContext {
 }
 
 
-export default class Messsage extends Action {
+export default class Message extends Action {
   private [MessageTo]: string[];
   private [MessageBody]: string;
 

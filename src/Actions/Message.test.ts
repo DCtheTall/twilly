@@ -1,5 +1,5 @@
 import Message from './Message';
-import { GetContext } from './Action';
+import { ActionGetContext, GetContext } from './Action';
 import { uniqueString } from '../util';
 
 
@@ -76,4 +76,5 @@ test('Message should record its to and body properties when getting context', ()
     to: [to],
     body,
   });
+  expect(msg[ActionGetContext]()).toHaveProperty('type', 'Message');
 });

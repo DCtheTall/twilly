@@ -15,7 +15,7 @@ export interface QuestionContext extends ActionContext {
   answer: string | number;
   attempts?: string[];
   body: string;
-  type: string;
+  questionType: string;
   wasAnswered: boolean;
   wasFailed: boolean;
 }
@@ -24,7 +24,7 @@ export interface QuestionContext extends ActionContext {
 const MutlipleChoiceQuestion = Symbol('mutlipleChoice');
 const TextQuestion = Symbol('text');
 
-const QuestionTypeMap = {
+export const QuestionTypeMap = {
   [MutlipleChoiceQuestion]: 'multipleChoice',
   [TextQuestion]: 'text',
 };
@@ -69,11 +69,14 @@ const QuestionShouldSendInvalidRes = Symbol('shouldSendInvalidResponse');
 const QuestionType = Symbol('type');
 
 export const QuestionEvaluate = Symbol('evaluate');
-export const QuestionHandleInvalidAnswer = Symbol('handleInvalidAnswer');
-export const QuestionSetAnswer = Symbol('setAnswer');
 export const QuestionShouldContinueOnFail = Symbol('shouldContinueOnFailure');
 
 export default class Question extends Action {
+  static validString(s: any): boolean {
+    return (typeof s === 'string')
+      && Boolean(s.length);
+  }
+
   static Types: QuestionTypes = {
     MultipleChoice: MutlipleChoiceQuestion,
     Text: TextQuestion,
@@ -105,7 +108,7 @@ export default class Question extends Action {
       validateAnswer = defaultOptions.validateAnswer,
     }: QuestionOptions = defaultOptions,
   ) {
-    if (typeof body !== 'string' || !body.length) {
+    if (!Question.validString(body)) {
       throw new TypeError(
         'The first argument of the Question constructor must be a non-empty string');
     }
@@ -120,13 +123,29 @@ export default class Question extends Action {
       throw new TypeError(
         'Multiple choice Questions must include a \'choices\' option, an array of at least 2 functions of a string which return a boolen');
     }
-    if (typeof failedToAnswerResponse !== 'string' || !failedToAnswerResponse.length) {
+    if (!Question.validString(failedToAnswerResponse)) {
       throw new TypeError(
         'Question failedToAnswerResponse option must be a non-empty string');
     }
-    if (isNaN(maxRetries)) {
+    if (!Question.validString(invalidAnswerResponse)) {
       throw new TypeError(
-        `Question maxRetries option must be a number.`);
+        'Question invalidAnswerResponse option must be a non-empty string');
+    }
+    if (
+      isNaN(maxRetries) ||
+      (f =>
+        (f(maxRetries) < 0
+          || f(maxRetries) > 100))(Math.round)
+    ) {
+      throw new TypeError(
+        'Question maxRetries option must be a number from 0 to 100.');
+    }
+    if (type !== TextQuestion && type !== MutlipleChoiceQuestion) {
+      type = TextQuestion;
+    }
+    if (typeof validateAnswer !== 'function') {
+      throw new TypeError(
+        'Question validateAnswer option must be a function');
     }
     super();
     this[QuestionAnswer] = null;
@@ -148,10 +167,23 @@ export default class Question extends Action {
     return {
       answer: this.answer,
       body: this.body,
-      type: QuestionTypeMap[this.type],
+      questionType: QuestionTypeMap[this.type],
       wasAnswered: this.isAnswered,
       wasFailed: this.isFailed,
     };
+  }
+
+  private handleInvalidAnswer(state: SmsCookie) {
+    if (state.question.attempts.length >= this.maxRetries) {
+      this[QuestionIsFailed] = true;
+    } else {
+      this[QuestionShouldSendInvalidRes] = true;
+    }
+  }
+
+  private setAnswer(answer: string | number) {
+    this[QuestionIsAnswered] = true;
+    this[QuestionAnswer] = answer;
   }
 
   get answer(): string | number {
@@ -214,7 +246,7 @@ export default class Question extends Action {
         this.type === Question.Types.Text &&
         await this.validateAnswer(req.body.Body)
       ) {
-        this[QuestionSetAnswer](req.body.Body);
+        this.setAnswer(req.body.Body);
         return;
       }
 
@@ -228,27 +260,14 @@ export default class Question extends Action {
                  .filter(i => choices[i]);
 
         if (validChoices.length === 1) {
-          this[QuestionSetAnswer](<number>validChoices[0]);
+          this.setAnswer(<number>validChoices[0]);
           return;
         }
       }
 
-      this[QuestionHandleInvalidAnswer](state);
+      this.handleInvalidAnswer(state);
     } catch (err) {
-      throw err;
+      handleError(err);
     }
-  }
-
-  public [QuestionHandleInvalidAnswer](state: SmsCookie) {
-    if (state.question.attempts.length >= this.maxRetries) {
-      this[QuestionIsFailed] = true;
-    } else {
-      this[QuestionShouldSendInvalidRes] = true;
-    }
-  }
-
-  public [QuestionSetAnswer](answer: string | number) {
-    this[QuestionIsAnswered] = true;
-    this[QuestionAnswer] = answer;
   }
 }
