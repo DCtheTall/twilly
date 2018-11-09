@@ -105,6 +105,10 @@ export default class Question extends Action {
       validateAnswer = defaultOptions.validateAnswer,
     }: QuestionOptions = defaultOptions,
   ) {
+    if (typeof body !== 'string' || !body.length) {
+      throw new TypeError(
+        'The first argument of the Question constructor must be a non-empty string');
+    }
     if (
       (type === MutlipleChoiceQuestion) && (
         (!choices)
@@ -115,6 +119,10 @@ export default class Question extends Action {
     ) {
       throw new TypeError(
         'Multiple choice Questions must include a \'choices\' option, an array of at least 2 functions of a string which return a boolen');
+    }
+    if (typeof failedToAnswerResponse !== 'string' || !failedToAnswerResponse.length) {
+      throw new TypeError(
+        'Question failedToAnswerResponse option must be a non-empty string');
     }
     if (isNaN(maxRetries)) {
       throw new TypeError(
@@ -130,7 +138,7 @@ export default class Question extends Action {
     this[QuestionIsAnswered] = false;
     this[QuestionMaxRetries] = Number(maxRetries);
     this[QuestionIsFailed] = false;
-    this[QuestionShouldContinueOnFail] = continueOnFailure;
+    this[QuestionShouldContinueOnFail] = Boolean(continueOnFailure);
     this[QuestionShouldSendInvalidRes] = false;
     this[QuestionType] = type;
     this[GetContext] = this.getQuestionContext.bind(this);
@@ -217,7 +225,7 @@ export default class Question extends Action {
               (validate: AnswerValidator) => validate(req.body.Body)));
         const validChoices =
           choices.map((_, i) => i)
-                .filter(i => choices[i]);
+                 .filter(i => choices[i]);
 
         if (validChoices.length === 1) {
           this[QuestionSetAnswer](<number>validChoices[0]);

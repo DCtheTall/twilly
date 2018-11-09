@@ -7,12 +7,14 @@ import Action, {
 } from './Action';
 import { uniqueString } from '../util';
 
+
 test('Action should not have a name or any sid when it is instantiated', () => {
   const action = new Action();
 
   expect(action.name).toBe(undefined);
   expect(action.sid).toBe(undefined);
 });
+
 
 test('Action should be able to set name using ActionSetName symbol', () => {
   const action = new Action();
@@ -22,12 +24,12 @@ test('Action should be able to set name using ActionSetName symbol', () => {
   expect(action.name).toBe(name);
 });
 
+
 test('ActionSetMessageSid symbol should save message sid', () => {
   const action = new Action();
   const sid = uniqueString();
 
   action[ActionSetMessageSid](sid);
-
   expect(action.sid).toBe(sid);
 });
 
@@ -36,9 +38,9 @@ test('ActionSetMessageSids symbol should save message sids', () => {
   const sids = [uniqueString(), uniqueString()];
 
   action[ActionSetMessageSids](sids);
-
   expect(action.sid).toBe(sids);
 });
+
 
 test('Action should be able to get context', () => {
   const action = new Action();

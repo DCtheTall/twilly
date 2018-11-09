@@ -23,16 +23,16 @@ export default class Messsage extends Action {
     body: string,
   ) {
     if (
-      typeof to !== 'string'
+      (typeof to !== 'string' || !to.length)
       && (!(Array.isArray(to)
-        && to.every((s: string) => typeof s === 'string')))
+        && to.every((s: string) => (typeof s === 'string' && Boolean(s.length)))))
     ) {
       throw new TypeError(
-        'Message constructor expects a string or an array of strings as the first argument');
+        'Message constructor expects a non-empty string or an array of non-empty strings as the first argument');
     }
-    if (typeof body !== 'string') {
+    if (typeof body !== 'string' || !body.length) {
       throw new TypeError(
-        'Message constructor expects a string as the second argument');
+        'Message constructor expects a non-empty string as the second argument');
     }
     super();
 
