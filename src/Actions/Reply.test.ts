@@ -3,7 +3,7 @@ import { GetContext } from './Action';
 import { uniqueString } from '../util';
 
 
-test('Reply should set constructor argument as body', () => {
+test('Reply should set constructor argument as body property', () => {
   const body = uniqueString();
   const reply = new Reply(body);
 
@@ -26,6 +26,13 @@ test(
       expect(caught.message).toBe(
         'Reply constructor expects a non-empty string as the first argument');
     }
+
+    executeTest(1);
+    executeTest('');
+    executeTest({});
+    executeTest([]);
+    executeTest(false);
+    executeTest(() => {});
   },
 );
 

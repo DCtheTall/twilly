@@ -15,9 +15,9 @@ export default class Trigger extends Action {
   private readonly [TriggerFlowName]: string;
 
   constructor(flowName: string) {
-    if (typeof flowName !== 'string') {
+    if (typeof flowName !== 'string' || !flowName.length) {
       throw new TypeError(
-        'Trigger constructor expects a string as the second argument');
+        'Trigger constructor expects a non-empty string as its constructor argument');
     }
     super();
     this[TriggerFlowName] = flowName;
