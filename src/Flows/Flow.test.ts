@@ -193,7 +193,8 @@ test('Flow addActions should throw a TypeError', () => {
   const f = new Flow(uniqueString());
   let caught: Error;
   const isTypeError =
-    () => expect(caught instanceof TypeError).toBeTruthy();
+    () => expect(
+      caught instanceof TypeError).toBeTruthy();
   const testMessage =
     () => expect(caught.message).toBe(
       'Flow addActions must add at least one action to the flow');

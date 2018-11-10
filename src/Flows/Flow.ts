@@ -1,9 +1,9 @@
 import { Action } from '../Actions';
-import { InteractionContext } from '../SmsCookie';
+import { InteractionContext, FlowContext } from '../SmsCookie';
 
 
 export type FlowActionResolver =
-  (context: InteractionContext, userContext?: any) => Action | Promise<Action>;
+  (context: FlowContext, userContext?: any) => Action | Promise<Action>;
 
 
 interface FlowAction {

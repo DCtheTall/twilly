@@ -58,14 +58,14 @@ async function handleIncomingSmsWebhook(
   req: TwilioWebhookRequest,
   res: Response,
 ) {
-  let state = <SmsCookie>{ context: null };
+  let state = <SmsCookie>{ interactionContext: [], flowContext: {} };
   let userCtx = null;
   let handleError = createHandleError(null, null, onCatchError);
 
   try {
     state = tc.getSmsCookeFromRequest(req);
     userCtx = await getUserContext(req.body.From); // will throw any errors not caught in promise
-    handleError = createHandleError(state.context, userCtx, onCatchError);
+    handleError = createHandleError(state.interactionContext, userCtx, onCatchError);
 
     let action =
       await fc.resolveActionFromState(
@@ -74,7 +74,7 @@ async function handleIncomingSmsWebhook(
     if (onMessage) {
       try {
         const result = await onMessage(
-          state.context, userCtx, req.body.Body);
+          state.interactionContext, userCtx, req.body.Body);
         if (result instanceof Message) {
           await tc.sendOnMessageNotification(result, handleError);
         }
@@ -105,7 +105,7 @@ async function handleIncomingSmsWebhook(
     }
 
     if (state.isComplete) {
-      fc.onInteractionEnd(state.context, userCtx);
+      fc.onInteractionEnd(state.interactionContext, userCtx);
       tc.clearSmsCookie(res);
     } else {
       tc.setSmsCookie(res, state);
@@ -115,7 +115,7 @@ async function handleIncomingSmsWebhook(
   } catch (err) {
     const result =
       await onCatchError(
-        state.context, userCtx, err); // will also throw any uncaught errors
+        state.interactionContext, userCtx, err); // will also throw any uncaught errors
     if (result instanceof Reply) {
       await tc.sendSmsResponse(res, result.body);
       return;

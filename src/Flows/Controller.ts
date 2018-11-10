@@ -110,7 +110,7 @@ export default class FlowController {
       return null;
     }
     try {
-      const action = await resolveAction(state.context, userCtx);
+      const action = await resolveAction(state.flowContext, userCtx);
       if (action instanceof Question) {
         await action[QuestionEvaluate](req, state, handleError);
       }

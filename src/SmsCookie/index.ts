@@ -11,15 +11,16 @@ import { Flow } from '../Flows';
 import { TwilioWebhookRequest } from '../twllio';
 
 
+export type FlowContext = { [index: string]: ActionContext };
 export type InteractionContext = ActionContext[];
 
-
 export interface SmsCookie {
-  context: InteractionContext;
   createdAt: Date;
   from: string;
   flow: string;
+  flowContext: FlowContext;
   flowKey: string | number;
+  interactionContext: InteractionContext;
   interactionComplete: boolean;
   interactionId: string;
   isComplete: boolean;
@@ -37,12 +38,13 @@ export function completeInteraction(state: SmsCookie) {
 
 export function createSmsCookie(req: TwilioWebhookRequest): SmsCookie {
   return {
-    context: [],
     createdAt: null,
     flow: null,
+    flowContext: {},
     flowKey: 0,
     from: req.body.From,
     interactionComplete: false,
+    interactionContext: [],
     interactionId: uniqueString(),
     isComplete: false,
     question: {
@@ -90,11 +92,20 @@ export function incrementFlowAction(
 
 function recordQuestionMessageSid(state: SmsCookie, flow: Flow, action: Question): string[] {
   const prevSid =
-    (<string[]>((state.context[flow.name] || {})[action.name] || {}).messageSid || []);
+    (<string[]>((state.flowContext[flow.name] || {})[action.name] || {}).messageSid || []);
   return [
     ...prevSid,
     ...(<string[]>action.sid || []),
   ];
+}
+
+
+function getActionContext(state, flow, action): ActionContext {
+  return (action instanceof Question ?
+    <QuestionContext>{
+      ...action[ActionGetContext](),
+      messageSid: recordQuestionMessageSid(state, flow, action),
+    } : action[ActionGetContext]());
 }
 
 
@@ -106,14 +117,13 @@ export function updateContext(
   return state &&
     {
       ...state,
-    context: [
-      ...state.context,
-      (action instanceof Question ?
-        <QuestionContext>{
-          flowName: flow.name,
-          ...action[ActionGetContext](),
-          messageSid: recordQuestionMessageSid(state, flow, action),
-        } : action[ActionGetContext]()),
+      flowContext: {
+        ...(flow.name === state.flow ? state.flowContext : {}),
+        [action.name]: getActionContext(state, flow, action),
+      },
+      interactionContext: [
+        ...state.interactionContext,
+        getActionContext(state, flow, action),
       ],
     };
 }
