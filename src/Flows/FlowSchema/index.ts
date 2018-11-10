@@ -11,7 +11,15 @@ const FlowSchemaValidateInput = Symbol('validateInput');
 
 export default class FlowSchema {
   static [FlowSchemaValidateInput](schema: FlowSchemaParams) {
-    Object.keys(schema).forEach(
+    if (
+      typeof schema !== 'object' ||
+      schema === null ||
+      Array.isArray(schema)
+    ) {
+      throw new TypeError(
+        'The argument of the flow schema constructor must be an object');
+    }
+    Object.keys(schema).map(
       (key: string) => {
         const u = schema[key];
         if (!(u instanceof Flow || u instanceof FlowSchema)) {
