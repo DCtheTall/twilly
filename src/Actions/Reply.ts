@@ -15,9 +15,9 @@ export default class Reply extends Action {
   private [ReplyBody]: string;
 
   constructor(body: string) {
-    if (typeof body !== 'string') {
+    if (typeof body !== 'string' || !body.length) {
       throw new TypeError(
-        'Reply constructor expects a string as the first argument');
+        'Reply constructor expects a non-empty string as the first argument');
     }
     super();
     this[ReplyBody] = body;
