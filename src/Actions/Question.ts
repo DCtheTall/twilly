@@ -7,6 +7,9 @@ import { TwilioWebhookRequest } from '../twllio';
 import { ErrorHandler } from "../util";
 
 
+export const MAXIMUM_RETRIES_ALLOWED = 10;
+
+
 export type AnswerValidator =
   (answer: string) => (boolean | Promise<boolean>);
 
@@ -135,10 +138,10 @@ export default class Question extends Action {
       isNaN(maxRetries) ||
       (f =>
         (f(maxRetries) < 0
-          || f(maxRetries) > 100))(Math.round)
+          || f(maxRetries) > MAXIMUM_RETRIES_ALLOWED))(Math.round)
     ) {
       throw new TypeError(
-        'Question maxRetries option must be a number from 0 to 100.');
+        `Question maxRetries option must be a number from 0 to ${MAXIMUM_RETRIES_ALLOWED}.`);
     }
     if (type !== TextQuestion && type !== MutlipleChoiceQuestion) {
       type = TextQuestion;
