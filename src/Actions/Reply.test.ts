@@ -15,8 +15,8 @@ test(
   'Reply should throw a TypeError if the '
     + 'constructor argument is not a non-empty string',
   () => {
-    let caught: Error;
     const executeTest = (body: any) => {
+      let caught: Error;
       try {
         new Reply(body);
       } catch (err) {

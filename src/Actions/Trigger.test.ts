@@ -15,8 +15,8 @@ test(
   'Trigger should throw a TypeError if the '
     + 'constructor argument is not a non-empty string',
   () => {
-    let caught: Error;
     const executeTest = (flowName: any) => {
+      let caught: Error;
       try {
         new Trigger(flowName);
       } catch (err) {

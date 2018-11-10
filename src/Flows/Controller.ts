@@ -2,6 +2,8 @@ import {
   EvaluatedSchema,
   Flow,
   FlowSchema,
+  FlowSelectActionResolver,
+  FlowSelectName,
   evaluateSchema,
 } from '.';
 import {
@@ -102,7 +104,7 @@ export default class FlowController {
 
     const key = Number(state.flowKey);
     const currFlow = this.getCurrentFlow(state);
-    const resolveAction = currFlow.selectActionResolver(key);
+    const resolveAction = currFlow[FlowSelectActionResolver](key);
 
     if (!resolveAction) {
       return null;
@@ -115,7 +117,7 @@ export default class FlowController {
       if (!(action instanceof Action)) {
         return null;
       }
-      action[ActionSetName](currFlow.selectName(key));
+      action[ActionSetName](currFlow[FlowSelectName](key));
       return action;
     } catch (err) {
       handleError(err);
