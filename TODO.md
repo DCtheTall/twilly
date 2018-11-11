@@ -13,9 +13,10 @@
 [x] Exit an interaction
 [x] On interaction end hook
 [x] On message hook
-[ ] Error handling
+[x] Error handling
 [ ] Testing
+[ ] Documentation
 
 ## Icebox
-- Get replies or questions to send xml response (low pri)
-- Documentation
+- Get replies or questions to send xml response (low pri, after testing)
+- Passing context from one flow to another using Trigger actions

@@ -1,5 +1,5 @@
 {
-  "name": "twilio-server",
+  "name": "twilly",
   "version": "1.0.0",
   "description": "unopinionated Node.js Twilio API abstraction server",
   "main": "dist/index.js",

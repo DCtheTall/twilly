@@ -17,32 +17,36 @@ export function evaluateSchema(
   visited: Set<FlowSchema> = EMPTY_SET,
 ): EvaluatedSchema {
   initialResult.set(root.name, root);
-  const evaluated = Object.keys(G.schema).reduce(
+  const keys = Object.keys(G.schema);
+  if (keys.length === 0) {
+    throw new TypeError(
+      'All FlowSchemas must contain at least one Flow object');
+  }
+  return keys.reduce(
     (acc: EvaluatedSchema, k: string): EvaluatedSchema =>
       {
         const flow = G.schema[k];
 
         if (flow instanceof FlowSchema) {
-          if (visited.has(flow)) return;
+          if (visited.has(flow)) return acc;
           visited.add(flow);
-          evaluateSchema(root, flow, acc, visited);
-        } else { // Type checking by FlowSchema constructor ensures this must be a Flow instance
-          if (acc.has(flow.name)) {
-            throw new TypeError(
-              `All Flows must have unique names. Unexpected duplicate name: ${flow.name}`);
-          }
-          if (flow.length === 0) {
-            // TODO reuse in FlowController
-            throw new TypeError(
-              'All Flows must perform at least one action');
-          }
-          acc.set(flow.name, flow);
+          return evaluateSchema(root, flow, acc, visited);
         }
+        // Type checking by FlowSchema constructor ensures this must be a Flow instance
+        if (acc.has(flow.name) && acc.get(flow.name) !== flow) {
+          throw new TypeError(
+            `All Flows must have unique names. Unexpected duplicate name: ${flow.name}`);
+        }
+        if (acc.has(flow.name)) {
+          return acc;
+        }
+        if (flow.length === 0) {
+          throw new TypeError(
+            `All Flows must perform at least one action. Check flow: ${flow.name}`);
+        }
+        acc.set(flow.name, flow);
         return acc;
-      }, initialResult);
-  if (evaluated.size === 0) {
-    throw new TypeError(
-      'All FlowSchemas must contain at least one Flow object');
-  }
-  return evaluated;
+      },
+      initialResult,
+    );
 }
