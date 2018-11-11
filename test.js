@@ -22,10 +22,10 @@ root.addActions([
   },
   {
     name: 'reply',
-    resolve: ctx =>
+    resolve: (ctx, user) =>
       new Reply(
-        ctx.root.question.wasAnswered ?
-          `Your favorite color is ${ctx.root.question.answer.toLowerCase()}`
+        ctx.question.wasAnswered ?
+          `${user.name}'s favorite color is ${ctx.question.answer.toLowerCase()}`
           : 'Goodbye.'),
   },
 ]);
@@ -45,13 +45,19 @@ app.use('/twilly', twilly({
   testForExit: str => /(exit)/i.test(str),
   onInteractionEnd(ctx, user) {
     console.log(`Interaction with ${user.name} complete.`);
-    console.log(ctx, ctx.root.question.messageSid);
+    console.log(`Interaction Context:\n${JSON.stringify(ctx, 2, 2)}\n`);
   },
   onMessage(ctx, user, body) {
+    console.log(`New message from ${user.name}!`);
+    console.log(`Body: ${body}\n`);
+    console.log(`Interaction Context:\n${JSON.stringify(ctx, 2, 2)}\n`);
     return new Message(
       '+12034820254', `Message from ${user.name}: ${body}`);
   },
   onCatchError(ctx, user, err) {
+    console.log(`Error during interaction with ${user.name}`);
+    console.log(`Interaction Context:\n${JSON.stringify(ctx, 2, 2)}`);
+    console.log(err);
     return new Reply('Oops, something went wrong');
   }
 }));

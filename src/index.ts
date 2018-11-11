@@ -120,6 +120,7 @@ async function handleIncomingSmsWebhook(
       await tc.sendSmsResponse(res, result.body);
       return;
     }
+    tc.clearSmsCookie(res);
     tc.sendEmptyResponse(res);
   }
 }

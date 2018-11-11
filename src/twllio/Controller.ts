@@ -73,7 +73,6 @@ export default class TwilioController {
     handleError: ErrorHandler,
   ): Promise<void> {
     try {
-      throw new Error('Testing');
       let sid: string | string[];
 
       switch (action.constructor) {

@@ -123,7 +123,10 @@ export function updateContext(
       },
       interactionContext: [
         ...state.interactionContext,
-        getActionContext(state, flow, action),
+        {
+          ...getActionContext(state, flow, action),
+          flowName: flow.name,
+        },
       ],
     };
 }
