@@ -126,6 +126,7 @@ test(
     }
     expect(caught).toBe(undefined);
     expect(result instanceof Map).toBe(true);
+    expect(result.size).toBe(3);
     expect(result.get(root.name)).toBe(root);
     expect(result.get(flow1.name)).toBe(flow1);
     expect(result.get(flow2.name)).toBe(flow2);

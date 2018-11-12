@@ -6,15 +6,11 @@ export const ROOT = '__ROOT__';
 export type EvaluatedSchema = Map<string, Flow>;
 
 
-const EMPTY_MAP = <EvaluatedSchema>(new Map());
-const EMPTY_SET = new Set<FlowSchema>();
-
-
 export function evaluateSchema(
   root: Flow,
   G: FlowSchema,
-  initialResult: EvaluatedSchema = EMPTY_MAP,
-  visited: Set<FlowSchema> = EMPTY_SET,
+  initialResult: EvaluatedSchema = <EvaluatedSchema>(new Map()),
+  visited: Set<FlowSchema> = new Set<FlowSchema>(),
 ): EvaluatedSchema {
   initialResult.set(root.name, root);
   const keys = Object.keys(G.schema);

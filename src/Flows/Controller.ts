@@ -61,19 +61,28 @@ export default class FlowController {
       testForExit = defaultOptions.testForExit,
     }: FlowControllerOptions = defaultOptions,
   ) {
+    if (!(root instanceof Flow)) {
+      throw new TypeError(
+        'root parameter must be an instance of Flow');
+    }
     if (root.length === 0) {
       throw new TypeError(
-        'All Flows must perform at least one action');
+        'All Flows must perform at least one action. Check the root Flow');
     }
-    this.root = root;
-    if (schema && !(schema instanceof FlowSchema)) {
+    if (schema !== undefined && !(schema instanceof FlowSchema)) {
       throw new TypeError(
-        'The twilly schema parameter must be an instance of FlowSchema');
+        'schema parameter must be an instance of FlowSchema');
     }
+    // other type checking here
+    this.root = root;
     if (schema) {
       // DFS of schema to get each user-defined flow
       // uniqueness of each flow name is guaranteed or it will throw err
       this.schema = evaluateSchema(root, schema);
+      if (this.schema.size === 1) {
+        throw new TypeError(
+          'If you provide the schema parameter, it must include a flow distinct from the root Flow');
+      }
     }
     this.onInteractionEnd = onInteractionEnd;
     this.testForExit = testForExit;
