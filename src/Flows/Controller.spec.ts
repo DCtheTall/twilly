@@ -236,7 +236,7 @@ test(
   'FlowController resolveActionFromState should resolve an action in the root flow '
   + 'if the current flow in the SMS cookie is the root',
   async () => {
-    const replyName = uniqueString()
+    const replyName = uniqueString();
     const rootReply = new Reply(replyName);
     const resolver = jest.fn();
     const root = new Flow(uniqueString()).addAction(replyName, resolver);
@@ -287,6 +287,87 @@ test(
   },
 );
 
+test(
+  'FlowController resolveActionFromState should determine '
+    + 'which action in the root Flow to resolve',
+  async () => {
+    const replyName = uniqueString();
+    const reply = new Reply(replyName);
+    const resolver = jest.fn();
+    const root = new Flow(uniqueString()).addActions([
+      { name: uniqueString(), resolve: () => new Reply(uniqueString()) },
+      { name: uniqueString(), resolve: () => new Reply(uniqueString()) },
+      { name: replyName, resolve: resolver },
+      { name: uniqueString(), resolve: () => new Reply(uniqueString()) },
+    ]);
+    const fc = new FlowController(root);
+    const req = getMockTwilioWebhookRequest();
+    const user = {};
+    const state = createSmsCookie(req);
+
+    state.flowKey = 2;
+    resolver.mockResolvedValue(reply);
+    const result = await fc.resolveActionFromState(req, state, user, () => {});
+
+    expect(resolver).toBeCalledTimes(1);
+    expect(resolver).toBeCalledWith(state.flowContext, user);
+    expect(result).toBe(reply);
+    expect(result.name).toBe(replyName);
+  },
+);
+
+
+test(
+  'FlowController resolveActionFromState should determine '
+    + 'which action to use in the Flow schema',
+  async () => {
+    const replyName = uniqueString();
+    const reply = new Reply(replyName);
+    const resolver = jest.fn();
+    const flow = new Flow(uniqueString()).addActions([
+      { name: uniqueString(), resolve: () => new Reply(uniqueString()) },
+      { name: replyName, resolve: resolver },
+      { name: uniqueString(), resolve: () => new Reply(uniqueString()) },
+      { name: uniqueString(), resolve: () => new Reply(uniqueString()) },
+    ]);
+    const fc = new FlowController(randomFlow(), new FlowSchema({
+      [uniqueString()]: flow,
+      [uniqueString()]: randomFlow(),
+    }));
+    const req = getMockTwilioWebhookRequest();
+    const user = {};
+    const state = createSmsCookie(req);
+
+    state.flow = flow.name;
+    state.flowKey = 1;
+    resolver.mockResolvedValue(reply);
+    const result = await fc.resolveActionFromState(req, state, user, () => {});
+
+    expect(resolver).toBeCalledTimes(1);
+    expect(resolver).toBeCalledWith(state.flowContext, user);
+    expect(result).toBe(reply);
+    expect(result.name).toBe(replyName);
+  },
+);
+
+
+test(
+  'FlowController resolveActionFromState should return null '
+    + 'if there is no action left to take',
+  async () => {
+    const root = randomFlow();
+    root.addAction(uniqueString(), () => new Reply(uniqueString()));
+    const fc = new FlowController(root);
+    const req = getMockTwilioWebhookRequest();
+    const user = {};
+    const state = createSmsCookie(req);
+
+    state.flowKey = 2;
+    const result = await fc.resolveActionFromState(req, state, user, () => { });
+
+    expect(result).toBe(null);
+  },
+);
 
 // test resolveActionFromState
 // test error handling
