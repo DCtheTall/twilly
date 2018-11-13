@@ -215,3 +215,6 @@ test('Flow addActions should throw a TypeError', () => {
   isTypeError();
   testMessage();
 });
+
+
+// TODO test FlowSelectActionResolver, FlowSelectName

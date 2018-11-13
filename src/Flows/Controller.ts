@@ -69,7 +69,7 @@ export default class FlowController {
       throw new TypeError(
         'All Flows must perform at least one action. Check the root Flow');
     }
-    if (schema !== undefined && !(schema instanceof FlowSchema)) {
+    if (schema && !(schema instanceof FlowSchema)) {
       throw new TypeError(
         'schema parameter must be an instance of FlowSchema');
     }
@@ -94,6 +94,10 @@ export default class FlowController {
       (state.flow === this.root.name)
     ) {
       return this.root;
+    }
+    if (!this.schema.has(state.flow)) {
+      throw new TypeError(
+        `Received invalid flow name in SMS cookie: ${state.flow}`);
     }
     return this.schema.get(state.flow);
   }
