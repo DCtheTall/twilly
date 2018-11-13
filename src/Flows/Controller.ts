@@ -112,7 +112,7 @@ export default class FlowController {
       return null;
     }
     if (this.testForExit && await this.testForExit(req.body.Body)) {
-      return new Exit(req.body.From);
+      return new Exit(req.body.Body);
     }
 
     const key = Number(state.flowKey);

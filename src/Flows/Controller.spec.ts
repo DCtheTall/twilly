@@ -1,7 +1,7 @@
 import FlowController from './Controller';
-import Flow from './Flow';
+import Flow, { FlowSelectName } from './Flow';
 import FlowSchema from './FlowSchema';
-import { Reply } from '../Actions';
+import { Reply, Exit, GetContext } from '../Actions';
 import { uniqueString } from '../util';
 import { getMockTwilioWebhookRequest } from '../twllio';
 import { createSmsCookie } from '../SmsCookie';
@@ -168,20 +168,44 @@ test(
   'FlowController resolveActionFromState should test if the user wants to exit the interaction',
   async () => {
     const testForExit = jest.fn();
-    const fc = new FlowController(randomFlow(), null, {
+    const flow = randomFlow();
+    const fc = new FlowController(flow, null, {
+      testForExit,
+    });
+    const req = getMockTwilioWebhookRequest();
+    const user = {};
+    const state = createSmsCookie(req);
+
+    testForExit.mockResolvedValue(false);
+    const result = await fc.resolveActionFromState(req, state, user, () => { });
+
+    expect(testForExit).toBeCalledTimes(1);
+    expect(testForExit).toBeCalledWith(req.body.Body);
+    expect(result.name).toBe(flow[FlowSelectName](0));
+  },
+);
+
+
+test(
+  'FlowController resolveActionFromState should return an Exit action '
+    + 'if the testForExit test resolves true',
+  async () => {
+    const testForExit = jest.fn();
+    const flow = randomFlow();
+    const fc = new FlowController(flow, null, {
       testForExit,
     });
     const req = getMockTwilioWebhookRequest({ body: uniqueString() });
     const user = {};
     const state = createSmsCookie(req);
 
-    testForExit.mockResolvedValue(false);
-    await fc.resolveActionFromState(req, state, user, () => { });
+    testForExit.mockResolvedValue(true);
+    const result = <Exit>(await fc.resolveActionFromState(req, state, user, () => {}));
 
-    expect(testForExit).toBeCalledTimes(1);
-    expect(testForExit).toBeCalledWith(req.body.Body);
-  },
-);
+    expect(result instanceof Exit).toBeTruthy();
+    expect(result[GetContext]()).toEqual({ messageBody: req.body.Body });
+  }
+)
 
 
 test(
