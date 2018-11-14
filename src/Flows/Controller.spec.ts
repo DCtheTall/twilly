@@ -1,7 +1,13 @@
 import FlowController from './Controller';
 import Flow, { FlowSelectName } from './Flow';
 import FlowSchema from './FlowSchema';
-import { Reply, Exit, GetContext } from '../Actions';
+import {
+  Exit,
+  GetContext,
+  Question,
+  QuestionEvaluate,
+  Reply,
+} from '../Actions';
 import { uniqueString } from '../util';
 import { getMockTwilioWebhookRequest } from '../twllio';
 import { createSmsCookie } from '../SmsCookie';
@@ -226,7 +232,7 @@ test(
 
     expect(resolver).toBeCalledTimes(1);
     expect(resolver).toBeCalledWith(state.flowContext, user);
-    expect(result instanceof Reply).toBeTruthy();
+    expect(result).toBe(rootReply);
     expect(result.name).toBe(replyName);
   },
 );
@@ -356,16 +362,49 @@ test(
     + 'if there is no action left to take',
   async () => {
     const root = randomFlow();
-    root.addAction(uniqueString(), () => new Reply(uniqueString()));
     const fc = new FlowController(root);
     const req = getMockTwilioWebhookRequest();
     const user = {};
     const state = createSmsCookie(req);
 
-    state.flowKey = 2;
-    const result = await fc.resolveActionFromState(req, state, user, () => { });
+    state.flowKey = 1;
+    let result = await fc.resolveActionFromState(req, state, user, () => {});
 
     expect(result).toBe(null);
+
+    root.addAction(uniqueString(), () => new Reply(uniqueString()));
+    state.flowKey = 2;
+    result = await fc.resolveActionFromState(req, state, user, () => {});
+
+    expect(result).toBe(null);
+  },
+);
+
+
+test(
+  'FlowController resolveActionFromState should evaluate the state of a Question action',
+  async () => {
+    const root = randomFlow();
+    const q = new Question(uniqueString());
+    const qname = uniqueString();
+    const resolver = jest.fn();
+
+    root.addAction(qname, resolver);
+    q[QuestionEvaluate] = jest.fn();
+
+    const req = getMockTwilioWebhookRequest();
+    const user = {};
+    const state = createSmsCookie(req);
+    const fc = new FlowController(root);
+    const handleError = jest.fn();
+
+    resolver.mockResolvedValue(q);
+    state.flowKey = 1;
+    const result = await fc.resolveActionFromState(req, state, user, handleError);
+
+    expect(result).toBe(q);
+    expect(q[QuestionEvaluate]).toBeCalledTimes(1);
+    expect(q[QuestionEvaluate]).toBeCalledWith(req, state, handleError);
   },
 );
 
