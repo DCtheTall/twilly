@@ -16,7 +16,6 @@ import {
   ActionSetMessageSid,
   ActionSetMessageSids,
 } from '../Actions';
-import { ErrorHandler } from '../util';
 
 
 type TwilioFactory = (accountSid: string, authToken: string) => TwilioClient;
@@ -70,74 +69,63 @@ export default class TwilioController {
   public async handleAction(
     req: TwilioWebhookRequest,
     action: Action,
-    handleError: ErrorHandler,
   ): Promise<void> {
-    try {
-      let sid: string | string[];
+    let sid: string | string[];
 
-      switch (action.constructor) {
-        case Exit:
-          sid = <string>(await this.sendSmsMessage(
-            req.body.From,
-            this.sendOnExit,
-            handleError,
-          ));
-          action[ActionSetMessageSid](<string>sid);
-          break;
+    switch (action.constructor) {
+      case Exit:
+        sid = <string>(await this.sendSmsMessage(
+          req.body.From,
+          this.sendOnExit,
+        ));
+        action[ActionSetMessageSid](<string>sid);
+        break;
 
-        case Message:
-          sid = <string[]>(await this.sendSmsMessage(
-            (<Message>action).to,
-            (<Message>action).body,
-            handleError,
-          ));
-          action[ActionSetMessageSids](<string[]>sid);
-          break;
+      case Message:
+        sid = <string[]>(await this.sendSmsMessage(
+          (<Message>action).to,
+          (<Message>action).body,
+        ));
+        action[ActionSetMessageSids](<string[]>sid);
+        break;
 
-        case Question:
-          (async () => {
-            const question = <Question>action;
-            sid = [];
-            if (question.isAnswered) return;
-            if (question.isFailed) {
-              sid.push(<string>(await this.sendSmsMessage(
-                req.body.From,
-                question.failedAnswerResponse,
-                handleError,
-              )));
-              action[ActionSetMessageSids](sid);
-              return;
-            }
-            if (question.shouldSendInvalidRes) {
-              sid.push(<string>(await this.sendSmsMessage(
-                req.body.From,
-                question.invalidAnswerResponse,
-                handleError,
-              )));
-            }
+      case Question:
+        (async () => {
+          const question = <Question>action;
+          sid = [];
+          if (question.isAnswered) return;
+          if (question.isFailed) {
             sid.push(<string>(await this.sendSmsMessage(
               req.body.From,
-              question.body,
-              handleError,
+              question.failedAnswerResponse,
             )));
             action[ActionSetMessageSids](sid);
-          })();
-          break;
-
-        case Reply:
-          sid = <string>(await this.sendSmsMessage(
+            return;
+          }
+          if (question.shouldSendInvalidRes) {
+            sid.push(<string>(await this.sendSmsMessage(
+              req.body.From,
+              question.invalidAnswerResponse,
+            )));
+          }
+          sid.push(<string>(await this.sendSmsMessage(
             req.body.From,
-            (<Reply>action).body,
-            handleError,
-          ));
-          action[ActionSetMessageSid](<string>sid);
-          break;
+            question.body,
+          )));
+          action[ActionSetMessageSids](sid);
+        })();
+        break;
 
-        default:
-          break;
-      }
-    } catch (err) {
-      handleError(err);
+      case Reply:
+        sid = <string>(await this.sendSmsMessage(
+          req.body.From,
+          (<Reply>action).body,
+        ));
+        action[ActionSetMessageSid](<string>sid);
+        break;
+
+      default:
+        break;
     }
   }
 
@@ -145,19 +133,13 @@ export default class TwilioController {
     return new TwimlResponse(res).send();
   }
 
-  public async sendOnMessageNotification(msg: Message, handleError: ErrorHandler) {
-    try {
-      await this.sendSmsMessage(
-        msg.to, msg.body, handleError);
-    } catch (err) {
-      handleError(err);
-    }
+  public async sendOnMessageNotification(msg: Message) {
+    await this.sendSmsMessage(msg.to, msg.body);
   }
 
   public async sendSmsMessage(
     to: string | string[],
     body: string,
-    handleError: ErrorHandler,
   ): Promise<string | string[]> {
     if (Array.isArray(to)) {
       const data = await Promise.all(
@@ -169,16 +151,12 @@ export default class TwilioController {
           })));
       return data.map(m => m.sid);
     }
-    try {
-      const data = await this.twilio.messages.create({
-        to: <string>to,
-        body,
-        messagingServiceSid: this.messageServiceId,
-      });
-      return data.sid;
-    } catch (err) {
-      handleError(err);
-    }
+    const data = await this.twilio.messages.create({
+      to: <string>to,
+      body,
+      messagingServiceSid: this.messageServiceId,
+    });
+    return data.sid;
   }
 
   public sendSmsResponse(res: Response, msg: string): void {

@@ -163,7 +163,7 @@ test(
     const state = createSmsCookie(req);
 
     state.isComplete = true;
-    const result = await fc.resolveActionFromState(req, state, user, () => { });
+    const result = await fc.resolveActionFromState(req, state, user);
 
     expect(result).toBe(null);
   },
@@ -183,7 +183,7 @@ test(
     const state = createSmsCookie(req);
 
     testForExit.mockResolvedValue(false);
-    const result = await fc.resolveActionFromState(req, state, user, () => { });
+    const result = await fc.resolveActionFromState(req, state, user);
 
     expect(testForExit).toBeCalledTimes(1);
     expect(testForExit).toBeCalledWith(req.body.Body);
@@ -206,7 +206,7 @@ test(
     const state = createSmsCookie(req);
 
     testForExit.mockResolvedValue(true);
-    const result = <Exit>(await fc.resolveActionFromState(req, state, user, () => { }));
+    const result = <Exit>(await fc.resolveActionFromState(req, state, user));
 
     expect(result instanceof Exit).toBeTruthy();
     expect(result[GetContext]()).toEqual({ messageBody: req.body.Body });
@@ -228,7 +228,7 @@ test(
     const state = createSmsCookie(req);
 
     resolver.mockResolvedValue(rootReply);
-    const result = await fc.resolveActionFromState(req, state, user, () => { });
+    const result = await fc.resolveActionFromState(req, state, user);
 
     expect(resolver).toBeCalledTimes(1);
     expect(resolver).toBeCalledWith(state.flowContext, user);
@@ -253,7 +253,7 @@ test(
 
     state.flow = root.name;
     resolver.mockResolvedValue(rootReply);
-    const result = await fc.resolveActionFromState(req, state, user, () => { });
+    const result = await fc.resolveActionFromState(req, state, user);
 
     expect(resolver).toBeCalledTimes(1);
     expect(resolver).toBeCalledWith(state.flowContext, user);
@@ -284,7 +284,7 @@ test(
 
     state.flow = flowName;
     resolver.mockResolvedValue(flowReply);
-    const result = await fc.resolveActionFromState(req, state, user, () => { });
+    const result = await fc.resolveActionFromState(req, state, user);
 
     expect(resolver).toBeCalledTimes(1);
     expect(resolver).toBeCalledWith(state.flowContext, user);
@@ -313,7 +313,7 @@ test(
 
     state.flowKey = 2;
     resolver.mockResolvedValue(reply);
-    const result = await fc.resolveActionFromState(req, state, user, () => { });
+    const result = await fc.resolveActionFromState(req, state, user);
 
     expect(resolver).toBeCalledTimes(1);
     expect(resolver).toBeCalledWith(state.flowContext, user);
@@ -347,7 +347,7 @@ test(
     state.flow = flow.name;
     state.flowKey = 1;
     resolver.mockResolvedValue(reply);
-    const result = await fc.resolveActionFromState(req, state, user, () => { });
+    const result = await fc.resolveActionFromState(req, state, user);
 
     expect(resolver).toBeCalledTimes(1);
     expect(resolver).toBeCalledWith(state.flowContext, user);
@@ -368,13 +368,13 @@ test(
     const state = createSmsCookie(req);
 
     state.flowKey = 1;
-    let result = await fc.resolveActionFromState(req, state, user, () => { });
+    let result = await fc.resolveActionFromState(req, state, user);
 
     expect(result).toBe(null);
 
     root.addAction(uniqueString(), () => new Reply(uniqueString()));
     state.flowKey = 2;
-    result = await fc.resolveActionFromState(req, state, user, () => { });
+    result = await fc.resolveActionFromState(req, state, user);
 
     expect(result).toBe(null);
   },
@@ -396,15 +396,14 @@ test(
     const user = {};
     const state = createSmsCookie(req);
     const fc = new FlowController(root);
-    const handleError = jest.fn();
 
     resolver.mockResolvedValue(q);
     state.flowKey = 1;
-    const result = await fc.resolveActionFromState(req, state, user, handleError);
+    const result = await fc.resolveActionFromState(req, state, user);
 
     expect(result).toBe(q);
     expect(q[QuestionEvaluate]).toBeCalledTimes(1);
-    expect(q[QuestionEvaluate]).toBeCalledWith(req, state, handleError);
+    expect(q[QuestionEvaluate]).toBeCalledWith(req, state);
   },
 );
 
@@ -426,7 +425,7 @@ test(
 
       resolver.mockResolvedValue(obj);
       state.flowKey = 1;
-      const result = await fc.resolveActionFromState(req, state, user, () => { });
+      const result = await fc.resolveActionFromState(req, state, user);
 
       expect(result).toBe(null);
     };
@@ -442,33 +441,7 @@ test(
 
 
 test(
-  'FlowController resolveActionFromState should call handleError '
-  + 'if there is an error resolving the next action',
-  async () => {
-    const root = randomFlow();
-    const resolver = jest.fn();
-
-    root.addAction(uniqueString(), resolver);
-
-    const req = getMockTwilioWebhookRequest();
-    const user = {};
-    const state = createSmsCookie(req);
-    const fc = new FlowController(root);
-    const err = new Error(uniqueString());
-    const handleError = jest.fn();
-
-    resolver.mockRejectedValue(err);
-    state.flowKey = 1;
-    await fc.resolveActionFromState(req, state, user, handleError);
-
-    expect(handleError).toBeCalledTimes(1);
-    expect(handleError).toBeCalledWith(err);
-  },
-);
-
-
-test(
-  'FlowController resolveActionFromState should call handleError '
+  'FlowController resolveActionFromState should throw an error '
   + 'if the state specifies a flow not in the schema',
   async () => {
     const root = randomFlow();
@@ -479,7 +452,7 @@ test(
     const handleError = jest.fn();
 
     state.flow = uniqueString();
-    await fc.resolveActionFromState(req, state, user, handleError);
+    await fc.resolveActionFromState(req, state, user);
 
     expect(handleError).toBeCalledTimes(1);
     expect(handleError.mock.calls[0][0] instanceof TypeError).toBeTruthy();
@@ -503,7 +476,7 @@ test(
     const fc = new FlowController(root, null, { testForExit });
 
     testForExit.mockRejectedValue(err);
-    await fc.resolveActionFromState(req, state, user, handleError);
+    await fc.resolveActionFromState(req, state, user);
 
     expect(handleError).toBeCalledTimes(1);
     expect(handleError).toBeCalledWith(err);

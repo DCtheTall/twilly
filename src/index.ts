@@ -1,10 +1,6 @@
 import { Router, Response } from 'express';
 
-import {
-  OnCatchErrorHook,
-  getSha256Hash,
-  createHandleError,
-} from './util';
+import { getSha256Hash } from './util';
 import {
   TwilioController,
   TwilioControllerArgs,
@@ -46,6 +42,10 @@ const DEFAULT_EXIT_TEXT = 'Goodbye.';
 
 type OnMessageHook =
   (context: InteractionContext, user: any, messageBody: string) => any;
+
+type OnCatchErrorHook =
+  (context: InteractionContext, user: any, err: Error) => any;
+
 type UserContextGetter = (from: string) => any;
 
 
@@ -60,23 +60,20 @@ async function handleIncomingSmsWebhook(
 ) {
   let state = <SmsCookie>{ interactionContext: [], flowContext: {} };
   let userCtx = null;
-  let handleError = createHandleError(null, null, onCatchError);
 
   try {
     state = tc.getSmsCookeFromRequest(req);
     userCtx = await getUserContext(req.body.From); // will throw any errors not caught in promise
-    handleError = createHandleError(state.interactionContext, userCtx, onCatchError);
 
     let action =
-      await fc.resolveActionFromState(
-        req, state, userCtx, handleError);
+      await fc.resolveActionFromState(req, state, userCtx);
 
     if (onMessage) {
       try {
         const result = await onMessage(
           state.interactionContext, userCtx, req.body.Body);
         if (result instanceof Message) {
-          await tc.sendOnMessageNotification(result, handleError);
+          await tc.sendOnMessageNotification(result);
         }
       } catch (err) {
         onCatchError(state.interactionContext, userCtx, err);
@@ -84,7 +81,7 @@ async function handleIncomingSmsWebhook(
     }
 
     while (action !== null) {
-      await tc.handleAction(req, action, handleError);
+      await tc.handleAction(req, action);
       await new Promise(
         resolve => setTimeout(resolve, 1000)); // for preserving message order
 
@@ -99,8 +96,7 @@ async function handleIncomingSmsWebhook(
         )
       ) break;
       action =
-        await fc.resolveActionFromState(
-          req, state, userCtx, handleError);
+        await fc.resolveActionFromState(req, state, userCtx);
       if (action === null) break;
     }
 

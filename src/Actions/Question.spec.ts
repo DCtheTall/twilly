@@ -245,11 +245,10 @@ test('Question evaluating valid text answer', async () => {
   const answer = uniqueString();
   const q = new Question(uniqueString(), { validateAnswer: ans => ans === answer });
   const reqMock = getMockTwilioWebhookRequest({ body: answer });
-  const errorHandlerStub = jest.fn();
   const stateMock = createSmsCookie(reqMock);
 
   stateMock.question.isAnswering = true;
-  await q[QuestionEvaluate](reqMock, stateMock, errorHandlerStub);
+  await q[QuestionEvaluate](reqMock, stateMock);
 
   expect(q.isAnswered).toBe(true);
   expect(q.isFailed).toBe(false);
@@ -270,7 +269,7 @@ test('Question evaluating invalid text answer with retry left', async () => {
   const stateMock = createSmsCookie(reqMock);
 
   stateMock.question.isAnswering = true;
-  await q[QuestionEvaluate](reqMock, stateMock, errorHandlerStub);
+  await q[QuestionEvaluate](reqMock, stateMock);
 
   expect(q.isFailed).toBe(false);
   expect(q.isAnswered).toBe(false);
@@ -287,12 +286,11 @@ test('Question evaluating invalid text answer without retry left', async () => {
     validateAnswer: ans => Promise.resolve(ans !== answer),
   });
   const reqMock = getMockTwilioWebhookRequest({ body: answer });
-  const errorHandlerStub = jest.fn();
   const stateMock = createSmsCookie(reqMock);
 
   stateMock.question.isAnswering = true;
   stateMock.question.attempts = [uniqueString()];
-  await q[QuestionEvaluate](reqMock, stateMock, errorHandlerStub);
+  await q[QuestionEvaluate](reqMock, stateMock);
 
   expect(q.isAnswered).toBe(false);
   expect(q.isFailed).toBe(true);
@@ -300,23 +298,6 @@ test('Question evaluating invalid text answer without retry left', async () => {
   expect(q[GetContext]()).toHaveProperty('wasAnswered', false);
   expect(q[GetContext]()).toHaveProperty('wasFailed', true);
   expect(q[GetContext]()).toHaveProperty('answer', null);
-});
-
-
-test('Question throws error evaluating text answer', async () => {
-  const answer = uniqueString();
-  const errorMock = new Error(uniqueString());
-  const q = new Question(uniqueString(), {
-    validateAnswer: () => { throw errorMock; },
-  });
-  const reqMock = getMockTwilioWebhookRequest({ body: answer });
-  const errorHandlerStub = jest.fn();
-  const stateMock = createSmsCookie(reqMock);
-
-  stateMock.question.isAnswering = true;
-  await q[QuestionEvaluate](reqMock, stateMock, errorHandlerStub);
-
-  expect(errorHandlerStub).toBeCalledWith(errorMock);
 });
 
 
@@ -330,11 +311,10 @@ test('Question evaluating valid multiple choice answer', async () => {
     ],
   });
   const reqMock = getMockTwilioWebhookRequest({ body: answer });
-  const errorHandlerStub = jest.fn();
   const stateMock = createSmsCookie(reqMock);
 
   stateMock.question.isAnswering = true;
-  await q[QuestionEvaluate](reqMock, stateMock, errorHandlerStub);
+  await q[QuestionEvaluate](reqMock, stateMock);
 
   expect(q.isAnswered).toBe(true);
   expect(q.isFailed).toBe(false);
@@ -359,7 +339,7 @@ test('Question validates multiple choices selected with retry left', async () =>
   const stateMock = createSmsCookie(reqMock);
 
   stateMock.question.isAnswering = true;
-  await q[QuestionEvaluate](reqMock, stateMock, errorHandlerStub);
+  await q[QuestionEvaluate](reqMock, stateMock);
 
   expect(q.isFailed).toBe(false);
   expect(q.isAnswered).toBe(false);
@@ -380,12 +360,11 @@ test('Question validates multiple choices selected without retry left', async ()
     ],
   });
   const reqMock = getMockTwilioWebhookRequest({ body: answer });
-  const errorHandlerStub = jest.fn();
   const stateMock = createSmsCookie(reqMock);
 
   stateMock.question.isAnswering = true;
   stateMock.question.attempts = [uniqueString()];
-  await q[QuestionEvaluate](reqMock, stateMock, errorHandlerStub);
+  await q[QuestionEvaluate](reqMock, stateMock);
 
   expect(q.isAnswered).toBe(false);
   expect(q.isFailed).toBe(true);
@@ -406,11 +385,10 @@ test('Question evaluating invalid multiple choice answer with retry left', async
     ],
   });
   const reqMock = getMockTwilioWebhookRequest({ body: answer });
-  const errorHandlerStub = jest.fn();
   const stateMock = createSmsCookie(reqMock);
 
   stateMock.question.isAnswering = true;
-  await q[QuestionEvaluate](reqMock, stateMock, errorHandlerStub);
+  await q[QuestionEvaluate](reqMock, stateMock);
 
   expect(q.isFailed).toBe(false);
   expect(q.isAnswered).toBe(false);
@@ -431,12 +409,11 @@ test('Question evaluating invalid multiple choice answer without retry left', as
     ],
   });
   const reqMock = getMockTwilioWebhookRequest({ body: answer });
-  const errorHandlerStub = jest.fn();
   const stateMock = createSmsCookie(reqMock);
 
   stateMock.question.isAnswering = true;
   stateMock.question.attempts = [uniqueString()];
-  await q[QuestionEvaluate](reqMock, stateMock, errorHandlerStub);
+  await q[QuestionEvaluate](reqMock, stateMock);
 
   expect(q.isFailed).toBe(true);
   expect(q.isAnswered).toBe(false);
@@ -447,27 +424,6 @@ test('Question evaluating invalid multiple choice answer without retry left', as
 });
 
 
-test('Question evaluating multiple choice answer throws answer', async () => {
-  const answer = uniqueString();
-  const errorMock = new Error(uniqueString());
-  const q = new Question(uniqueString(), {
-    type: Question.Types.MultipleChoice,
-    choices: [
-      ans => Promise.resolve(ans !== answer),
-      () => { throw errorMock },
-    ],
-  });
-  const reqMock = getMockTwilioWebhookRequest({ body: answer });
-  const errorHandlerStub = jest.fn();
-  const stateMock = createSmsCookie(reqMock);
-
-  stateMock.question.isAnswering = true;
-  await q[QuestionEvaluate](reqMock, stateMock, errorHandlerStub);
-
-  expect(errorHandlerStub).toBeCalledWith(errorMock);
-});
-
-
 test('Question evaluating with more maxRetries than 1', async () => {
   const answer = uniqueString();
   const q = new Question(uniqueString(), {
@@ -475,12 +431,11 @@ test('Question evaluating with more maxRetries than 1', async () => {
     maxRetries: 3,
   });
   const reqMock = getMockTwilioWebhookRequest({ body: answer });
-  const errorHandlerStub = jest.fn();
   const stateMock = createSmsCookie(reqMock);
 
   stateMock.question.isAnswering = true;
   stateMock.question.attempts = [uniqueString(), uniqueString()];
-  await q[QuestionEvaluate](reqMock, stateMock, errorHandlerStub);
+  await q[QuestionEvaluate](reqMock, stateMock);
 
   expect(q.isFailed).toBe(false);
   expect(q.isAnswered).toBe(false);
@@ -499,10 +454,9 @@ test('Question should not evaluate when not answering the question yet', async (
     maxRetries: 3,
   });
   const reqMock = getMockTwilioWebhookRequest({ body: answer });
-  const errorHandlerStub = jest.fn();
   const stateMock = createSmsCookie(reqMock);
 
-  await q[QuestionEvaluate](reqMock, stateMock, errorHandlerStub);
+  await q[QuestionEvaluate](reqMock, stateMock);
 
   expect(validateAnswer).toBeCalledTimes(0);
 });

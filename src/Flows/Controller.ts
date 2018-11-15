@@ -25,7 +25,6 @@ import {
   updateContext,
 } from '../SmsCookie';
 import { TwilioWebhookRequest } from '../twllio';
-import { ErrorHandler } from '../util';
 
 
 export type ExitKeywordTest =
@@ -106,37 +105,32 @@ export default class FlowController {
     req: TwilioWebhookRequest,
     state: SmsCookie,
     userCtx: any,
-    handleError: ErrorHandler,
   ): Promise<Action> {
     if (state.isComplete) {
       return null;
     }
-    try {
-      if (this.testForExit && await this.testForExit(req.body.Body)) {
-        return new Exit(req.body.Body);
-      }
-
-      const key = Number(state.flowKey);
-      const currFlow = this.getCurrentFlow(state);
-      const resolveAction = currFlow[FlowSelectActionResolver](key);
-
-      if (!resolveAction) {
-        return null;
-      }
-
-      const action = await resolveAction(state.flowContext, userCtx);
-      if (action instanceof Question) {
-        await action[QuestionEvaluate](req, state, handleError);
-      }
-      if (!(action instanceof Action)) {
-        return null;
-      }
-      action[ActionSetName](currFlow[FlowSelectName](key));
-
-      return action;
-    } catch (err) {
-      handleError(err);
+    if (this.testForExit && await this.testForExit(req.body.Body)) {
+      return new Exit(req.body.Body);
     }
+
+    const key = Number(state.flowKey);
+    const currFlow = this.getCurrentFlow(state);
+    const resolveAction = currFlow[FlowSelectActionResolver](key);
+
+    if (!resolveAction) {
+      return null;
+    }
+
+    const action = await resolveAction(state.flowContext, userCtx);
+    if (action instanceof Question) {
+      await action[QuestionEvaluate](req, state);
+    }
+    if (!(action instanceof Action)) {
+      return null;
+    }
+    action[ActionSetName](currFlow[FlowSelectName](key));
+
+    return action;
   }
 
   public resolveNextStateFromAction(

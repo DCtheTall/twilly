@@ -4,7 +4,6 @@ import Action, {
 } from "./Action";
 import { SmsCookie } from "../SmsCookie";
 import { TwilioWebhookRequest } from '../twllio';
-import { ErrorHandler } from "../util";
 
 
 export const MAXIMUM_RETRIES_ALLOWED = 10;
@@ -240,37 +239,31 @@ export default class Question extends Action {
   public async [QuestionEvaluate](
     req: TwilioWebhookRequest,
     state: SmsCookie,
-    handleError: ErrorHandler,
   ) {
     if (!state.question.isAnswering) return;
+    if (
+      this.type === Question.Types.Text &&
+      await this.validateAnswer(req.body.Body)
+    ) {
+      this.setAnswer(req.body.Body);
+      return;
+    }
 
-    try {
-      if (
-        this.type === Question.Types.Text &&
-        await this.validateAnswer(req.body.Body)
-      ) {
-        this.setAnswer(req.body.Body);
+    if (this.type === Question.Types.MultipleChoice) {
+      const choices =
+        await Promise.all(
+          this.choices.map(
+            (validate: AnswerValidator) => validate(req.body.Body)));
+      const validChoices =
+        choices.map((_, i) => i)
+                .filter(i => choices[i]);
+
+      if (validChoices.length === 1) {
+        this.setAnswer(<number>validChoices[0]);
         return;
       }
-
-      if (this.type === Question.Types.MultipleChoice) {
-        const choices =
-          await Promise.all(
-            this.choices.map(
-              (validate: AnswerValidator) => validate(req.body.Body)));
-        const validChoices =
-          choices.map((_, i) => i)
-                 .filter(i => choices[i]);
-
-        if (validChoices.length === 1) {
-          this.setAnswer(<number>validChoices[0]);
-          return;
-        }
-      }
-
-      this.handleInvalidAnswer(state);
-    } catch (err) {
-      handleError(err);
     }
+
+    this.handleInvalidAnswer(state);
   }
 }
