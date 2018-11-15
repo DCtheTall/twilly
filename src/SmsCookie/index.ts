@@ -66,15 +66,6 @@ export function createSmsCookie(req: TwilioWebhookRequest): SmsCookie {
 }
 
 
-function getActionContext(state, flow, action): ActionContext {
-  return (action instanceof Question ?
-    <QuestionContext>{
-      ...action[ActionGetContext](),
-      messageSid: recordQuestionMessageSid(state, flow, action),
-    } : action[ActionGetContext]());
-}
-
-
 export function handleTrigger(state: SmsCookie, trigger: Trigger): SmsCookie {
   return {
     ...state,
@@ -97,6 +88,17 @@ export function incrementFlowAction(
 }
 
 
+export function startQuestion(state: SmsCookie): SmsCookie {
+  return {
+    ...state,
+    question: {
+      attempts: [],
+      isAnswering: true,
+    },
+  };
+}
+
+
 function recordQuestionMessageSid(
   state: SmsCookie,
   flow: Flow,
@@ -110,17 +112,13 @@ function recordQuestionMessageSid(
   ];
 }
 
-
-export function startQuestion(state: SmsCookie): SmsCookie {
-  return {
-    ...state,
-    question: {
-      attempts: [],
-      isAnswering: true,
-    },
-  };
+function getActionContext(state, flow, action): ActionContext {
+  return (action instanceof Question ?
+    <QuestionContext>{
+      ...action[ActionGetContext](),
+      messageSid: recordQuestionMessageSid(state, flow, action),
+    } : action[ActionGetContext]());
 }
-
 
 export function updateContext(
   state: SmsCookie,

@@ -39,21 +39,25 @@ export interface TwilioWebhookRequest extends ExpressRequest {
 export interface MockTwilioWebhookRequestOpts {
   body?: string;
   cookieKey?: string;
+  from?: string;
 }
 
 const defaultOptions = <MockTwilioWebhookRequestOpts>{
   body: uniqueString(),
   cookieKey: uniqueString(),
+  from: uniqueString(),
 };
 
 export function getMockTwilioWebhookRequest({
   body = defaultOptions.body,
   cookieKey = defaultOptions.cookieKey,
+  from = defaultOptions.from,
 }: MockTwilioWebhookRequestOpts = defaultOptions): TwilioWebhookRequest {
   return <TwilioWebhookRequest>{
     cookies: { [cookieKey]: <SmsCookie>{} },
     body: {
       Body: body,
+      From: from,
     },
   };
 }
