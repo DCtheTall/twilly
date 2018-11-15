@@ -79,7 +79,7 @@ async function handleIncomingSmsWebhook(
           await tc.sendOnMessageNotification(result, handleError);
         }
       } catch (err) {
-        handleError(err);
+        onCatchError(state.interactionContext, userCtx, err);
       }
     }
 

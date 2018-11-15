@@ -95,7 +95,7 @@ export default class FlowController {
     ) {
       return this.root;
     }
-    if (!this.schema.has(state.flow)) {
+    if (!(this.schema && this.schema.has(state.flow))) {
       throw new TypeError(
         `Received invalid flow name in SMS cookie: ${state.flow}`);
     }
@@ -111,18 +111,19 @@ export default class FlowController {
     if (state.isComplete) {
       return null;
     }
-    if (this.testForExit && await this.testForExit(req.body.Body)) {
-      return new Exit(req.body.Body);
-    }
-
-    const key = Number(state.flowKey);
-    const currFlow = this.getCurrentFlow(state);
-    const resolveAction = currFlow[FlowSelectActionResolver](key);
-
-    if (!resolveAction) {
-      return null;
-    }
     try {
+      if (this.testForExit && await this.testForExit(req.body.Body)) {
+        return new Exit(req.body.Body);
+      }
+
+      const key = Number(state.flowKey);
+      const currFlow = this.getCurrentFlow(state);
+      const resolveAction = currFlow[FlowSelectActionResolver](key);
+
+      if (!resolveAction) {
+        return null;
+      }
+
       const action = await resolveAction(state.flowContext, userCtx);
       if (action instanceof Question) {
         await action[QuestionEvaluate](req, state, handleError);
@@ -131,6 +132,7 @@ export default class FlowController {
         return null;
       }
       action[ActionSetName](currFlow[FlowSelectName](key));
+
       return action;
     } catch (err) {
       handleError(err);
