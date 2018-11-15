@@ -449,37 +449,19 @@ test(
     const user = {};
     const state = createSmsCookie(req);
     const fc = new FlowController(root);
-    const handleError = jest.fn();
 
-    state.flow = uniqueString();
-    await fc.resolveActionFromState(req, state, user);
+    let caught: Error;
 
-    expect(handleError).toBeCalledTimes(1);
-    expect(handleError.mock.calls[0][0] instanceof TypeError).toBeTruthy();
-    expect(handleError.mock.calls[0][0].message).toBe(
+    try {
+      state.flow = uniqueString();
+      await fc.resolveActionFromState(req, state, user);
+    } catch (err) {
+      caught = err;
+    }
+
+    expect(caught instanceof TypeError).toBeTruthy();
+    expect(caught.message).toBe(
       `Received invalid flow name in SMS cookie: ${state.flow}`);
-  },
-);
-
-
-test(
-  'FlowController resolveActionFromState should call handleError '
-  + 'if the testForExit hook throws an error',
-  async () => {
-    const root = randomFlow();
-    const testForExit = jest.fn();
-    const req = getMockTwilioWebhookRequest();
-    const user = {};
-    const state = createSmsCookie(req);
-    const handleError = jest.fn();
-    const err = new Error(uniqueString());
-    const fc = new FlowController(root, null, { testForExit });
-
-    testForExit.mockRejectedValue(err);
-    await fc.resolveActionFromState(req, state, user);
-
-    expect(handleError).toBeCalledTimes(1);
-    expect(handleError).toBeCalledWith(err);
   },
 );
 
