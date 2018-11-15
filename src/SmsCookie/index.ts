@@ -31,6 +31,17 @@ export interface SmsCookie {
 }
 
 
+export function addQuestionAttempt(state: SmsCookie, attempt: string): SmsCookie {
+  return {
+    ...state,
+    question: {
+      ...state.question,
+      attempts: [...state.question.attempts, attempt],
+    },
+  };
+}
+
+
 export function completeInteraction(state: SmsCookie) {
   return { ...state, isComplete: true };
 }
@@ -38,7 +49,7 @@ export function completeInteraction(state: SmsCookie) {
 
 export function createSmsCookie(req: TwilioWebhookRequest): SmsCookie {
   return {
-    createdAt: null,
+    createdAt: new Date(),
     flow: null,
     flowContext: {},
     flowKey: 0,
@@ -55,16 +66,12 @@ export function createSmsCookie(req: TwilioWebhookRequest): SmsCookie {
 }
 
 
-export function startQuestion(
-  state: SmsCookie,
-): SmsCookie {
-  return {
-    ...state,
-    question: {
-      attempts: [],
-      isAnswering: true,
-    },
-  };
+function getActionContext(state, flow, action): ActionContext {
+  return (action instanceof Question ?
+    <QuestionContext>{
+      ...action[ActionGetContext](),
+      messageSid: recordQuestionMessageSid(state, flow, action),
+    } : action[ActionGetContext]());
 }
 
 
@@ -90,7 +97,11 @@ export function incrementFlowAction(
 }
 
 
-function recordQuestionMessageSid(state: SmsCookie, flow: Flow, action: Question): string[] {
+function recordQuestionMessageSid(
+  state: SmsCookie,
+  flow: Flow,
+  action: Question,
+): string[] {
   const prevSid =
     (<string[]>((state.flowContext[flow.name] || {})[action.name] || {}).messageSid || []);
   return [
@@ -100,12 +111,14 @@ function recordQuestionMessageSid(state: SmsCookie, flow: Flow, action: Question
 }
 
 
-function getActionContext(state, flow, action): ActionContext {
-  return (action instanceof Question ?
-    <QuestionContext>{
-      ...action[ActionGetContext](),
-      messageSid: recordQuestionMessageSid(state, flow, action),
-    } : action[ActionGetContext]());
+export function startQuestion(state: SmsCookie): SmsCookie {
+  return {
+    ...state,
+    question: {
+      attempts: [],
+      isAnswering: true,
+    },
+  };
 }
 
 

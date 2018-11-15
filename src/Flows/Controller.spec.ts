@@ -6,13 +6,17 @@ import {
   GetContext,
   Question,
   QuestionEvaluate,
+  QuestionSetIsAnswered,
+  QuestionSetIsFailed,
   Reply,
+  Trigger,
 } from '../Actions';
 import { uniqueString } from '../util';
 import { getMockTwilioWebhookRequest } from '../twllio';
-import { createSmsCookie } from '../SmsCookie';
+import * as SmsCookieModule from '../SmsCookie';
 
 
+const createSmsCookie = SmsCookieModule.createSmsCookie;
 const randomFlow = () =>
   new Flow(uniqueString()).addAction(
     uniqueString(), () => new Reply(uniqueString()));
@@ -43,7 +47,7 @@ test(
       } catch (err) {
         caught = err;
       }
-      expect(caught instanceof TypeError).toBeTruthy();
+      expect(caught.constructor).toBe(TypeError);
       expect(caught.message).toBe(
         'root parameter must be an instance of Flow');
     };
@@ -71,7 +75,7 @@ test(
     } catch (err) {
       caught = err;
     }
-    expect(caught instanceof TypeError).toBeTruthy();
+    expect(caught.constructor).toBe(TypeError);
     expect(caught.message).toBe(
       'All Flows must perform at least one action. Check the root Flow');
   },
@@ -114,7 +118,7 @@ test(
       } catch (err) {
         caught = err;
       }
-      expect(caught instanceof TypeError).toBeTruthy();
+      expect(caught.constructor).toBe(TypeError);
       expect(caught.message).toBe(
         'schema parameter must be an instance of FlowSchema');
     };
@@ -147,11 +151,20 @@ test(
     } catch (err) {
       caught = err;
     }
-    expect(caught instanceof TypeError).toBeTruthy();
+    expect(caught.constructor).toBe(TypeError);
     expect(caught.message).toBe(
       'If you provide the schema parameter, it must include a flow distinct from the root Flow');
   }
 );
+
+
+test('FlowController should take an onInteractionEnd option', () => {
+  const root = randomFlow();
+  const onInteractionEnd = () => {};
+  const fc = new FlowController(root, null, { onInteractionEnd });
+
+  expect(fc.onInteractionEnd).toBe(onInteractionEnd);
+});
 
 
 test(
@@ -292,6 +305,33 @@ test(
     expect(result.name).toBe(replyName);
   },
 );
+
+
+test(
+  'FlowController resolveActionFromState should throw an error '
+  + 'if the state specifies a flow not in the schema',
+  async () => {
+    const root = randomFlow();
+    const req = getMockTwilioWebhookRequest();
+    const user = {};
+    const state = createSmsCookie(req);
+    const fc = new FlowController(root);
+
+    let caught: Error;
+
+    try {
+      state.flow = uniqueString();
+      await fc.resolveActionFromState(req, state, user);
+    } catch (err) {
+      caught = err;
+    }
+
+    expect(caught.constructor).toBe(TypeError);
+    expect(caught.message).toBe(
+      `Received invalid flow name in SMS cookie: ${state.flow}`);
+  },
+);
+
 
 test(
   'FlowController resolveActionFromState should determine '
@@ -441,35 +481,349 @@ test(
 
 
 test(
-  'FlowController resolveActionFromState should throw an error '
-  + 'if the state specifies a flow not in the schema',
-  async () => {
-    const root = randomFlow();
-    const req = getMockTwilioWebhookRequest();
-    const user = {};
-    const state = createSmsCookie(req);
-    const fc = new FlowController(root);
+  'FlowController resolveNextStateFromAction should complete the interaction '
+    + 'if it is called with anything other than an action',
+  () => {
+    const executeTest = (action: any) => {
+      const fc = new FlowController(randomFlow());
+      const req = getMockTwilioWebhookRequest();
+      const state = createSmsCookie(req);
+      const newState = { ...state };
 
-    let caught: Error;
+      const completeInteraction = jest.spyOn(SmsCookieModule, 'completeInteraction');
 
-    try {
-      state.flow = uniqueString();
-      await fc.resolveActionFromState(req, state, user);
-    } catch (err) {
-      caught = err;
-    }
+      completeInteraction.mockReturnValue(newState);
+      const result = fc.resolveNextStateFromAction(req, state, action);
 
-    expect(caught instanceof TypeError).toBeTruthy();
-    expect(caught.message).toBe(
-      `Received invalid flow name in SMS cookie: ${state.flow}`);
+      expect(completeInteraction).toBeCalledTimes(1);
+      expect(completeInteraction).toBeCalledWith(state);
+      expect(result).toBe(newState);
+
+      completeInteraction.mockRestore();
+    };
+
+    executeTest(1);
+    executeTest([]);
+    executeTest({});
+    executeTest(uniqueString());
+    executeTest(() => {});
+    executeTest(new Buffer(uniqueString()));
   },
 );
 
 
-// test(
-//   ''
-// );
+test(
+  'FlowController resolveNextStateFromAction should end the interaction '
+    + 'if it receives an Exit action',
+  () => {
+    const root = randomFlow();
+    const req = getMockTwilioWebhookRequest();
+    const state = createSmsCookie(req);
+    const exit = new Exit(uniqueString());
+    const fc = new FlowController(root);
+    const updatedState = { ...state };
+    const newState = { ...state };
 
-// test testForExit option with type checking
-// test resolveNextStateFromAction
-// test onInteractionEnd with type checking
+    const completeInteraction = jest.spyOn(SmsCookieModule, 'completeInteraction');
+    const updateContext = jest.spyOn(SmsCookieModule, 'updateContext');
+
+    updateContext.mockReturnValue(updatedState);
+    completeInteraction.mockReturnValue(newState);
+    const result = fc.resolveNextStateFromAction(req, state, exit);
+
+    expect(updateContext).toBeCalledTimes(1);
+    expect(updateContext).toBeCalledWith(state, root, exit);
+    expect(completeInteraction).toBeCalledTimes(1);
+    expect(completeInteraction).toBeCalledWith(updatedState);
+    expect(result).toBe(newState);
+
+    updateContext.mockRestore();
+    completeInteraction.mockRestore();
+  },
+);
+
+
+test(
+  'FlowController resolveNextStateFromAction should handle an answered Question',
+  () => {
+    const root = randomFlow();
+    const req = getMockTwilioWebhookRequest();
+    const state = createSmsCookie(req);
+    const stateWithAttempt = { ...state };
+    const updatedState = { ...state };
+    const newState = { ...state };
+    const q = new Question(uniqueString());
+    const fc = new FlowController(root);
+
+    const addQuestionAttempt = jest.spyOn(SmsCookieModule, 'addQuestionAttempt');
+    const incrementFlowAction = jest.spyOn(SmsCookieModule, 'incrementFlowAction');
+    const updateContext = jest.spyOn(SmsCookieModule, 'updateContext');
+
+    state.question.isAnswering = true;
+    q[QuestionSetIsAnswered]();
+    addQuestionAttempt.mockReturnValue(stateWithAttempt);
+    updateContext.mockReturnValue(updatedState);
+    incrementFlowAction.mockReturnValue(newState);
+    const result = fc.resolveNextStateFromAction(req, state, q);
+
+    expect(addQuestionAttempt).toBeCalledTimes(1);
+    expect(addQuestionAttempt).toBeCalledWith(state, req.body.Body);
+    expect(updateContext).toBeCalledTimes(1);
+    expect(updateContext).toBeCalledWith(stateWithAttempt, root, q);
+    expect(incrementFlowAction).toBeCalledTimes(1);
+    expect(incrementFlowAction).toBeCalledWith(updatedState, root);
+    expect(result).toBe(newState);
+
+    addQuestionAttempt.mockRestore();
+    incrementFlowAction.mockRestore();
+    updateContext.mockRestore();
+  },
+);
+
+
+test(
+  'FlowController resolveNextStateFromAction should handle a failed Question '
+    + 'when it should continue on fail',
+  () => {
+    const root = randomFlow();
+    const req = getMockTwilioWebhookRequest();
+    const state = createSmsCookie(req);
+    const stateWithAttempt = { ...state };
+    const updatedState = { ...state };
+    const newState = { ...state };
+    const q = new Question(uniqueString(), { continueOnFailure: true });
+    const fc = new FlowController(root);
+
+    const addQuestionAttempt = jest.spyOn(SmsCookieModule, 'addQuestionAttempt');
+    const incrementFlowAction = jest.spyOn(SmsCookieModule, 'incrementFlowAction');
+    const updateContext = jest.spyOn(SmsCookieModule, 'updateContext');
+
+    state.question.isAnswering = true;
+    q[QuestionSetIsFailed]();
+    addQuestionAttempt.mockReturnValue(stateWithAttempt);
+    updateContext.mockReturnValue(updatedState);
+    incrementFlowAction.mockReturnValue(newState);
+    const result = fc.resolveNextStateFromAction(req, state, q);
+
+    expect(addQuestionAttempt).toBeCalledTimes(1);
+    expect(addQuestionAttempt).toBeCalledWith(state, req.body.Body);
+    expect(updateContext).toBeCalledTimes(1);
+    expect(updateContext).toBeCalledWith(stateWithAttempt, root, q);
+    expect(incrementFlowAction).toBeCalledTimes(1);
+    expect(incrementFlowAction).toBeCalledWith(updatedState, root);
+    expect(result).toBe(newState);
+
+    addQuestionAttempt.mockRestore();
+    incrementFlowAction.mockRestore();
+    updateContext.mockRestore();
+  },
+);
+
+
+test(
+  'FlowController resolveNextStateFromAction should handle a failed Question '
+  + 'when it should not continue on fail',
+  () => {
+    const root = randomFlow();
+    const req = getMockTwilioWebhookRequest();
+    const state = createSmsCookie(req);
+    const stateWithAttempt = { ...state };
+    const updatedState = { ...state };
+    const newState = { ...state };
+    const q = new Question(uniqueString());
+    const fc = new FlowController(root);
+
+    const addQuestionAttempt = jest.spyOn(SmsCookieModule, 'addQuestionAttempt');
+    const completeInteraction = jest.spyOn(SmsCookieModule, 'completeInteraction');
+    const updateContext = jest.spyOn(SmsCookieModule, 'updateContext');
+
+    state.question.isAnswering = true;
+    q[QuestionSetIsFailed]();
+    addQuestionAttempt.mockReturnValue(stateWithAttempt);
+    updateContext.mockReturnValue(updatedState);
+    completeInteraction.mockReturnValue(newState);
+    const result = fc.resolveNextStateFromAction(req, state, q);
+
+    expect(addQuestionAttempt).toBeCalledTimes(1);
+    expect(addQuestionAttempt).toBeCalledWith(state, req.body.Body);
+    expect(updateContext).toBeCalledTimes(1);
+    expect(updateContext).toBeCalledWith(stateWithAttempt, root, q);
+    expect(completeInteraction).toBeCalledTimes(1);
+    expect(completeInteraction).toBeCalledWith(updatedState);
+    expect(result).toBe(newState);
+
+    addQuestionAttempt.mockRestore();
+    completeInteraction.mockRestore();
+    updateContext.mockRestore();
+  },
+);
+
+
+test(
+  'FlowController resolveNextStateFromAction should update context '
+    + 'while a Question is being answered',
+  () => {
+    const root = randomFlow();
+    const req = getMockTwilioWebhookRequest();
+    const state = createSmsCookie(req);
+    const stateWithAttempt = { ...state };
+    const newState = { ...state };
+    const q = new Question(uniqueString());
+    const fc = new FlowController(root);
+
+    const addQuestionAttempt = jest.spyOn(SmsCookieModule, 'addQuestionAttempt');
+    const updateContext = jest.spyOn(SmsCookieModule, 'updateContext');
+
+    state.question.isAnswering = true;
+    addQuestionAttempt.mockReturnValue(stateWithAttempt);
+    updateContext.mockReturnValue(newState);
+    const result = fc.resolveNextStateFromAction(req, state, q);
+
+    expect(addQuestionAttempt).toBeCalledTimes(1);
+    expect(addQuestionAttempt).toBeCalledWith(state, req.body.Body);
+    expect(updateContext).toBeCalledTimes(1);
+    expect(updateContext).toBeCalledWith(stateWithAttempt, root, q);
+    expect(result).toBe(newState);
+
+    addQuestionAttempt.mockRestore();
+    updateContext.mockRestore();
+  },
+);
+
+
+test('FlowController resolveNextStateFromAction should start an unstarted Question', () => {
+  const root = randomFlow();
+  const req = getMockTwilioWebhookRequest();
+  const state = createSmsCookie(req);
+  const stateStartedQuestion = { ...state };
+  const newState = { ...state };
+  const q = new Question(uniqueString());
+  const fc = new FlowController(root);
+
+  const startQuestion = jest.spyOn(SmsCookieModule, 'startQuestion');
+  const updateContext = jest.spyOn(SmsCookieModule, 'updateContext');
+
+  startQuestion.mockReturnValue(stateStartedQuestion);
+  updateContext.mockReturnValue(newState);
+  const result = fc.resolveNextStateFromAction(req, state, q);
+
+  expect(startQuestion).toBeCalledTimes(1);
+  expect(startQuestion).toBeCalledWith(state);
+  expect(updateContext).toBeCalledTimes(1);
+  expect(updateContext).toBeCalledWith(stateStartedQuestion, root, q);
+  expect(result).toBe(newState);
+
+  startQuestion.mockRestore();
+  updateContext.mockRestore();
+});
+
+
+test(
+  'FlowController resolveNextStateFromAction Trigger should throw a TypeError '
+    + 'if there is no defined schema',
+  () => {
+    const req = getMockTwilioWebhookRequest();
+    const state = createSmsCookie(req);
+    const trigger = new Trigger(uniqueString());
+    const fc = new FlowController(randomFlow());
+
+    let caught: Error;
+
+    try {
+      fc.resolveNextStateFromAction(req, state, trigger);
+    } catch (err) {
+      caught = err;
+    }
+
+    expect(caught.message).toBe(
+      'Cannot use Trigger action without a defined Flow schema');
+  },
+);
+
+
+test(
+  'FlowController resolveNextStateFromAction Trigger should throw a TypeError '
+    + 'if the Flow the Trigger starts is not in the schema',
+  () => {
+    const req = getMockTwilioWebhookRequest();
+    const state = createSmsCookie(req);
+    const trigger = new Trigger(uniqueString());
+    const fc = new FlowController(randomFlow(), new FlowSchema({
+      [uniqueString()]: randomFlow(),
+    }));
+
+    let caught: Error;
+
+    try {
+      fc.resolveNextStateFromAction(req, state, trigger);
+    } catch (err) {
+      caught = err;
+    }
+
+    expect(caught.message).toBe(
+      'Trigger constructors expect a name of an existing Flow');
+  },
+);
+
+
+test('FlowController resolveNextStateFromAction should handle Trigger actions', () => {
+  const req = getMockTwilioWebhookRequest();
+  const state = createSmsCookie(req);
+  const flow1 = randomFlow();
+  const flow2 = randomFlow();
+  const trigger = new Trigger(flow2.name);
+  const fc = new FlowController(randomFlow(), new FlowSchema({
+    [uniqueString()]: flow1,
+    [uniqueString()]: flow2,
+  }));
+  const updatedState = { ...state };
+  const newState = { ...state };
+
+  const updateContext = jest.spyOn(SmsCookieModule, 'updateContext');
+  const handleTrigger = jest.spyOn(SmsCookieModule, 'handleTrigger');
+
+  state.flow = flow1.name;
+  updateContext.mockReturnValue(updatedState);
+  handleTrigger.mockReturnValue(newState);
+  const result = fc.resolveNextStateFromAction(req, state, trigger);
+
+  expect(updateContext).toBeCalledTimes(1);
+  expect(updateContext).toBeCalledWith(state, flow1, trigger);
+  expect(handleTrigger).toBeCalledTimes(1);
+  expect(handleTrigger).toBeCalledWith(updatedState, trigger);
+  expect(result).toBe(newState);
+
+  updateContext.mockRestore();
+  handleTrigger.mockRestore();
+});
+
+
+test(
+  'FlowController resolveNextStateFromAction should increment the flow action '
+    + 'and update the context by default',
+  () => {
+    const req = getMockTwilioWebhookRequest();
+    const state = createSmsCookie(req);
+    const root = randomFlow();
+    const fc = new FlowController(root);
+    const updatedState = { ...state };
+    const newState = { ...state };
+    const reply = new Reply(uniqueString());
+
+    const updateContext = jest.spyOn(SmsCookieModule, 'updateContext');
+    const incrementFlowAction = jest.spyOn(SmsCookieModule, 'incrementFlowAction');
+
+    updateContext.mockReturnValue(updatedState);
+    incrementFlowAction.mockReturnValue(newState);
+    const result = fc.resolveNextStateFromAction(req, state, reply);
+
+    expect(updateContext).toBeCalledTimes(1);
+    expect(updateContext).toBeCalledWith(state, root, reply);
+    expect(incrementFlowAction).toBeCalledTimes(1);
+    expect(incrementFlowAction).toBeCalledWith(updatedState, root);
+    expect(result).toBe(newState);
+
+    updateContext.mockRestore();
+    incrementFlowAction.mockRestore();
+  },
+);

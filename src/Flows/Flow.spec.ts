@@ -24,7 +24,7 @@ test(
       } catch (err) {
         caught = err;
       }
-      expect(caught instanceof TypeError).toBeTruthy();
+      expect(caught.constructor).toBe(TypeError);
       expect(caught.message).toBe(
         'Flow constructor expects a non-empty string as the first argument');
     };
@@ -68,7 +68,7 @@ test('Flow addAction should throw a TypeError if the first argument is not a non
     } catch (err) {
       caught = err;
     }
-    expect(caught instanceof TypeError).toBeTruthy();
+    expect(caught.constructor).toBe(TypeError);
     expect(caught.message).toBe(
       'Flow addAction expects a non-empty string as the first argument');
   };
@@ -94,7 +94,7 @@ test('Flow addAction duplicate action names should throw a TypeError', () => {
   } catch (err) {
     caught = err;
   }
-  expect(caught instanceof TypeError).toBeTruthy();
+  expect(caught.constructor).toBe(TypeError);
   expect(caught.message).toBe(
     `Every Flow's action names must be unique. Unexpected duplicate name: ${name}`);
 });
@@ -109,7 +109,7 @@ test('Flow addAction should throw a TypeError if the second argument is not a fu
     } catch (err) {
       caught = err;
     }
-    expect(caught instanceof TypeError).toBeTruthy();
+    expect(caught.constructor).toBe(TypeError);
     expect(caught.message).toBe(
       'Flow addAction expects a function as the second argument');
   };
@@ -172,7 +172,7 @@ test('Flow addActions should throw a TypeError if an invalid name is provided', 
     } catch (err) {
       caught = err;
     }
-    expect(caught instanceof TypeError).toBeTruthy();
+    expect(caught.constructor).toBe(TypeError);
     expect(caught.message).toBe(
       'Flow addActions expects an array of objects with a name property set to a non-empty string');
   }

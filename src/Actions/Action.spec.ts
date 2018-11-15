@@ -56,5 +56,5 @@ test('Action should be able to get context', () => {
   expect(ctx).toHaveProperty('actionName', name);
   expect(ctx).toHaveProperty('type', 'Action');
   expect(ctx).toHaveProperty('createdAt');
-  expect(ctx.createdAt instanceof Date).toBe(true);
+  expect(ctx.createdAt.constructor).toBe(Date);
 });

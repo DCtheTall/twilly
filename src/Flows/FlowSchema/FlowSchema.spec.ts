@@ -73,7 +73,7 @@ test('FlowSchema should only accept objects as its constructor argument', () => 
     } catch (err) {
       caught = err;
     }
-    expect(caught instanceof TypeError).toBeTruthy();
+    expect(caught.constructor).toBe(TypeError);
     expect(caught.message).toBe(
       'The argument of the flow schema constructor must be an object');
   };
@@ -94,7 +94,7 @@ test('FlowSchema should only allow keys to be set to FlowSchemas or Flows', () =
     } catch (err) {
       caught = err;
     }
-    expect(caught instanceof TypeError).toBeTruthy();
+    expect(caught.constructor).toBe(TypeError);
     expect(caught.message).toBe(
       'Each key of a FlowSchema must be a Flow or another FlowSchema');
   };

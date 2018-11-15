@@ -71,6 +71,8 @@ const QuestionShouldSendInvalidRes = Symbol('shouldSendInvalidResponse');
 const QuestionType = Symbol('type');
 
 export const QuestionEvaluate = Symbol('evaluate');
+export const QuestionSetIsAnswered = Symbol('setIsAnswered');
+export const QuestionSetIsFailed = Symbol('setIsFailed');
 export const QuestionShouldContinueOnFail = Symbol('shouldContinueOnFailure');
 
 export default class Question extends Action {
@@ -265,5 +267,13 @@ export default class Question extends Action {
     }
 
     this.handleInvalidAnswer(state);
+  }
+
+  public [QuestionSetIsAnswered]() {
+    this[QuestionIsAnswered] = true;
+  }
+
+  public [QuestionSetIsFailed]() {
+    this[QuestionIsFailed] = true;
   }
 }

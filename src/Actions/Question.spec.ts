@@ -31,7 +31,7 @@ test('Question should throw a TypeError if its constructor receives an invalid a
     } catch (err) {
       caught = err;
     }
-    expect(caught instanceof TypeError).toBeTruthy();
+    expect(caught.constructor).toBe(TypeError);
     expect(caught.message).toBe(
       'The first argument of the Question constructor must be a non-empty string');
   }
@@ -70,7 +70,7 @@ test('Multiple choice Question should throw a TypeError if choices input is inva
     } catch (err) {
       caught = err;
     }
-    expect(caught instanceof TypeError).toBeTruthy();
+    expect(caught.constructor).toBe(TypeError);
     expect(caught.message).toBe(
       'Multiple choice Questions must include a \'choices\' option, '
         + 'an array of at least 2 functions of a string which return a boolen');
@@ -100,7 +100,7 @@ test('Invalid failedToAnswerResponse Question option should throw a TypError', (
     } catch (err) {
       caught = err;
     }
-    expect(caught instanceof TypeError).toBeTruthy();
+    expect(caught.constructor).toBe(TypeError);
     expect(caught.message).toBe(
       'Question failedToAnswerResponse option must be a non-empty string');
   };
@@ -129,7 +129,7 @@ test('Invalid invalidAnswerResponse Question option should throw a TypError', ()
     } catch (err) {
       caught = err;
     }
-    expect(caught instanceof TypeError).toBeTruthy();
+    expect(caught.constructor).toBe(TypeError);
     expect(caught.message).toBe(
       'Question invalidAnswerResponse option must be a non-empty string');
   };
@@ -160,7 +160,7 @@ test('Invalid maxRetries Question option should throw a TypError', () => {
     } catch (err) {
       caught = err;
     }
-    expect(caught instanceof TypeError).toBeTruthy();
+    expect(caught.constructor).toBe(TypeError);
     expect(caught.message).toBe(
       `Question maxRetries option must be a number from 0 to ${MAXIMUM_RETRIES_ALLOWED}.`);
   };
@@ -200,7 +200,7 @@ test('Invalid validateAnswer Question option should throw a TypError', () => {
     } catch (err) {
       caught = err;
     }
-    expect(caught instanceof TypeError).toBeTruthy();
+    expect(caught.constructor).toBe(TypeError);
     expect(caught.message).toBe(
       'Question validateAnswer option must be a function');
   };

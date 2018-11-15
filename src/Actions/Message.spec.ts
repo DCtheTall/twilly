@@ -23,7 +23,7 @@ test('Message should throw a TypeError if the 1st constructor argument is not a 
     } catch (err) {
       caught = err;
     }
-    expect(caught instanceof TypeError).toBeTruthy();
+    expect(caught.constructor).toBe(TypeError);
     expect(caught.message).toBe(
       'Message constructor expects a non-empty string or an array of non-empty strings as the first argument');
   }
@@ -44,7 +44,7 @@ test('Message should throw a TypeError if the 2nd constructor argument is not a 
     } catch (err) {
       caught = err;
     }
-    expect(caught instanceof TypeError).toBeTruthy();
+    expect(caught.constructor).toBe(TypeError);
     expect(caught.message).toBe(
       'Message constructor expects a non-empty string as the second argument');
   }

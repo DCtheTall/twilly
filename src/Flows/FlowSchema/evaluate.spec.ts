@@ -158,7 +158,7 @@ test(
     } catch (err) {
       caught = err;
     }
-    expect(caught instanceof TypeError).toBeTruthy();
+    expect(caught.constructor).toBe(TypeError);
     expect(caught.message).toBe(
       `All Flows must have unique names. Unexpected duplicate name: ${flowName}`);
   },
@@ -183,7 +183,7 @@ test(
     } catch (err) {
       caught = err;
     }
-    expect(caught instanceof TypeError).toBeTruthy();
+    expect(caught.constructor).toBe(TypeError);
     expect(caught.message).toBe(
       `All Flows must perform at least one action. Check flow: ${flow.name}`);
   },
@@ -206,7 +206,7 @@ test('evaluateSchema should throw a TypeError when it receives an empty schema',
   } catch (err) {
     caught = err;
   }
-  expect(caught instanceof TypeError).toBeTruthy();
+  expect(caught.constructor).toBe(TypeError);
   expect(caught.message).toBe(
     'All FlowSchemas must contain at least one Flow object');
 });

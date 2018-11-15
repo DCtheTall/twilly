@@ -23,6 +23,7 @@ import {
   incrementFlowAction,
   startQuestion,
   updateContext,
+  addQuestionAttempt,
 } from '../SmsCookie';
 import { TwilioWebhookRequest } from '../twllio';
 
@@ -147,34 +148,15 @@ export default class FlowController {
       return completeInteraction(
         updateContext(state, currFlow, action));
     }
-    if (!state.createdAt) {
-      state.createdAt = new Date();
-    }
 
     switch (action.constructor) {
-      case Trigger:
-        return ((): SmsCookie => {
-          const newFlow =
-            (<Trigger>action).flowName === this.root.name ?
-              this.root : this.schema.get((<Trigger>action).flowName);
-          if (!newFlow) {
-            // TODO typed error
-            throw new Error(
-              'Trigger constructors expect a name of an existing Flow');
-          }
-          if ((currFlow === this.root) && (!this.schema)) {
-            throw new TypeError(
-              'Cannot use Trigger action without a defined Flow schema');
-          }
-          return handleTrigger(
-            updateContext(state, currFlow, action), <Trigger>action);
-        })();
-
       case Question:
         return ((): SmsCookie => {
           const question = <Question>action;
 
-          state.question.attempts.push(req.body.Body);
+          if (state.question.isAnswering) {
+            state = addQuestionAttempt(state, req.body.Body);
+          }
           if (question.isAnswered) {
             return incrementFlowAction(
               updateContext(
@@ -205,6 +187,26 @@ export default class FlowController {
 
           return updateContext(
             startQuestion(state), currFlow, action);
+        })();
+
+      case Trigger:
+        return ((): SmsCookie => {
+          const trigger = <Trigger>action;
+
+          if ((currFlow === this.root) && (!this.schema)) {
+            throw new Error(
+              'Cannot use Trigger action without a defined Flow schema');
+          }
+          if (
+            !(trigger.flowName === this.root.name
+              || this.schema.has(trigger.flowName))
+          ) {
+            throw new Error(
+              'Trigger constructors expect a name of an existing Flow');
+          }
+
+          return handleTrigger(
+            updateContext(state, currFlow, action), trigger);
         })();
 
       default:

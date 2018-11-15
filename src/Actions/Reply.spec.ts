@@ -22,7 +22,7 @@ test(
       } catch (err) {
         caught = err;
       }
-      expect(caught instanceof TypeError).toBeTruthy();
+      expect(caught.constructor).toBe(TypeError);
       expect(caught.message).toBe(
         'Reply constructor expects a non-empty string as the first argument');
     }
