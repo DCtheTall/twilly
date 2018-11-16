@@ -37,7 +37,7 @@ export default class TwilioController {
     return typeof s === 'string' && Boolean(s.length);
   }
 
-  static typeCheckStrings(args: TwilioControllerArgs) {
+  static typeCheckArguments(args: TwilioControllerArgs) {
     Object.keys(args).map((option: string) => {
       if (!TwilioController.isValidString(args[option])) {
         throw new TypeError(
@@ -58,7 +58,7 @@ export default class TwilioController {
       messageServiceId,
       sendOnExit,
   }: TwilioControllerArgs) {
-    TwilioController.typeCheckStrings({
+    TwilioController.typeCheckArguments({
       accountSid,
       authToken,
       cookieKey,
