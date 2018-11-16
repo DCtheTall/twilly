@@ -23,9 +23,6 @@ type TwilioFactory = (accountSid: string, authToken: string) => TwilioClient;
 const twilio = <TwilioFactory>require('twilio');
 
 
-export * from './TwilioWebhookRequest';
-
-
 export interface TwilioControllerArgs {
   accountSid: string;
   authToken: string;
@@ -36,8 +33,17 @@ export interface TwilioControllerArgs {
 
 
 export default class TwilioController {
-  static create(args: TwilioControllerArgs) {
-    return new TwilioController(args);
+  static isValidString(s: string): boolean {
+    return typeof s === 'string' && Boolean(s.length);
+  }
+
+  static typeCheckStrings(args: TwilioControllerArgs) {
+    Object.keys(args).map((option: string) => {
+      if (!TwilioController.isValidString(args[option])) {
+        throw new TypeError(
+          `${option} twilly option must be a non-empty string`);
+      }
+    });
   }
 
   private readonly cookieKey: string;
@@ -48,10 +54,17 @@ export default class TwilioController {
   constructor({
       accountSid,
       authToken,
-      messageServiceId,
       cookieKey,
+      messageServiceId,
       sendOnExit,
   }: TwilioControllerArgs) {
+    TwilioController.typeCheckStrings({
+      accountSid,
+      authToken,
+      cookieKey,
+      messageServiceId,
+      sendOnExit,
+    });
     this.cookieKey = cookieKey;
     this.messageServiceId = messageServiceId;
     this.sendOnExit = sendOnExit;

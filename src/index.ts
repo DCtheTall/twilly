@@ -165,7 +165,7 @@ export function twilly({
   testForExit = defaultParameters.testForExit,
 }: TwillyParameters): Router {
   if (!cookieKey) {
-    cookieKey = getSha256Hash(accountSid, accountSid).slice(0, 10);
+    cookieKey = getSha256Hash(accountSid, accountSid).slice(0, 16);
   }
   if (!cookieSecret) {
     cookieSecret = getSha256Hash(accountSid, authToken);
@@ -175,7 +175,7 @@ export function twilly({
     testForExit,
     onInteractionEnd,
   });
-  const tc = TwilioController.create({
+  const tc = new TwilioController({
     accountSid,
     authToken,
     cookieKey,
