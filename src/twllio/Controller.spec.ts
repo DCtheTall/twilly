@@ -11,16 +11,27 @@ import {
   QuestionSetIsAnswered,
   QuestionSetIsFailed,
   QuestionSetShouldSendInvalidRes,
+  Reply,
 } from '../Actions';
+import TwimlResponse from './TwimlResponse';
 
 
 jest.mock('twilio', () => jest.fn());
+jest.mock('./TwimlResponse', () => jest.fn());
 
 
 const twilioMessagesCreate = jest.fn();
+const twimlResponseMock = {
+  send: jest.fn(),
+  setMessage: jest.fn()
+};
+
+twimlResponseMock.setMessage.mockReturnValue(twimlResponseMock);
 
 let twilio: jest.Mock;
 let setSids: jest.Mock;
+let twimlResponseConstructorMock: jest.Mock;
+
 
 beforeEach(() => {
   twilio = <jest.Mock>require('twilio');
@@ -29,10 +40,16 @@ beforeEach(() => {
       create: twilioMessagesCreate,
     },
   });
+  twimlResponseConstructorMock = jest.fn();
+  twimlResponseConstructorMock.mockReturnValue(twimlResponseMock);
+  (<any>TwimlResponse).mockImplementation(twimlResponseConstructorMock);
 });
+
 afterEach(() => {
   twilio.mockRestore();
   twilioMessagesCreate.mockRestore();
+  (<any>TwimlResponse).mockRestore();
+  twimlResponseMock.send.mockRestore();
 });
 
 
@@ -228,8 +245,8 @@ test('TwilioController handleAction receives Question that has been failed', asy
     body: q.failedAnswerResponse,
     messagingServiceSid: args.messagingServiceSid,
   });
-  expect(q[ActionSetMessageSids]).toBeCalledTimes(1);
-  expect(q[ActionSetMessageSids]).toBeCalledWith([sid]);
+  expect(setSids).toBeCalledTimes(1);
+  expect(setSids).toBeCalledWith([sid]);
 });
 
 
@@ -263,8 +280,8 @@ test(
       messagingServiceSid: args.messagingServiceSid,
       to: req.body.From,
     });
-    expect(q[ActionSetMessageSids]).toBeCalledTimes(1);
-    expect(q[ActionSetMessageSids]).toBeCalledWith(sids);
+    expect(setSids).toBeCalledTimes(1);
+    expect(setSids).toBeCalledWith(sids);
   },
 );
 
@@ -286,6 +303,89 @@ test('TwilioController handleAction receives Question that has not yet been answ
     messagingServiceSid: args.messagingServiceSid,
     to: req.body.From,
   });
-  expect(q[ActionSetMessageSids]).toBeCalledTimes(1);
-  expect(q[ActionSetMessageSids]).toBeCalledWith([sid]);
+  expect(setSids).toBeCalledTimes(1);
+  expect(setSids).toBeCalledWith([sid]);
+});
+
+
+test('TwilioController handleAction receives Reply', async () => {
+  const tc = new TwilioController(args);
+  const req = getMockTwilioWebhookRequest();
+  const reply = new Reply(uniqueString());
+  const sid = uniqueString();
+
+  twilioMessagesCreate.mockResolvedValueOnce({ sid });
+  reply[ActionSetMessageSid] = jest.fn();
+
+  await tc.handleAction(req, reply);
+
+  expect(twilioMessagesCreate).toBeCalledTimes(1);
+  expect(twilioMessagesCreate).toBeCalledWith({
+    body: reply.body,
+    messagingServiceSid: args.messagingServiceSid,
+    to: req.body.From,
+  });
+  expect(reply[ActionSetMessageSid]).toBeCalledTimes(1);
+  expect(reply[ActionSetMessageSid]).toBeCalledWith(sid);
+});
+
+
+test('TwilioController sendEmptyResponse test', () => {
+  const res = <any>{};
+  const tc = new TwilioController(args);
+
+  tc.sendEmptyResponse(res);
+
+  expect(twimlResponseConstructorMock).toBeCalledTimes(1);
+  expect(twimlResponseConstructorMock).toBeCalledWith(res);
+  expect(twimlResponseMock.send).toBeCalledTimes(1);
+  expect(twimlResponseMock.send).toBeCalledWith();
+});
+
+
+test('TwilioController sendOnMessageNotification test', async () => {
+  const msg = new Message([uniqueString(), uniqueString()], uniqueString());
+  const tc = new TwilioController(args);
+
+  twilioMessagesCreate.mockResolvedValue({ sid: uniqueString() });
+  await tc.sendOnMessageNotification(msg);
+
+  expect(twilioMessagesCreate).toBeCalledTimes(2);
+  [...Array(2)].map(
+    (_, i: number) =>
+      expect(twilioMessagesCreate.mock.calls[i][0]).toEqual({
+        body: msg.body,
+        messagingServiceSid: args.messagingServiceSid,
+        to: msg.to[i],
+      }));
+});
+
+
+test('TwilioController sendSmsResponse test', () => {
+  const res = <any>{};
+  const tc = new TwilioController(args);
+  const body = uniqueString();
+
+  tc.sendSmsResponse(res, body);
+
+  expect(twimlResponseConstructorMock).toBeCalledTimes(1);
+  expect(twimlResponseConstructorMock).toBeCalledWith(res);
+
+  expect(twimlResponseMock.setMessage).toBeCalledTimes(1);
+  expect(twimlResponseMock.setMessage).toBeCalledWith(body);
+
+  expect(twimlResponseMock.send).toBeCalledTimes(1);
+  expect(twimlResponseMock.send).toBeCalledWith();
+});
+
+
+test('TwilioController setSmsCookie test', () => {
+  const res = <any>{ cookie: jest.fn() };
+  const tc = new TwilioController(args);
+  const cookie = createSmsCookie(getMockTwilioWebhookRequest());
+
+  tc.setSmsCookie(res, cookie);
+
+  expect(res.cookie).toBeCalledTimes(1);
+  expect(res.cookie).toBeCalledWith(args.cookieKey, cookie);
 });

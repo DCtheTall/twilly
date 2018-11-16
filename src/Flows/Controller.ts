@@ -102,7 +102,7 @@ export default class FlowController {
     this.testForExit = testForExit;
   }
 
-  private getCurrentFlow(state: SmsCookie): Flow {
+  public getCurrentFlow(state: SmsCookie): Flow {
     if (
       (!state.flow) ||
       (state.flow === this.root.name)

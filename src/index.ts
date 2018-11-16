@@ -21,6 +21,7 @@ import {
 import {
   InteractionContext,
   SmsCookie,
+  updateContext,
 } from './SmsCookie';
 
 export {
@@ -111,11 +112,24 @@ async function handleIncomingSmsWebhook(
   } catch (err) {
     const result =
       await onCatchError(
-        state.interactionContext, userCtx, err); // will also throw any uncaught errors
+        state.interactionContext, userCtx, err);
+
     if (result instanceof Reply) {
-      await tc.sendSmsResponse(res, result.body);
-      return;
+      try{
+        await tc.handleAction(req, result);
+        fc.onInteractionEnd(
+          updateContext(
+            state,
+            fc.getCurrentFlow(state),
+            result,
+          ).interactionContext,
+          userCtx,
+        );
+      } catch (innerErr) {
+        onCatchError(state.interactionContext, userCtx, innerErr);
+      }
     }
+
     tc.clearSmsCookie(res);
     tc.sendEmptyResponse(res);
   }

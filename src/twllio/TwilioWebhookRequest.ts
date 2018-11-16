@@ -7,6 +7,18 @@ import { uniqueString } from '../util';
 type Numberlike = string | number;
 
 
+export interface RequestHeader {
+  [index: string]: string;
+  'Content-Type'?: string;
+  'Set-Cookie'?: string;
+}
+
+
+export const XmlContentTypeHeader = <RequestHeader>{
+  'Content-Type': 'text/xml',
+};
+
+
 export interface TwilioWebhookRequestBody {
   ApiVersion?: string,
   AccountSid?: string,
