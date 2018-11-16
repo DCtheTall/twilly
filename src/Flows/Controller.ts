@@ -24,8 +24,22 @@ import {
   startQuestion,
   updateContext,
   addQuestionAttempt,
+  createSmsCookie,
 } from '../SmsCookie';
-import { TwilioWebhookRequest } from '../twllio';
+import {
+  TwilioWebhookRequest,
+  getMockTwilioWebhookRequest,
+} from '../twllio';
+import { compose } from '../util';
+
+
+type SmsCookieUpdate = (state?: SmsCookie) => SmsCookie;
+
+export function pipeSmsCookieUpdates(...funcs: SmsCookieUpdate[]): SmsCookieUpdate {
+  return (
+    cookie: SmsCookie = createSmsCookie(getMockTwilioWebhookRequest()),
+  ): SmsCookie => compose(...funcs)(cookie);
+}
 
 
 export type ExitKeywordTest =
@@ -145,8 +159,10 @@ export default class FlowController {
       return completeInteraction(state);
     }
     if (action instanceof Exit) {
-      return completeInteraction(
-        updateContext(state, currFlow, action));
+      return pipeSmsCookieUpdates(
+        (s: SmsCookie) => updateContext(s, currFlow, action),
+        completeInteraction,
+      )(state);
     }
 
     switch (action.constructor) {
@@ -158,35 +174,31 @@ export default class FlowController {
             state = addQuestionAttempt(state, req.body.Body);
           }
           if (question.isAnswered) {
-            return incrementFlowAction(
-              updateContext(
-                state,
-                currFlow,
-                action,
-              ),
-              currFlow,
-            );
+            return pipeSmsCookieUpdates(
+              (s: SmsCookie) => updateContext(s, currFlow, action),
+              (s: SmsCookie) => incrementFlowAction(s, currFlow),
+            )(state);
           }
           if (question.isFailed) {
             if (question[QuestionShouldContinueOnFail]) {
-              return incrementFlowAction(
-                updateContext(
-                  state,
-                  currFlow,
-                  action,
-                ),
-                currFlow,
-              );
+              return pipeSmsCookieUpdates(
+                (s: SmsCookie) => updateContext(s, currFlow, action),
+                (s: SmsCookie) => incrementFlowAction(s, currFlow),
+              )(state);
             }
-            return completeInteraction(
-              updateContext(state, currFlow, action));
+            return pipeSmsCookieUpdates(
+              (s: SmsCookie) => updateContext(s, currFlow, action),
+              completeInteraction,
+            )(state);
           }
           if (state.question.isAnswering) {
             return updateContext(state, currFlow, action);
           }
 
-          return updateContext(
-            startQuestion(state), currFlow, action);
+          return pipeSmsCookieUpdates(
+            startQuestion,
+            (s: SmsCookie) => updateContext(s, currFlow, action),
+          )(state);
         })();
 
       case Trigger:
@@ -205,19 +217,17 @@ export default class FlowController {
               'Trigger constructors expect a name of an existing Flow');
           }
 
-          return handleTrigger(
-            updateContext(state, currFlow, action), trigger);
+          return pipeSmsCookieUpdates(
+            (s: SmsCookie) => updateContext(s, currFlow, action),
+            (s: SmsCookie) => handleTrigger(s, trigger),
+          )(state);
         })();
 
       default:
-        return incrementFlowAction(
-          updateContext(
-            state,
-            currFlow,
-            action,
-          ),
-          currFlow,
-        );
+        return pipeSmsCookieUpdates(
+          (s: SmsCookie) => updateContext(s, currFlow, action),
+          (s: SmsCookie) => incrementFlowAction(s, currFlow),
+        )(state);
     }
   }
 }

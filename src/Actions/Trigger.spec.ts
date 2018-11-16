@@ -38,8 +38,8 @@ test(
 
 
 test('Trigger should contain flowName in the context', () => {
-  const flowName = uniqueString();
-  const t = new Trigger(flowName);
+  const triggerFlowName = uniqueString();
+  const t = new Trigger(triggerFlowName);
 
-  expect(t[GetContext]()).toEqual({ flowName });
+  expect(t[GetContext]()).toEqual({ triggerFlowName });
 });

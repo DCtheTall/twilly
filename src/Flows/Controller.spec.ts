@@ -11,15 +11,12 @@ import {
   Reply,
   Trigger,
 } from '../Actions';
-import { uniqueString } from '../util';
+import { uniqueString, randomFlow } from '../util';
 import { getMockTwilioWebhookRequest } from '../twllio';
 import * as SmsCookieModule from '../SmsCookie';
 
 
 const createSmsCookie = SmsCookieModule.createSmsCookie;
-const randomFlow = () =>
-  new Flow(uniqueString()).addAction(
-    uniqueString(), () => new Reply(uniqueString()));
 
 
 test('FlowController base case: root flow with one action', () => {

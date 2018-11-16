@@ -13,8 +13,8 @@ interface FlowAction {
 
 const FlowName = Symbol('name');
 const FlowActions = Symbol('actions');
-const FlowActionNames = Symbol('actionNames');
 
+export const FlowActionNames = Symbol('actionNames');
 export const FlowSelectActionResolver = Symbol('selectActionResolver');
 export const FlowSelectName = Symbol('selectName');
 
@@ -24,8 +24,8 @@ export default class Flow {
   }
 
   private readonly [FlowActions]: FlowAction[];
-  private readonly [FlowActionNames]: Set<string>;
 
+  public readonly [FlowActionNames]: Set<string>;
   public readonly [FlowName]: string;
 
   constructor(name: string) {
@@ -33,9 +33,9 @@ export default class Flow {
       throw new TypeError(
         'Flow constructor expects a non-empty string as the first argument');
     }
-    this[FlowName] = name;
-    this[FlowActions] = [];
     this[FlowActionNames] = new Set<string>();
+    this[FlowActions] = [];
+    this[FlowName] = name;
   }
 
   get length() {

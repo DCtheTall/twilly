@@ -5,7 +5,7 @@ import Action, {
 
 
 export interface TriggerContext extends ActionContext {
-  flowName: string;
+  triggerFlowName: string;
 }
 
 
@@ -14,15 +14,15 @@ const TriggerFlowName = Symbol('flowName');
 export default class Trigger extends Action {
   private readonly [TriggerFlowName]: string;
 
-  constructor(flowName: string) {
-    if (typeof flowName !== 'string' || !flowName.length) {
+  constructor(triggerFlowName: string) {
+    if (typeof triggerFlowName !== 'string' || !triggerFlowName.length) {
       throw new TypeError(
         'Trigger constructor expects a non-empty string as its constructor argument');
     }
     super();
-    this[TriggerFlowName] = flowName;
+    this[TriggerFlowName] = triggerFlowName;
     this[GetContext] =
-      (): TriggerContext => ({ flowName });
+      (): TriggerContext => ({ triggerFlowName });
   }
 
   get flowName(): string {

@@ -1,4 +1,4 @@
-import { uniqueString } from '../util';
+import { uniqueString, compose } from '../util';
 import {
   Action,
   ActionContext,
@@ -7,8 +7,10 @@ import {
   Trigger,
   ActionGetContext,
 } from '../Actions';
-import { Flow } from '../Flows';
-import { TwilioWebhookRequest } from '../twllio';
+import { Flow, FlowActionNames } from '../Flows';
+import {
+  TwilioWebhookRequest,
+} from '../twllio';
 
 
 export type FlowContext = { [index: string]: ActionContext };
@@ -71,6 +73,7 @@ export function handleTrigger(state: SmsCookie, trigger: Trigger): SmsCookie {
     ...state,
     flow: trigger.flowName,
     flowKey: 0,
+    flowContext: {},
   };
 }
 
@@ -101,14 +104,13 @@ export function startQuestion(state: SmsCookie): SmsCookie {
 
 function recordQuestionMessageSid(
   state: SmsCookie,
-  flow: Flow,
-  action: Question,
+  question: Question,
 ): string[] {
-  const prevSid =
-    (<string[]>((state.flowContext[flow.name] || {})[action.name] || {}).messageSid || []);
+  const prevSids =
+    (<string[]>(state.flowContext[question.name] || {}).messageSid || []);
   return [
-    ...prevSid,
-    ...(<string[]>action.sid || []),
+    ...prevSids,
+    ...(<string[]>question.sid || []),
   ];
 }
 
@@ -116,7 +118,7 @@ function getActionContext(state, flow, action): ActionContext {
   return (action instanceof Question ?
     <QuestionContext>{
       ...action[ActionGetContext](),
-      messageSid: recordQuestionMessageSid(state, flow, action),
+      messageSid: recordQuestionMessageSid(state, action),
     } : action[ActionGetContext]());
 }
 
@@ -125,19 +127,24 @@ export function updateContext(
   flow: Flow,
   action: Action,
 ): SmsCookie {
-  return state &&
-    {
-      ...state,
-      flowContext: {
-        ...(flow.name === state.flow ? state.flowContext : {}),
-        [action.name]: getActionContext(state, flow, action),
+  if (!state) return null;
+  if (!flow[FlowActionNames].has(action.name)) {
+    throw new Error(
+      `Flow ${flow.name} does not have an action named ${action.name}`);
+  }
+  if (!state.flow) state.flow = flow.name;
+  return {
+    ...state,
+    flowContext: {
+      ...state.flowContext,
+      [action.name]: getActionContext(state, flow, action),
+    },
+    interactionContext: [
+      ...state.interactionContext,
+      {
+        ...getActionContext(state, flow, action),
+        flowName: flow.name,
       },
-      interactionContext: [
-        ...state.interactionContext,
-        {
-          ...getActionContext(state, flow, action),
-          flowName: flow.name,
-        },
-      ],
-    };
+    ],
+  };
 }

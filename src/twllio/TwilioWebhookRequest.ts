@@ -54,7 +54,7 @@ export function getMockTwilioWebhookRequest({
   from = defaultOptions.from,
 }: MockTwilioWebhookRequestOpts = defaultOptions): TwilioWebhookRequest {
   return <TwilioWebhookRequest>{
-    cookies: { [cookieKey]: <SmsCookie>{} },
+    cookies: { [cookieKey]: {} },
     body: {
       Body: body,
       From: from,
