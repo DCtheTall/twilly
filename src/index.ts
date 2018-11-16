@@ -59,15 +59,14 @@ async function handleIncomingSmsWebhook(
   req: TwilioWebhookRequest,
   res: Response,
 ) {
-  let state = <SmsCookie>{ interactionContext: [], flowContext: {} };
-  let userCtx = null;
+  let state: SmsCookie = null;
+  let userCtx: any = null;
 
   try {
     state = tc.getSmsCookeFromRequest(req);
     userCtx = await getUserContext(req.body.From); // will throw any errors not caught in promise
 
-    let action =
-      await fc.resolveActionFromState(req, state, userCtx);
+    let action = await fc.resolveActionFromState(req, state, userCtx);
 
     if (onMessage) {
       try {
@@ -86,8 +85,7 @@ async function handleIncomingSmsWebhook(
       await new Promise(
         resolve => setTimeout(resolve, 1000)); // for preserving message order
 
-      state =
-        await fc.resolveNextStateFromAction(req, state, action);
+      state = await fc.resolveNextStateFromAction(req, state, action);
 
       if (
         (state.isComplete)
@@ -96,8 +94,7 @@ async function handleIncomingSmsWebhook(
           && !(<Question>action).isComplete
         )
       ) break;
-      action =
-        await fc.resolveActionFromState(req, state, userCtx);
+      action = await fc.resolveActionFromState(req, state, userCtx);
       if (action === null) break;
     }
 

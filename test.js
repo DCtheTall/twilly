@@ -5,9 +5,10 @@ const app = require('express')();
 
 // TODO uninstall these
 const bp = require('body-parser');
+const morgan = require('morgan');
 
 const root = new Flow('root');
-root.addActions([
+root.addActions(
   {
     name: 'greeting',
     resolve: (_, user) => new Promise(r => r(new Reply('Hi ' + user.name))),
@@ -28,9 +29,9 @@ root.addActions([
           `${user.name}'s favorite color is ${ctx.question.answer.toLowerCase()}`
           : 'Goodbye.'),
   },
-]);
+);
 
-app.use(require('morgan')('dev'));
+app.use(morgan('dev'));
 app.use(bp.urlencoded({ extended: false, limit: '2mb' }));
 app.use(bp.json({ limit: '5mb' }));
 
@@ -59,7 +60,7 @@ app.use('/twilly', twilly({
     console.log(`Interaction Context:\n${JSON.stringify(ctx, 2, 2)}`);
     console.log(err);
     return new Reply('Oops, something went wrong');
-  }
+  },
 }));
 
 app.get('/', (req, res) => {
