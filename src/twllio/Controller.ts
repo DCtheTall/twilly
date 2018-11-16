@@ -27,7 +27,7 @@ export interface TwilioControllerArgs {
   accountSid: string;
   authToken: string;
   cookieKey?: string;
-  messageServiceId: string;
+  messagingServiceSid: string;
   sendOnExit?: string;
 }
 
@@ -47,7 +47,7 @@ export default class TwilioController {
   }
 
   private readonly cookieKey: string;
-  private readonly messageServiceId: string;
+  private readonly messagingServiceSid: string;
   private readonly sendOnExit: string;
   private readonly twilio: TwilioClient;
 
@@ -55,18 +55,18 @@ export default class TwilioController {
       accountSid,
       authToken,
       cookieKey,
-      messageServiceId,
+      messagingServiceSid,
       sendOnExit,
   }: TwilioControllerArgs) {
     TwilioController.typeCheckArguments({
       accountSid,
       authToken,
       cookieKey,
-      messageServiceId,
+      messagingServiceSid,
       sendOnExit,
     });
     this.cookieKey = cookieKey;
-    this.messageServiceId = messageServiceId;
+    this.messagingServiceSid = messagingServiceSid;
     this.sendOnExit = sendOnExit;
     this.twilio = twilio(accountSid, authToken);
   }
@@ -79,16 +79,16 @@ export default class TwilioController {
       const data = await Promise.all(
         to.map((dst: string) =>
           this.twilio.messages.create({
-            to: dst,
             body,
-            messagingServiceSid: this.messageServiceId,
+            messagingServiceSid: this.messagingServiceSid,
+            to: dst,
           })));
       return data.map(m => m.sid);
     }
     const { sid } = await this.twilio.messages.create({
       to: <string>to,
       body,
-      messagingServiceSid: this.messageServiceId,
+      messagingServiceSid: this.messagingServiceSid,
     });
     return sid;
   }

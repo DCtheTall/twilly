@@ -4,9 +4,13 @@ import { getMockTwilioWebhookRequest } from './TwilioWebhookRequest';
 import { createSmsCookie } from '../SmsCookie';
 import {
   ActionSetMessageSid,
+  ActionSetMessageSids,
   Exit,
   Message,
-  ActionSetMessageSids,
+  Question,
+  QuestionSetIsAnswered,
+  QuestionSetIsFailed,
+  QuestionSetShouldSendInvalidRes,
 } from '../Actions';
 
 
@@ -14,10 +18,12 @@ jest.mock('twilio', () => jest.fn());
 
 
 const twilioMessagesCreate = jest.fn();
-let twilio;
+
+let twilio: jest.Mock;
+let setSids: jest.Mock;
 
 beforeEach(() => {
-  twilio = require('twilio');
+  twilio = <jest.Mock>require('twilio');
   twilio.mockReturnValue({
     messages: {
       create: twilioMessagesCreate,
@@ -34,7 +40,7 @@ const args = <TwilioControllerArgs>{
   accountSid: uniqueString(),
   authToken: uniqueString(),
   cookieKey: uniqueString(),
-  messageServiceId: uniqueString(),
+  messagingServiceSid: uniqueString(),
   sendOnExit: uniqueString(),
 };
 
@@ -127,7 +133,7 @@ test('TwilioController handleAction receives Exit action', async () => {
   expect(twilioMessagesCreate).toBeCalledWith({
     to: req.body.From,
     body: args.sendOnExit,
-    messagingServiceSid: args.messageServiceId,
+    messagingServiceSid: args.messagingServiceSid,
   });
   expect(exit[ActionSetMessageSid]).toBeCalledTimes(1);
   expect(exit[ActionSetMessageSid]).toBeCalledWith(sid);
@@ -148,7 +154,7 @@ test('TwilioController handleAction receives Message action with single recipien
   expect(twilioMessagesCreate).toBeCalledWith({
     to: msg.to[0],
     body: msg.body,
-    messagingServiceSid: args.messageServiceId,
+    messagingServiceSid: args.messagingServiceSid,
   });
   expect(msg[ActionSetMessageSids]).toBeCalledTimes(1);
   expect(msg[ActionSetMessageSids]).toBeCalledWith([sid]);
@@ -164,19 +170,15 @@ test('TwilioController handleAction receives Message action with multiple recipi
     uniqueString(),
   ];
   const msg = new Message(to, uniqueString());
+  const sids = [
+    uniqueString(),
+    uniqueString(),
+    uniqueString(),
+  ];
 
-  const sids = <string[]>[];
-  function getSid(): string {
-    sids.push(uniqueString());
-    return sids[sids.length - 1];
-  }
-
-  let setSids;
+  sids.forEach(sid =>
+    twilioMessagesCreate.mockResolvedValueOnce({ sid }));
   msg[ActionSetMessageSids] = setSids = jest.fn();
-  twilioMessagesCreate
-    .mockResolvedValueOnce({ sid: getSid() })
-    .mockResolvedValueOnce({ sid: getSid() })
-    .mockResolvedValueOnce({ sid: getSid() });
 
   await tc.handleAction(req, msg);
 
@@ -186,8 +188,104 @@ test('TwilioController handleAction receives Message action with multiple recipi
       expect(twilioMessagesCreate.mock.calls[i][0]).toEqual({
         to: msg.to[i],
         body: msg.body,
-        messagingServiceSid: args.messageServiceId,
+        messagingServiceSid: args.messagingServiceSid,
       }));
   expect(setSids).toBeCalledTimes(1);
   expect(setSids.mock.calls[0][0]).toEqual(sids);
+});
+
+
+test('TwilioController handleAction receives Question that has been answered', async () => {
+  const tc = new TwilioController(args);
+  const req = getMockTwilioWebhookRequest();
+  const q = new Question(uniqueString());
+
+  q[ActionSetMessageSids] = setSids = jest.fn();
+  q[QuestionSetIsAnswered]();
+
+  await tc.handleAction(req, q);
+
+  expect(twilioMessagesCreate).toBeCalledTimes(0);
+  expect(setSids).toBeCalledTimes(0);
+});
+
+
+test('TwilioController handleAction receives Question that has been failed', async () => {
+  const tc = new TwilioController(args);
+  const req = getMockTwilioWebhookRequest();
+  const q = new Question(uniqueString());
+  const sid = uniqueString();
+
+  q[ActionSetMessageSids] = setSids = jest.fn();
+  twilioMessagesCreate.mockResolvedValue({ sid });
+  q[QuestionSetIsFailed]();
+
+  await tc.handleAction(req, q);
+
+  expect(twilioMessagesCreate).toBeCalledTimes(1);
+  expect(twilioMessagesCreate).toBeCalledWith({
+    to: req.body.From,
+    body: q.failedAnswerResponse,
+    messagingServiceSid: args.messagingServiceSid,
+  });
+  expect(q[ActionSetMessageSids]).toBeCalledTimes(1);
+  expect(q[ActionSetMessageSids]).toBeCalledWith([sid]);
+});
+
+
+test(
+  'TwilioController handleAction receives Question '
+    + 'with a wrong answer but has not failed yet',
+  async () => {
+    const tc = new TwilioController(args);
+    const req = getMockTwilioWebhookRequest();
+    const q = new Question(uniqueString());
+    const sids = [
+      uniqueString(),
+      uniqueString(),
+    ];
+
+    sids.forEach(sid =>
+      twilioMessagesCreate.mockResolvedValueOnce({ sid }));
+    q[QuestionSetShouldSendInvalidRes]();
+    q[ActionSetMessageSids] = setSids = jest.fn();
+
+    await tc.handleAction(req, q);
+
+    expect(twilioMessagesCreate).toBeCalledTimes(2);
+    expect(twilioMessagesCreate.mock.calls[0][0]).toEqual({
+      body: q.invalidAnswerResponse,
+      messagingServiceSid: args.messagingServiceSid,
+      to: req.body.From,
+    });
+    expect(twilioMessagesCreate.mock.calls[1][0]).toEqual({
+      body: q.body,
+      messagingServiceSid: args.messagingServiceSid,
+      to: req.body.From,
+    });
+    expect(q[ActionSetMessageSids]).toBeCalledTimes(1);
+    expect(q[ActionSetMessageSids]).toBeCalledWith(sids);
+  },
+);
+
+
+test('TwilioController handleAction receives Question that has not yet been answered', async () => {
+  const tc = new TwilioController(args);
+  const req = getMockTwilioWebhookRequest();
+  const q = new Question(uniqueString());
+  const sid = uniqueString();
+
+  twilioMessagesCreate.mockResolvedValueOnce({ sid });
+  q[ActionSetMessageSids] = setSids = jest.fn();
+
+  await tc.handleAction(req, q);
+
+  expect(twilioMessagesCreate).toBeCalledTimes(1);
+  expect(twilioMessagesCreate).toBeCalledWith({
+    body: q.body,
+    messagingServiceSid: args.messagingServiceSid,
+    to: req.body.From,
+  });
+  expect(q[ActionSetMessageSids]).toBeCalledTimes(1);
+  expect(q[ActionSetMessageSids]).toBeCalledWith([sid]);
 });

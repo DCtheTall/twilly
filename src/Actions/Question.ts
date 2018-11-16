@@ -74,6 +74,7 @@ export const QuestionEvaluate = Symbol('evaluate');
 export const QuestionSetIsAnswered = Symbol('setIsAnswered');
 export const QuestionSetIsFailed = Symbol('setIsFailed');
 export const QuestionShouldContinueOnFail = Symbol('shouldContinueOnFailure');
+export const QuestionSetShouldSendInvalidRes = Symbol('setShouldSendInvalidRes');
 
 export default class Question extends Action {
   static validString(s: any): boolean {
@@ -275,5 +276,9 @@ export default class Question extends Action {
 
   public [QuestionSetIsFailed]() {
     this[QuestionIsFailed] = true;
+  }
+
+  public [QuestionSetShouldSendInvalidRes]() {
+    this[QuestionShouldSendInvalidRes] = true;
   }
 }

@@ -37,7 +37,7 @@ app.use(bp.json({ limit: '5mb' }));
 app.use('/twilly', twilly({
   accountSid: process.env.ACCOUNT_SID,
   authToken: process.env.AUTH_TOKEN,
-  messageServiceId: process.env.MESSAGE_SERVICE_ID,
+  messagingServiceSid: process.env.MESSAGE_SERVICE_ID,
   root,
   getUserContext(fromNumber) { // can return a Promise resolving the user data
     return { name: 'Dylan' };

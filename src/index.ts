@@ -147,7 +147,7 @@ const defaultParameters = <TwillyParameters>{
 export function twilly({
   accountSid,
   authToken,
-  messageServiceId,
+  messagingServiceSid,
 
   cookieKey = defaultParameters.cookieKey,
   cookieSecret = defaultParameters.cookieSecret,
@@ -179,7 +179,7 @@ export function twilly({
     accountSid,
     authToken,
     cookieKey,
-    messageServiceId,
+    messagingServiceSid,
     sendOnExit,
   });
   const router = Router();
