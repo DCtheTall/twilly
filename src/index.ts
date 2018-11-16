@@ -31,8 +31,8 @@ export {
 export {
   Message,
   Question,
-  Trigger,
   Reply,
+  Trigger,
 } from './Actions';
 
 const cookieParser = require('cookie-parser');
@@ -183,8 +183,8 @@ export function twilly({
   }
 
   const fc = new FlowController(root, schema, {
-    testForExit,
     onInteractionEnd,
+    testForExit,
   });
   const tc = new TwilioController({
     accountSid,
