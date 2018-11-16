@@ -18,8 +18,8 @@ export const ActionSetMessageSids = Symbol('setMessageSids');
 export const ActionSetName = Symbol('setName');
 
 export default class Action {
-  private [ActionName]: string;
   private [ActionMessageSid]: string | string[];
+  private [ActionName]: string;
 
   public [GetContext]: () => ActionContext;
 

@@ -71,86 +71,7 @@ export default class TwilioController {
     this.twilio = twilio(accountSid, authToken);
   }
 
-  public clearSmsCookie(res: Response) {
-    res.clearCookie(this.cookieKey);
-  }
-
-  public getSmsCookeFromRequest(req: TwilioWebhookRequest): SmsCookie {
-    return req.cookies[this.cookieKey] || createSmsCookie(req);
-  }
-
-  public async handleAction(
-    req: TwilioWebhookRequest,
-    action: Action,
-  ): Promise<void> {
-    let sid: string | string[];
-
-    switch (action.constructor) {
-      case Exit:
-        sid = <string>(await this.sendSmsMessage(
-          req.body.From,
-          this.sendOnExit,
-        ));
-        action[ActionSetMessageSid](<string>sid);
-        break;
-
-      case Message:
-        sid = <string[]>(await this.sendSmsMessage(
-          (<Message>action).to,
-          (<Message>action).body,
-        ));
-        action[ActionSetMessageSids](<string[]>sid);
-        break;
-
-      case Question:
-        (async () => {
-          const question = <Question>action;
-          sid = [];
-          if (question.isAnswered) return;
-          if (question.isFailed) {
-            sid.push(<string>(await this.sendSmsMessage(
-              req.body.From,
-              question.failedAnswerResponse,
-            )));
-            action[ActionSetMessageSids](sid);
-            return;
-          }
-          if (question.shouldSendInvalidRes) {
-            sid.push(<string>(await this.sendSmsMessage(
-              req.body.From,
-              question.invalidAnswerResponse,
-            )));
-          }
-          sid.push(<string>(await this.sendSmsMessage(
-            req.body.From,
-            question.body,
-          )));
-          action[ActionSetMessageSids](sid);
-        })();
-        break;
-
-      case Reply:
-        sid = <string>(await this.sendSmsMessage(
-          req.body.From,
-          (<Reply>action).body,
-        ));
-        action[ActionSetMessageSid](<string>sid);
-        break;
-
-      default:
-        break;
-    }
-  }
-
-  public sendEmptyResponse(res: Response): void {
-    return new TwimlResponse(res).send();
-  }
-
-  public async sendOnMessageNotification(msg: Message) {
-    await this.sendSmsMessage(msg.to, msg.body);
-  }
-
-  public async sendSmsMessage(
+  private async sendSmsMessage(
     to: string | string[],
     body: string,
   ): Promise<string | string[]> {
@@ -164,12 +85,92 @@ export default class TwilioController {
           })));
       return data.map(m => m.sid);
     }
-    const data = await this.twilio.messages.create({
+    const { sid } = await this.twilio.messages.create({
       to: <string>to,
       body,
       messagingServiceSid: this.messageServiceId,
     });
-    return data.sid;
+    return sid;
+  }
+
+  public clearSmsCookie(res: Response) {
+    res.clearCookie(this.cookieKey);
+  }
+
+  public getSmsCookeFromRequest(req: TwilioWebhookRequest): SmsCookie {
+    return req.cookies[this.cookieKey] || createSmsCookie(req);
+  }
+
+  public async handleAction(
+    req: TwilioWebhookRequest,
+    action: Action,
+  ): Promise<void> {
+    let sid: string;
+    let sids: string[];
+
+    switch (action.constructor) {
+      case Exit:
+        sid = <string>(await this.sendSmsMessage(
+          req.body.From,
+          this.sendOnExit,
+        ));
+        action[ActionSetMessageSid](<string>sid);
+        return;
+
+      case Message:
+        sids = <string[]>(await this.sendSmsMessage(
+          (<Message>action).to,
+          (<Message>action).body,
+        ));
+        action[ActionSetMessageSids](sids);
+        return;
+
+      case Question:
+        await (async () => {
+          const question = <Question>action;
+          sids = [];
+          if (question.isAnswered) return;
+          if (question.isFailed) {
+            sids.push(<string>(await this.sendSmsMessage(
+              req.body.From,
+              question.failedAnswerResponse,
+            )));
+            action[ActionSetMessageSids](sids);
+            return;
+          }
+          if (question.shouldSendInvalidRes) {
+            sids.push(<string>(await this.sendSmsMessage(
+              req.body.From,
+              question.invalidAnswerResponse,
+            )));
+          }
+          sids.push(<string>(await this.sendSmsMessage(
+            req.body.From,
+            question.body,
+          )));
+          action[ActionSetMessageSids](sids);
+        })();
+        return;
+
+      case Reply:
+        sid = <string>(await this.sendSmsMessage(
+          req.body.From,
+          (<Reply>action).body,
+        ));
+        action[ActionSetMessageSid](sid);
+        return;
+
+      default:
+        return;
+    }
+  }
+
+  public sendEmptyResponse(res: Response): void {
+    return new TwimlResponse(res).send();
+  }
+
+  public async sendOnMessageNotification(msg: Message) {
+    await this.sendSmsMessage(msg.to, msg.body);
   }
 
   public sendSmsResponse(res: Response, msg: string): void {
