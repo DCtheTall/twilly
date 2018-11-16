@@ -30,3 +30,8 @@ export function compose(...fns: AnyFunc[]): AnyFunc {
   return fns.reduce(
     (a, b) => (...args: any[]) => b(a(...args)));
 }
+
+
+export function randInt(): number {
+  return 1 + Math.round(1000 * Math.random());
+}

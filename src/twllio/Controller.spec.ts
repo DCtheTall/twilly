@@ -25,12 +25,10 @@ const twimlResponseMock = {
   send: jest.fn(),
   setMessage: jest.fn()
 };
-
-twimlResponseMock.setMessage.mockReturnValue(twimlResponseMock);
+const twimlResponseConstructorMock = jest.fn();
 
 let twilio: jest.Mock;
 let setSids: jest.Mock;
-let twimlResponseConstructorMock: jest.Mock;
 
 
 beforeEach(() => {
@@ -40,8 +38,8 @@ beforeEach(() => {
       create: twilioMessagesCreate,
     },
   });
-  twimlResponseConstructorMock = jest.fn();
   twimlResponseConstructorMock.mockReturnValue(twimlResponseMock);
+  twimlResponseMock.setMessage.mockReturnValue(twimlResponseMock);
   (<any>TwimlResponse).mockImplementation(twimlResponseConstructorMock);
 });
 
@@ -50,6 +48,7 @@ afterEach(() => {
   twilioMessagesCreate.mockRestore();
   (<any>TwimlResponse).mockRestore();
   twimlResponseMock.send.mockRestore();
+  twimlResponseConstructorMock.mockRestore();
 });
 
 
