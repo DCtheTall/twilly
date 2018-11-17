@@ -10,12 +10,15 @@ import {
 import FlowController from './Flows/Controller';
 import TwilioController from './twllio/Controller';
 import { uniqueString, randomFlow, getSha256Hash } from './util';
+import { updateContext } from './SmsCookie';
 
 
 jest.mock('cookie-parser');
 
 jest.mock('./Flows/Controller');
 jest.mock('./twllio/Controller');
+jest.mock('./SmsCookie');
+
 
 const fcMock = {
   getCurrentFlow: jest.fn(),
@@ -38,6 +41,12 @@ const tcConstructorMock = jest.fn();
 const cookieParserMiddleware = jest.fn();
 
 let cookieParserMock: jest.Mock;
+let cookieMock: any;
+let actionMock: any;
+
+let getUserContextMock: jest.Mock;
+let onCatchErrorMock: jest.Mock;
+let onMessageMock: jest.Mock;
 
 
 const defaultArgs = <any>{
@@ -49,6 +58,9 @@ const defaultArgs = <any>{
 
 
 beforeEach(() => {
+  cookieMock = {};
+  actionMock = {};
+
   cookieParserMock = require('cookie-parser');
   cookieParserMock.mockReturnValue(cookieParserMiddleware);
 
@@ -57,6 +69,15 @@ beforeEach(() => {
 
   (<jest.Mock>(<any>FlowController)).mockImplementation(fcConstructorMock);
   (<jest.Mock>(<any>TwilioController)).mockImplementation(tcConstructorMock);
+
+  fcMock.resolveActionFromState.mockResolvedValue(actionMock);
+  fcMock.resolveNextStateFromAction.mockResolvedValue(cookieMock);
+
+  tcMock.getSmsCookeFromRequest.mockReturnValue(cookieMock);
+
+  getUserContextMock = jest.fn();
+  onMessageMock = jest.fn();
+  onCatchErrorMock = jest.fn();
 });
 
 afterEach(() => {
@@ -77,6 +98,8 @@ afterEach(() => {
   tcMock.sendOnMessageNotification.mockRestore();
   tcMock.sendEmptyResponse.mockRestore();
   tcMock.setSmsCookie.mockRestore();
+
+  (<jest.Mock>(<any>updateContext)).mockRestore();
 });
 
 

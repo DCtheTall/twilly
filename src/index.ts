@@ -39,6 +39,7 @@ const cookieParser = require('cookie-parser');
 
 
 const DEFAULT_EXIT_TEXT = 'Goodbye.';
+const ROUTE_REGEXP = /^\/?$/i;
 
 
 type OnMessageHook =
@@ -197,7 +198,7 @@ export function twilly({
 
   router.use(cookieParser(cookieSecret));
   router.post(
-    '/',
+    ROUTE_REGEXP,
     handleIncomingSmsWebhook.bind(
       null, getUserContext, onCatchError, onMessage, fc, tc));
   return router;
