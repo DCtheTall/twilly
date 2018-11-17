@@ -160,6 +160,9 @@ export function twilly({
   authToken,
   messagingServiceSid,
 
+  root,
+  schema = defaultParameters.schema,
+
   cookieKey = defaultParameters.cookieKey,
   cookieSecret = defaultParameters.cookieSecret,
 
@@ -168,9 +171,6 @@ export function twilly({
   onCatchError = defaultParameters.onCatchError,
   onInteractionEnd = defaultParameters.onInteractionEnd,
   onMessage = defaultParameters.onMessage,
-
-  root,
-  schema = defaultParameters.schema,
 
   sendOnExit = defaultParameters.sendOnExit,
   testForExit = defaultParameters.testForExit,
