@@ -65,7 +65,7 @@ export default class FlowController {
   private readonly schema: EvaluatedSchema;
   private testForExit: ExitKeywordTest;
 
-  public onInteractionEnd: InteractionEndHook;
+  public readonly onInteractionEnd: InteractionEndHook;
 
   constructor(
     root: Flow,

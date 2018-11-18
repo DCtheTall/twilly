@@ -169,7 +169,7 @@ export default class TwilioController {
     return new TwimlResponse(res).send();
   }
 
-  public async sendOnMessageNotification(msg: Message) {
+  public async sendMessageNotification(msg: Message) {
     await this.sendSmsMessage(msg.to, msg.body);
   }
 

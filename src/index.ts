@@ -75,7 +75,7 @@ async function handleIncomingSmsWebhook(
         const result = await onMessage(
           state.interactionContext, userCtx, req.body.Body);
         if (result instanceof Message) {
-          await tc.sendOnMessageNotification(result);
+          await tc.sendMessageNotification(result);
         }
       } catch (err) {
         onCatchError(state.interactionContext, userCtx, err);
@@ -102,8 +102,17 @@ async function handleIncomingSmsWebhook(
 
     if (state.isComplete) {
       if (fc.onInteractionEnd !== null) {
-        fc.onInteractionEnd(state.interactionContext, userCtx);
+        try {
+          const result =
+            await fc.onInteractionEnd(state.interactionContext, userCtx);
+          if (result instanceof Message) {
+            await tc.sendMessageNotification(result);
+          }
+        } catch (err) {
+          onCatchError(state.interactionContext, userCtx, err);
+        }
       }
+
       tc.clearSmsCookie(res);
     } else {
       tc.setSmsCookie(res, state);

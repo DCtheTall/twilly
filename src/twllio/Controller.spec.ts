@@ -347,7 +347,7 @@ test('TwilioController sendOnMessageNotification test', async () => {
   const tc = new TwilioController(args);
 
   twilioMessagesCreate.mockResolvedValue({ sid: uniqueString() });
-  await tc.sendOnMessageNotification(msg);
+  await tc.sendMessageNotification(msg);
 
   expect(twilioMessagesCreate).toBeCalledTimes(2);
   [...Array(2)].map(
