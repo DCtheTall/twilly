@@ -120,24 +120,24 @@ async function handleIncomingSmsWebhook(
 
     tc.sendEmptyResponse(res);
   } catch (err) {
-    const result =
-      await onCatchError(
-        state.interactionContext, userCtx, err);
+    const result = await onCatchError(
+      state.interactionContext, userCtx, err);
 
-    if (result instanceof Reply) {
-      try{
+    try{
+      if (result instanceof Reply) {
         await tc.handleAction(req, result);
-        fc.onInteractionEnd(
-          updateContext(
-            state,
-            fc.getCurrentFlow(state),
-            result,
-          ).interactionContext,
-          userCtx,
+        state = updateContext(
+          state,
+          fc.getCurrentFlow(state),
+          result,
         );
-      } catch (innerErr) {
-        onCatchError(state.interactionContext, userCtx, innerErr);
       }
+      if (fc.onInteractionEnd !== null) {
+        await fc.onInteractionEnd(state.interactionContext, userCtx);
+      }
+    } catch (innerErr) {
+      await onCatchError(
+        state.interactionContext, userCtx, innerErr);
     }
 
     tc.clearSmsCookie(res);

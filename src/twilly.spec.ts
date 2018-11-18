@@ -65,6 +65,7 @@ let getUserContextMock: jest.Mock;
 let onCatchErrorMock: jest.Mock;
 let onInteractionEndMock: jest.Mock;
 let onMessageMock: jest.Mock;
+let errorMock;
 
 
 const defaultArgs = <any>{
@@ -139,6 +140,8 @@ beforeEach(() => {
   onCatchErrorMock = jest.fn();
   onInteractionEndMock = jest.fn();
   onMessageMock = jest.fn();
+
+  errorMock = new Error(uniqueString());
 });
 
 afterEach(() => {
@@ -597,4 +600,160 @@ test('twilly onInteractionEnd handler success case returns Message', async () =>
 });
 
 
-// TODO error handling for pretty much everything
+test('twilly getUserContext throws error', async () => {
+  const router = twilly({
+    ...defaultArgs,
+    getUserContext: getUserContextMock,
+  });
+  const handleSmsWebhook = getHandler(router);
+
+  getUserContextMock.mockRejectedValue(errorMock);
+
+  await handleSmsWebhook(reqMock, resMock);
+
+  expect(fcMock.resolveActionFromState).not.toBeCalled();
+  expectMockToBeCalledWith(tcMock.clearSmsCookie, 1, [[resMock]]);
+  expectMockToBeCalledWith(tcMock.sendEmptyResponse, 1, [[resMock]]);
+});
+
+
+test('twilly getUserContext throws error with onCatchError hook', async () => {
+  const router = twilly({
+    ...defaultArgs,
+    getUserContext: getUserContextMock,
+    onCatchError: onCatchErrorMock,
+  });
+  const handleSmsWebhook = getHandler(router);
+
+  getUserContextMock.mockRejectedValue(errorMock);
+
+  await handleSmsWebhook(reqMock, resMock);
+
+  expect(fcMock.resolveActionFromState).not.toBeCalled();
+  expectMockToBeCalledWith(
+    onCatchErrorMock, 1, [[cookieMock.interactionContext, null, errorMock]]);
+  expectMockToBeCalledWith(tcMock.clearSmsCookie, 1, [[resMock]]);
+  expectMockToBeCalledWith(tcMock.sendEmptyResponse, 1, [[resMock]]);
+});
+
+
+test('twilly getUserContext throws error with onCatchError and onInteractionEnd hooks', async () => {
+  const router = twilly({
+    ...defaultArgs,
+    getUserContext: getUserContextMock,
+    onCatchError: onCatchErrorMock,
+  });
+  const handleSmsWebhook = getHandler(router);
+
+  getUserContextMock.mockRejectedValue(errorMock);
+  fcMock.onInteractionEnd = onInteractionEndMock;
+
+  await handleSmsWebhook(reqMock, resMock);
+
+  expect(fcMock.resolveActionFromState).not.toBeCalled();
+  expectMockToBeCalledWith(
+    onCatchErrorMock, 1, [[cookieMock.interactionContext, null, errorMock]]);
+  expectMockToBeCalledWith(
+    fcMock.onInteractionEnd, 1, [[cookieMock.interactionContext, null]]);
+  expectMockToBeCalledWith(tcMock.clearSmsCookie, 1, [[resMock]]);
+  expectMockToBeCalledWith(tcMock.sendEmptyResponse, 1, [[resMock]]);
+});
+
+
+test(
+  'twilly getUserContext throws error with onCatchError, onInteractionEnd hooks, returns Reply',
+  async () => {
+    const router = twilly({
+      ...defaultArgs,
+      getUserContext: getUserContextMock,
+      onCatchError: onCatchErrorMock,
+    });
+    const handleSmsWebhook = getHandler(router);
+    const reply = new Reply(uniqueString());
+
+    onCatchErrorMock.mockReturnValue(reply);
+    (<jest.Mock>updateContext).mockReturnValue(cookieMock);
+    getUserContextMock.mockRejectedValue(errorMock);
+    fcMock.onInteractionEnd = onInteractionEndMock;
+
+    await handleSmsWebhook(reqMock, resMock);
+
+    expect(fcMock.resolveActionFromState).not.toBeCalled();
+    expectMockToBeCalledWith(
+      onCatchErrorMock, 1, [[cookieMock.interactionContext, null, errorMock]]);
+    expectMockToBeCalledWith(tcMock.handleAction, 1, [[reqMock, reply]]);
+    expectMockToBeCalledWith(
+      fcMock.onInteractionEnd, 1, [[cookieMock.interactionContext, null]]);
+    expectMockToBeCalledWith(tcMock.clearSmsCookie, 1, [[resMock]]);
+    expectMockToBeCalledWith(tcMock.sendEmptyResponse, 1, [[resMock]]);
+  },
+);
+
+
+test(
+  'twilly getUserContext throws error with onCatchError, onInteractionEnd throws Error',
+  async () => {
+    const router = twilly({
+      ...defaultArgs,
+      getUserContext: getUserContextMock,
+      onCatchError: onCatchErrorMock,
+    });
+    const handleSmsWebhook = getHandler(router);
+    const secondError = new Error(uniqueString());
+    const reply = new Reply(uniqueString());
+
+    getUserContextMock.mockRejectedValue(errorMock);
+    onCatchErrorMock.mockReturnValue(reply);
+    tcMock.handleAction.mockRejectedValue(secondError);
+
+    await handleSmsWebhook(reqMock, resMock);
+
+    expect(fcMock.resolveActionFromState).not.toBeCalled();
+    expectMockToBeCalledWith(
+      onCatchErrorMock, 2, [
+        [cookieMock.interactionContext, null, errorMock],
+        [cookieMock.interactionContext, null, secondError],
+      ]);
+    expectMockToBeCalledWith(tcMock.clearSmsCookie, 1, [[resMock]]);
+    expectMockToBeCalledWith(tcMock.sendEmptyResponse, 1, [[resMock]]);
+  },
+);
+
+
+test(
+  'twilly getUserContext throws error, onInteractionEnd returns Reply, TwilioController throws Error',
+  async () => {
+    const router = twilly({
+      ...defaultArgs,
+      getUserContext: getUserContextMock,
+      onCatchError: onCatchErrorMock,
+    });
+    const handleSmsWebhook = getHandler(router);
+    const secondError = new Error(uniqueString());
+
+    getUserContextMock.mockRejectedValue(errorMock);
+    onInteractionEndMock.mockRejectedValue(secondError);
+    fcMock.onInteractionEnd = onInteractionEndMock;
+
+    await handleSmsWebhook(reqMock, resMock);
+
+    expect(fcMock.resolveActionFromState).not.toBeCalled();
+    expectMockToBeCalledWith(
+      onCatchErrorMock, 2, [
+        [cookieMock.interactionContext, null, errorMock],
+        [cookieMock.interactionContext, null, secondError],
+      ]);
+    expectMockToBeCalledWith(tcMock.clearSmsCookie, 1, [[resMock]]);
+    expectMockToBeCalledWith(tcMock.sendEmptyResponse, 1, [[resMock]]);
+  },
+);
+
+
+// TODO error handling for
+// resolveActionFromState
+// onMessage
+// tc.sendMessageNotification
+// tc.handleAction
+// resolveNextStateFromAction
+// fc.onInteractionEnd
+
