@@ -1,6 +1,6 @@
 require('dotenv').load(); // TODO uninstall this
 
-const { twilly, Flow, Reply, Question, Message } = require('./dist');
+const { twilly, Flow, Reply, Question, Message, Trigger } = require('./dist');
 const app = require('express')();
 
 // TODO uninstall these
@@ -11,7 +11,7 @@ const root = new Flow('root');
 root.addActions(
   {
     name: 'greeting',
-    resolve: (_, user) => new Promise(r => r(new Reply('Hi ' + user.name))),
+    resolve: (_, user) => Promise.resolve(new Reply('Hi ' + user.name)),
   },
   {
     name: 'question',
