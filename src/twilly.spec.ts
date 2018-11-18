@@ -10,9 +10,18 @@ import {
 import FlowController from './Flows/Controller';
 import TwilioController from './twllio/Controller';
 import { uniqueString, randomFlow, getSha256Hash } from './util';
-import { updateContext, SmsCookie } from './SmsCookie';
-import { TwilioWebhookRequest, getMockTwilioWebhookRequest } from './twllio';
-import { QuestionSetIsAnswered, QuestionSetIsFailed } from './Actions';
+import {
+  SmsCookie,
+  updateContext,
+} from './SmsCookie';
+import {
+  TwilioWebhookRequest,
+  getMockTwilioWebhookRequest,
+} from './twllio';
+import {
+  QuestionSetIsAnswered,
+  QuestionSetIsFailed,
+} from './Actions';
 
 
 jest.mock('cookie-parser');
@@ -54,6 +63,7 @@ let userMock: any;
 
 let getUserContextMock: jest.Mock;
 let onCatchErrorMock: jest.Mock;
+let onInteractionEndMock: jest.Mock;
 let onMessageMock: jest.Mock;
 
 
@@ -63,56 +73,6 @@ const defaultArgs = <any>{
   messagingServiceSid: uniqueString(),
   root: randomFlow(),
 };
-
-
-beforeEach(() => {
-  cookieMock = <SmsCookie>{};
-  actionMock = {};
-  reqMock = getMockTwilioWebhookRequest();
-  resMock = {};
-  userMock = {};
-
-  cookieParserMock = require('cookie-parser');
-  cookieParserMock.mockReturnValue(cookieParserMiddleware);
-
-  fcConstructorMock.mockReturnValue(fcMock);
-  tcConstructorMock.mockReturnValue(tcMock);
-
-  (<jest.Mock>(<any>FlowController)).mockImplementation(fcConstructorMock);
-  (<jest.Mock>(<any>TwilioController)).mockImplementation(tcConstructorMock);
-
-  fcMock.resolveNextStateFromAction.mockResolvedValue(cookieMock);
-
-  tcMock.getSmsCookeFromRequest.mockReturnValue(cookieMock);
-
-  getUserContextMock = jest.fn();
-  getUserContextMock.mockResolvedValue(userMock);
-
-  onMessageMock = jest.fn();
-  onCatchErrorMock = jest.fn();
-});
-
-afterEach(() => {
-  cookieParserMiddleware.mockRestore();
-  fcConstructorMock.mockRestore();
-  tcConstructorMock.mockRestore();
-
-  (<jest.Mock>(<any>FlowController)).mockRestore();
-  (<jest.Mock>(<any>TwilioController)).mockRestore();
-
-  fcMock.getCurrentFlow.mockRestore();
-  fcMock.resolveActionFromState.mockRestore();
-  fcMock.resolveNextStateFromAction.mockRestore();
-
-  tcMock.clearSmsCookie.mockRestore();
-  tcMock.getSmsCookeFromRequest.mockRestore();
-  tcMock.handleAction.mockRestore();
-  tcMock.sendOnMessageNotification.mockRestore();
-  tcMock.sendEmptyResponse.mockRestore();
-  tcMock.setSmsCookie.mockRestore();
-
-  (<jest.Mock>(<any>updateContext)).mockRestore();
-});
 
 
 function expectMockToBeCalledWith(fn: jest.Mock, n: number, args: any[][]) {
@@ -140,6 +100,69 @@ function baseCaseTest(user = null) {
   expectMockToBeCalledWith(tcMock.setSmsCookie, 1, [[resMock, cookieMock]]);
   expectMockToBeCalledWith(tcMock.sendEmptyResponse, 1, [[resMock]]);
 }
+
+
+beforeEach(() => {
+  reqMock = getMockTwilioWebhookRequest();
+  cookieMock = <SmsCookie>{
+    createdAt: new Date(),
+    flow: null,
+    flowContext: {},
+    flowKey: 0,
+    from: reqMock.body.From,
+    interactionComplete: false,
+    interactionContext: [],
+    interactionId: uniqueString(),
+    isComplete: false,
+    question: {
+      attempts: [],
+      isAnswering: false,
+    },
+  };
+  actionMock = {};
+  resMock = {};
+  userMock = {};
+
+  cookieParserMock = require('cookie-parser');
+  cookieParserMock.mockReturnValue(cookieParserMiddleware);
+
+  fcConstructorMock.mockReturnValue(fcMock);
+  tcConstructorMock.mockReturnValue(tcMock);
+
+  (<jest.Mock>(<any>FlowController)).mockImplementation(fcConstructorMock);
+  (<jest.Mock>(<any>TwilioController)).mockImplementation(tcConstructorMock);
+
+  fcMock.resolveNextStateFromAction.mockResolvedValue(cookieMock);
+
+  tcMock.getSmsCookeFromRequest.mockReturnValue(cookieMock);
+
+  getUserContextMock = jest.fn();
+  getUserContextMock.mockResolvedValue(userMock);
+  onMessageMock = jest.fn();
+  onCatchErrorMock = jest.fn();
+});
+
+afterEach(() => {
+  cookieParserMiddleware.mockRestore();
+  fcConstructorMock.mockRestore();
+  tcConstructorMock.mockRestore();
+
+  (<jest.Mock>(<any>FlowController)).mockRestore();
+  (<jest.Mock>(<any>TwilioController)).mockRestore();
+
+  fcMock.getCurrentFlow.mockRestore();
+  fcMock.resolveActionFromState.mockRestore();
+  fcMock.resolveNextStateFromAction.mockRestore();
+
+  tcMock.clearSmsCookie.mockRestore();
+  tcMock.getSmsCookeFromRequest.mockRestore();
+  tcMock.handleAction.mockRestore();
+  tcMock.sendOnMessageNotification.mockRestore();
+  tcMock.sendEmptyResponse.mockRestore();
+  tcMock.setSmsCookie.mockRestore();
+
+  (<jest.Mock>(<any>updateContext)).mockRestore();
+});
 
 
 test('twilly base case: all default parameters', () => {
@@ -371,6 +394,22 @@ test('twilly handleIncomingWebhookRequest incomplete Question', async () => {
 });
 
 
+test('twilly handleIncomingWebhookRequest answered Question', async () => {
+  const router = twilly(defaultArgs);
+  const handleSmsWebhook = getHandler(router);
+
+  actionMock = new Question(uniqueString());
+  actionMock[QuestionSetIsAnswered]();
+  fcMock.resolveActionFromState
+    .mockResolvedValueOnce(actionMock)
+    .mockResolvedValueOnce(null);
+
+  await handleSmsWebhook(reqMock, resMock);
+
+  baseCaseTest();
+});
+
+
 test('twilly handleIncomingWebhookRequest failed Question', async () => {
   const router = twilly(defaultArgs);
   const handleSmsWebhook = getHandler(router);
@@ -403,7 +442,7 @@ test('twilly handleIncomingWebhookRequest complete Question', async () => {
 });
 
 
-test('twilly getUserContext test', async () => {
+test('twilly getUserContext success case test', async () => {
   const router = twilly({
     ...defaultArgs,
     getUserContext: getUserContextMock,
@@ -417,3 +456,77 @@ test('twilly getUserContext test', async () => {
 
   baseCaseTest(userMock);
 });
+
+
+test('twilly onMessage hook success base case test', async () => {
+  const router = twilly({
+    ...defaultArgs,
+    onMessage: onMessageMock,
+  });
+  const handleSmsWebhook = getHandler(router);
+
+  fcMock.resolveActionFromState.mockResolvedValueOnce(actionMock);
+  fcMock.resolveActionFromState.mockResolvedValueOnce(null);
+
+  await handleSmsWebhook(reqMock, resMock);
+
+  baseCaseTest();
+  expectMockToBeCalledWith(
+    onMessageMock, 1, [[cookieMock.interactionContext, null, reqMock.body.Body]])
+});
+
+
+test('twilly onMessage hook success with getUserContext hook', async () => {
+  const router = twilly({
+    ...defaultArgs,
+    getUserContext: getUserContextMock,
+    onMessage: onMessageMock,
+  });
+  const handleSmsWebhook = getHandler(router);
+
+  fcMock.resolveActionFromState.mockResolvedValueOnce(actionMock);
+  fcMock.resolveActionFromState.mockResolvedValueOnce(null);
+
+  await handleSmsWebhook(reqMock, resMock);
+
+  baseCaseTest(userMock);
+  expectMockToBeCalledWith(
+    onMessageMock, 1, [[cookieMock.interactionContext, userMock, reqMock.body.Body]])
+});
+
+
+test('twilly onMessage hook success returns a Message action', async () => {
+  const router = twilly({
+    ...defaultArgs,
+    onMessage: onMessageMock,
+  });
+  const handleSmsWebhook = getHandler(router);
+
+  const msg = new Message(uniqueString(), uniqueString());
+  onMessageMock.mockResolvedValue(msg);
+
+  fcMock.resolveActionFromState.mockResolvedValueOnce(actionMock);
+  fcMock.resolveActionFromState.mockResolvedValueOnce(null);
+
+  await handleSmsWebhook(reqMock, resMock);
+
+  expectMockToBeCalledWith(tcMock.getSmsCookeFromRequest, 1, [[reqMock]]);
+  expectMockToBeCalledWith(
+    fcMock.resolveActionFromState,
+    2,
+    [
+      [reqMock, cookieMock, null],
+      [reqMock, cookieMock, null],
+    ],
+  );
+  expectMockToBeCalledWith(
+    tcMock.sendOnMessageNotification, 1, [[msg]]);
+  expectMockToBeCalledWith(tcMock.handleAction, 1, [[reqMock, actionMock]]);
+  expectMockToBeCalledWith(
+    fcMock.resolveNextStateFromAction, 1, [[reqMock, cookieMock, actionMock]]);
+  expectMockToBeCalledWith(tcMock.setSmsCookie, 1, [[resMock, cookieMock]]);
+  expectMockToBeCalledWith(tcMock.sendEmptyResponse, 1, [[resMock]]);
+});
+
+
+// TODO error handling for pretty much everything
