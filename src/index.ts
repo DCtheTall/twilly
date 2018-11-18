@@ -39,6 +39,7 @@ const cookieParser = require('cookie-parser');
 
 
 const DEFAULT_EXIT_TEXT = 'Goodbye.';
+const DELAY = process.env.NODE_ENV === 'test' ? 10 : 1000;
 const ROUTE_REGEXP = /^\/?$/i;
 
 
@@ -84,10 +85,11 @@ async function handleIncomingSmsWebhook(
     while (action !== null) {
       await tc.handleAction(req, action);
       await new Promise(
-        resolve => setTimeout(resolve, 1000)); // for preserving message order
+        resolve => setTimeout(resolve, DELAY)); // for preserving message order
 
       state = await fc.resolveNextStateFromAction(req, state, action);
 
+      if (action instanceof Question && action.isComplete) console.log(action);
       if (
         (state.isComplete)
         || (
@@ -100,7 +102,9 @@ async function handleIncomingSmsWebhook(
     }
 
     if (state.isComplete) {
-      fc.onInteractionEnd(state.interactionContext, userCtx);
+      if (fc.onInteractionEnd !== null) {
+        fc.onInteractionEnd(state.interactionContext, userCtx);
+      }
       tc.clearSmsCookie(res);
     } else {
       tc.setSmsCookie(res, state);

@@ -10,7 +10,9 @@ import {
 import FlowController from './Flows/Controller';
 import TwilioController from './twllio/Controller';
 import { uniqueString, randomFlow, getSha256Hash } from './util';
-import { updateContext } from './SmsCookie';
+import { updateContext, SmsCookie } from './SmsCookie';
+import { TwilioWebhookRequest, getMockTwilioWebhookRequest } from './twllio';
+import { QuestionSetIsAnswered } from './Actions';
 
 
 jest.mock('cookie-parser');
@@ -18,6 +20,9 @@ jest.mock('cookie-parser');
 jest.mock('./Flows/Controller');
 jest.mock('./twllio/Controller');
 jest.mock('./SmsCookie');
+
+
+const getHandler = router => router.stack[1].route.stack[0].handle;
 
 
 const fcMock = {
@@ -41,8 +46,10 @@ const tcConstructorMock = jest.fn();
 const cookieParserMiddleware = jest.fn();
 
 let cookieParserMock: jest.Mock;
-let cookieMock: any;
+let cookieMock: SmsCookie;
 let actionMock: any;
+let reqMock: TwilioWebhookRequest;
+let resMock: any;
 
 let getUserContextMock: jest.Mock;
 let onCatchErrorMock: jest.Mock;
@@ -58,8 +65,10 @@ const defaultArgs = <any>{
 
 
 beforeEach(() => {
-  cookieMock = {};
+  cookieMock = <SmsCookie>{};
   actionMock = {};
+  reqMock = getMockTwilioWebhookRequest();
+  resMock = {};
 
   cookieParserMock = require('cookie-parser');
   cookieParserMock.mockReturnValue(cookieParserMiddleware);
@@ -70,7 +79,6 @@ beforeEach(() => {
   (<jest.Mock>(<any>FlowController)).mockImplementation(fcConstructorMock);
   (<jest.Mock>(<any>TwilioController)).mockImplementation(tcConstructorMock);
 
-  fcMock.resolveActionFromState.mockResolvedValue(actionMock);
   fcMock.resolveNextStateFromAction.mockResolvedValue(cookieMock);
 
   tcMock.getSmsCookeFromRequest.mockReturnValue(cookieMock);
@@ -210,4 +218,139 @@ test('twilly test: sendOnExit parameter', () => {
     messagingServiceSid: defaultArgs.messagingServiceSid,
     sendOnExit,
   });
+});
+
+
+test('twilly handleIncomingWebhookRequest base case: 1 action', async () => {
+  const router = twilly(defaultArgs);
+  const handleSmsWebhook = getHandler(router);
+
+  fcMock.resolveActionFromState.mockResolvedValueOnce(actionMock);
+  fcMock.resolveActionFromState.mockResolvedValueOnce(null);
+
+  await handleSmsWebhook(reqMock, resMock);
+
+  expect(tcMock.getSmsCookeFromRequest).toBeCalledTimes(1);
+  expect(tcMock.getSmsCookeFromRequest).toBeCalledWith(reqMock);
+
+  expect(fcMock.resolveActionFromState).toBeCalledTimes(2);
+  expect(fcMock.resolveActionFromState.mock.calls[0]).toEqual([reqMock, cookieMock, null]);
+  expect(fcMock.resolveActionFromState.mock.calls[1]).toEqual([reqMock, cookieMock, null]);
+
+  expect(tcMock.sendOnMessageNotification).not.toBeCalled();
+
+  expect(tcMock.handleAction).toBeCalledTimes(1);
+  expect(tcMock.handleAction).toBeCalledWith(reqMock, actionMock);
+
+  expect(fcMock.resolveNextStateFromAction).toBeCalledTimes(1);
+  expect(fcMock.resolveNextStateFromAction).toBeCalledWith(reqMock, cookieMock, actionMock);
+
+  expect(tcMock.setSmsCookie).toBeCalledTimes(1);
+  expect(tcMock.setSmsCookie).toBeCalledWith(resMock, cookieMock);
+
+  expect(tcMock.sendEmptyResponse).toBeCalledTimes(1);
+  expect(tcMock.sendEmptyResponse).toBeCalledWith(resMock);
+});
+
+
+test('twilly handleIncomingWebhookRequest multiple actions', async () => {
+  const router = twilly(defaultArgs);
+  const handleSmsWebhook = getHandler(router);
+  const actionMocks = [{}, {}, {}];
+
+  actionMocks.forEach(
+    (mock: any) => fcMock.resolveActionFromState.mockResolvedValueOnce(mock));
+  fcMock.resolveActionFromState.mockResolvedValueOnce(null);
+
+  await handleSmsWebhook(reqMock, resMock);
+
+  expect(tcMock.getSmsCookeFromRequest).toBeCalledTimes(1);
+  expect(tcMock.getSmsCookeFromRequest).toBeCalledWith(reqMock);
+
+  expect(fcMock.resolveActionFromState).toBeCalledTimes(4);
+  [...Array(4)].map(
+    (_, i: number) =>
+      expect(fcMock.resolveActionFromState.mock.calls[i]).toEqual([reqMock, cookieMock, null]));
+
+  expect(tcMock.sendOnMessageNotification).not.toBeCalled();
+
+  expect(tcMock.handleAction).toBeCalledTimes(3);
+  actionMocks.forEach(
+    (mock: any, i: number) =>
+      expect(tcMock.handleAction.mock.calls[i]).toEqual([reqMock, mock]));
+
+  expect(fcMock.resolveNextStateFromAction).toBeCalledTimes(3);
+  actionMocks.forEach(
+    (mock: any, i: number) =>
+      expect(fcMock.resolveNextStateFromAction.mock.calls[i]).toEqual([reqMock, cookieMock, mock]));
+
+  expect(tcMock.setSmsCookie).toBeCalledTimes(1);
+  expect(tcMock.setSmsCookie).toBeCalledWith(resMock, cookieMock);
+
+  expect(tcMock.sendEmptyResponse).toBeCalledTimes(1);
+  expect(tcMock.sendEmptyResponse).toBeCalledWith(resMock);
+});
+
+
+test('twilly handleIncomingWebhookRequest interaction completed', async () => {
+  const router = twilly(defaultArgs);
+  const handleSmsWebhook = getHandler(router);
+
+  cookieMock.isComplete = true;
+  fcMock.resolveActionFromState.mockResolvedValueOnce(actionMock);
+  fcMock.resolveActionFromState.mockResolvedValueOnce(null);
+
+  await handleSmsWebhook(reqMock, resMock);
+
+  expect(tcMock.getSmsCookeFromRequest).toBeCalledTimes(1);
+  expect(tcMock.getSmsCookeFromRequest).toBeCalledWith(reqMock);
+
+  expect(fcMock.resolveActionFromState).toBeCalledTimes(1);
+  expect(fcMock.resolveActionFromState).toBeCalledWith(reqMock, cookieMock, null);
+
+  expect(tcMock.sendOnMessageNotification).not.toBeCalled();
+
+  expect(tcMock.handleAction).toBeCalledTimes(1);
+  expect(tcMock.handleAction).toBeCalledWith(reqMock, actionMock);
+
+  expect(fcMock.resolveNextStateFromAction).toBeCalledTimes(1);
+  expect(fcMock.resolveNextStateFromAction).toBeCalledWith(reqMock, cookieMock, actionMock);
+
+  expect(tcMock.clearSmsCookie).toBeCalledTimes(1);
+  expect(tcMock.clearSmsCookie).toBeCalledWith(resMock);
+
+  expect(tcMock.sendEmptyResponse).toBeCalledTimes(1);
+  expect(tcMock.sendEmptyResponse).toBeCalledWith(resMock);
+});
+
+
+test('twilly handleIncomingWebhookRequest incomplete Question', async () => {
+  const router = twilly(defaultArgs);
+  const handleSmsWebhook = getHandler(router);
+
+  actionMock = new Question(uniqueString());
+
+  fcMock.resolveActionFromState.mockResolvedValueOnce(actionMock);
+
+  await handleSmsWebhook(reqMock, resMock);
+
+  expect(tcMock.getSmsCookeFromRequest).toBeCalledTimes(1);
+  expect(tcMock.getSmsCookeFromRequest).toBeCalledWith(reqMock);
+
+  expect(fcMock.resolveActionFromState).toBeCalledTimes(1);
+  expect(fcMock.resolveActionFromState).toBeCalledWith(reqMock, cookieMock, null);
+
+  expect(tcMock.sendOnMessageNotification).not.toBeCalled();
+
+  expect(tcMock.handleAction).toBeCalledTimes(1);
+  expect(tcMock.handleAction).toBeCalledWith(reqMock, actionMock);
+
+  expect(fcMock.resolveNextStateFromAction).toBeCalledTimes(1);
+  expect(fcMock.resolveNextStateFromAction).toBeCalledWith(reqMock, cookieMock, actionMock);
+
+  expect(tcMock.setSmsCookie).toBeCalledTimes(1);
+  expect(tcMock.setSmsCookie).toBeCalledWith(resMock, cookieMock);
+
+  expect(tcMock.sendEmptyResponse).toBeCalledTimes(1);
+  expect(tcMock.sendEmptyResponse).toBeCalledWith(resMock);
 });
