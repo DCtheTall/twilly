@@ -346,7 +346,6 @@ test('twilly handleIncomingWebhookRequest base case: 1 action', async () => {
   fcMock.resolveActionFromState.mockResolvedValueOnce(null);
 
   await handleSmsWebhook(reqMock, resMock);
-
   baseCaseTest();
 });
 
@@ -967,9 +966,43 @@ test(
 );
 
 
+test('twilly onMessage throws error', async () => {
+  const router = twilly({
+    ...defaultArgs,
+    onMessage: onMessageMock,
+  });
+  const handleSmsWebhook = getHandler(router);
+
+  onMessageMock.mockRejectedValue(errorMock);
+  fcMock.resolveActionFromState.mockResolvedValueOnce(actionMock);
+  fcMock.resolveActionFromState.mockResolvedValueOnce(null);
+
+  await handleSmsWebhook(reqMock, resMock);
+  baseCaseTest();
+});
+
+
+test('twilly onMessage throws error with onCatchError hook', async () => {
+  const router = twilly({
+    ...defaultArgs,
+    onCatchError: onCatchErrorMock,
+    onMessage: onMessageMock,
+  });
+  const handleSmsWebhook = getHandler(router);
+
+  onMessageMock.mockRejectedValue(errorMock);
+  fcMock.resolveActionFromState.mockResolvedValueOnce(actionMock);
+  fcMock.resolveActionFromState.mockResolvedValueOnce(null);
+
+  await handleSmsWebhook(reqMock, resMock);
+  baseCaseTest();
+  expectMockToBeCalledWith(
+    onCatchErrorMock, 1, [[cookieMock.interactionContext, null, errorMock]]);
+});
+
+
 // TODO error handling for
-// onMessage
-// tc.sendMessageNotification
+// tc.sendMessageNotification 1st and 2nd time
 // tc.handleAction
 // resolveNextStateFromAction
 // fc.onInteractionEnd
