@@ -123,7 +123,7 @@ async function handleIncomingSmsWebhook(
     const result = await onCatchError(
       state.interactionContext, userCtx, err);
 
-    try{
+    try {
       if (result instanceof Reply) {
         await tc.handleAction(req, result);
         state = updateContext(
@@ -133,7 +133,10 @@ async function handleIncomingSmsWebhook(
         );
       }
       if (fc.onInteractionEnd !== null) {
-        await fc.onInteractionEnd(state.interactionContext, userCtx);
+        await fc.onInteractionEnd(
+          state.interactionContext,
+          userCtx,
+        );
       }
     } catch (innerErr) {
       await onCatchError(

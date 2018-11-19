@@ -1,5 +1,5 @@
 import { Action } from '../Actions';
-import { InteractionContext, FlowContext } from '../SmsCookie';
+import { FlowContext } from '../SmsCookie';
 
 
 export type FlowActionResolver =
