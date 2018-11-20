@@ -1,6 +1,6 @@
 require('dotenv').load(); // TODO uninstall this
 
-const { twilly, Flow, Reply, Question, Message, Trigger } = require('./dist');
+const { twilly, Flow, FlowSchema, Reply, Question, Message, Trigger } = require('./dist');
 const app = require('express')();
 
 // TODO uninstall these
@@ -13,6 +13,14 @@ root.addActions(
     name: 'greeting',
     resolve: (_, user) => Promise.resolve(new Reply('Hi ' + user.name)),
   },
+  {
+    name: 'trigger',
+    resolve: () => new Trigger('parent.child'),
+  },
+);
+
+const flow = new Flow();
+flow.addActions(
   {
     name: 'question',
     resolve: () => new Question('What is your favorite color?', {
@@ -40,6 +48,11 @@ app.use('/twilly', twilly({
   authToken: process.env.AUTH_TOKEN,
   messagingServiceSid: process.env.MESSAGE_SERVICE_ID,
   root,
+  schema: new FlowSchema({
+    parent: new FlowSchema({
+      child: flow,
+    }),
+  }),
   getUserContext(fromNumber) { // can return a Promise resolving the user data
     return { name: 'Dylan' };
   },

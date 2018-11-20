@@ -32,7 +32,6 @@ export default class Flow {
   constructor() {
     this[FlowActionNames] = new Set<string>();
     this[FlowActions] = [];
-    this[FlowName] = name;
   }
 
   get length() {

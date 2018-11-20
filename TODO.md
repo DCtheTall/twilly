@@ -15,7 +15,7 @@
 [x] On message hook
 [x] Error handling
 [x] Testing
-[ ] Take name out of Flow constructor, put naming Flows into the evaluate method
+[x] Take name out of Flow constructor, put naming Flows into the evaluate method
 [ ] Finish Flow tests
 [ ] Documentation
 
