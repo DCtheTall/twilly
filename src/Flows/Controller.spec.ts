@@ -1,5 +1,5 @@
 import FlowController from './Controller';
-import Flow, { FlowSelectName } from './Flow';
+import Flow, { FlowSelectActionName } from './Flow';
 import FlowSchema from './FlowSchema';
 import {
   Exit,
@@ -197,7 +197,7 @@ test(
 
     expect(testForExit).toBeCalledTimes(1);
     expect(testForExit).toBeCalledWith(req.body.Body);
-    expect(result.name).toBe(flow[FlowSelectName](0));
+    expect(result.name).toBe(flow[FlowSelectActionName](0));
   },
 );
 

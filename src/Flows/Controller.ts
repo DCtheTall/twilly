@@ -3,7 +3,7 @@ import {
   Flow,
   FlowSchema,
   FlowSelectActionResolver,
-  FlowSelectName,
+  FlowSelectActionName,
   evaluateSchema,
 } from '.';
 import {
@@ -25,12 +25,13 @@ import {
   updateContext,
   addQuestionAttempt,
   createSmsCookie,
+  FlowContext,
 } from '../SmsCookie';
 import {
   TwilioWebhookRequest,
   getMockTwilioWebhookRequest,
 } from '../twllio';
-import { compose } from '../util';
+import { compose, deepCopy } from '../util';
 
 
 type SmsCookieUpdate = (state?: SmsCookie) => SmsCookie;
@@ -91,7 +92,8 @@ export default class FlowController {
     this.root = root;
     if (schema) {
       // DFS of schema to get each user-defined flow
-      // uniqueness of each flow name is guaranteed or it will throw err
+      // uniqueness of flow names is enforced by the fact that JS objects cannot have duplicate keys
+      // each Flow instance can only be used once in the schema
       this.schema = evaluateSchema(root, schema);
       if (this.schema.size === 1) {
         throw new TypeError(
@@ -136,15 +138,14 @@ export default class FlowController {
       return null;
     }
 
-    const action = await resolveAction(
-      Object.freeze({ ...state.flowContext }), userCtx);
+    const action = await resolveAction(deepCopy<FlowContext>(state.flowContext), userCtx);
     if (action instanceof Question) {
       await action[QuestionEvaluate](req, state);
     }
     if (!(action instanceof Action)) {
       return null;
     }
-    action[ActionSetName](currFlow[FlowSelectName](key));
+    action[ActionSetName](currFlow[FlowSelectActionName](key));
 
     return action;
   }

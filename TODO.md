@@ -16,7 +16,7 @@
 [x] Error handling
 [x] Testing
 [x] Take name out of Flow constructor, put naming Flows into the evaluate method
-[ ] Finish Flow tests
+[x] Finish Flow tests
 [ ] Documentation
 
 ## Icebox

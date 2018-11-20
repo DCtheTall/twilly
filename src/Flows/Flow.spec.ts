@@ -1,6 +1,6 @@
 import Flow, {
   FlowSelectActionResolver,
-  FlowSelectName,
+  FlowSelectActionName,
   FlowSetName,
 } from './Flow';
 import { Action } from '../Actions';
@@ -18,12 +18,10 @@ test('Flow constructor test', () => {
 });
 
 
-test('Flow setName should set name property', () => {
+test('Flow setName should set readonly name property', () => {
   const name = uniqueString();
   const flow = new Flow();
-
   flow[FlowSetName](name);
-
   expect(flow.name).toBe(name);
 });
 
@@ -60,7 +58,7 @@ test('Flow addAction should store the action name and resolver', () => {
   const resolve = <() => Action>(() => null);
 
   flow.addAction(name, resolve);
-  expect(flow[FlowSelectName](0)).toBe(name);
+  expect(flow[FlowSelectActionName](0)).toBe(name);
   expect(flow[FlowSelectActionResolver](0)).toBe(resolve);
 });
 
@@ -153,8 +151,8 @@ test('Flow addActions should add multiple actions at once to the flow', () => {
   expect(f.length).toBe(2);
   expect(f[FlowSelectActionResolver](0)).toBe(resolvers[0]);
   expect(f[FlowSelectActionResolver](1)).toBe(resolvers[1]);
-  expect(f[FlowSelectName](0)).toBe(names[0]);
-  expect(f[FlowSelectName](1)).toBe(names[1]);
+  expect(f[FlowSelectActionName](0)).toBe(names[0]);
+  expect(f[FlowSelectActionName](1)).toBe(names[1]);
 });
 
 
@@ -173,8 +171,8 @@ test('Flow addActions should take an array of actions', () => {
   expect(f.length).toBe(2);
   expect(f[FlowSelectActionResolver](0)).toBe(resolvers[0]);
   expect(f[FlowSelectActionResolver](1)).toBe(resolvers[1]);
-  expect(f[FlowSelectName](0)).toBe(names[0]);
-  expect(f[FlowSelectName](1)).toBe(names[1]);
+  expect(f[FlowSelectActionName](0)).toBe(names[0]);
+  expect(f[FlowSelectActionName](1)).toBe(names[1]);
 });
 
 
@@ -232,4 +230,31 @@ test('Flow addActions should throw a TypeError', () => {
 });
 
 
-// TODO test FlowSelectActionResolver, FlowSelectName
+test('Flow selectActionResolver should return null if there is no Action at the specified key', () => {
+  const f = new Flow();
+  const executeTest = (key: any) =>
+    expect(f[FlowSelectActionResolver](key)).toBe(null);
+
+  ['', 5, uniqueString(), 1, 0].map(executeTest);
+
+  const resolver = jest.fn();
+  f.addAction(uniqueString(), resolver);
+
+  expect(f[FlowSelectActionResolver](0)).toBe(resolver);
+  ['', 5, uniqueString(), 1].map(executeTest);
+});
+
+
+test('Flow selectName should return null if there is no Action at the specificed key', () => {
+  const f = new Flow();
+  const executeTest = (key: any) =>
+    expect(f[FlowSelectActionName](key)).toBe(null);
+
+  ['', 5, uniqueString(), 1, 0].map(executeTest);
+
+  const name = uniqueString();
+  f.addAction(name, jest.fn());
+
+  expect(f[FlowSelectActionName](0)).toBe(name);
+  ['', 5, uniqueString(), 1].map(executeTest);
+});

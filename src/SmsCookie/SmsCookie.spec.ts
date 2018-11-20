@@ -12,7 +12,11 @@ import {
   Reply,
   Trigger,
 } from '../Actions';
-import { Flow, pipeSmsCookieUpdates } from '../Flows';
+import {
+  Flow,
+  FlowSetName,
+  pipeSmsCookieUpdates,
+} from '../Flows';
 
 
 test('SmsCookie addQuestionAttempt', () => {
@@ -230,6 +234,9 @@ test('SmsCookie updateContext: Interaction with mutliple actions', () => {
 test('SmsCookie updateContext: Interaction with multiple Flows', () => {
   const flow1 = randomFlow();
   const flow2 = randomFlow();
+
+  flow2[FlowSetName](uniqueString());
+
   const reply1 = new Reply(uniqueString());
   const reply2 = new Reply(uniqueString());
   const trigger = new Trigger(flow2.name);

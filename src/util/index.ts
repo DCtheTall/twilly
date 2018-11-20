@@ -35,3 +35,25 @@ export function compose(...fns: AnyFunc[]): AnyFunc {
 export function randInt(): number {
   return 1 + Math.round(1000 * Math.random());
 }
+
+
+/**
+ * Create a static deep copy of a serealizable object
+ */
+export function deepCopy<T>(obj: T): T {
+  const result = <T>{};
+  Object.keys(obj).map(
+    (key: string) => {
+      const val = obj[key];
+      if (
+        (val !== null)
+        && (!(val instanceof Date))
+        && (typeof val === 'object')
+      ) {
+        result[key] = deepCopy(val);
+      } else {
+        result[key] = val;
+      }
+    });
+  return result;
+}

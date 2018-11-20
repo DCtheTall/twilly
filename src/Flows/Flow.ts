@@ -16,12 +16,18 @@ const FlowActions = Symbol('actions');
 
 export const FlowActionNames = Symbol('actionNames');
 export const FlowSelectActionResolver = Symbol('selectActionResolver');
-export const FlowSelectName = Symbol('selectName');
+export const FlowSelectActionName = Symbol('selectName');
 export const FlowSetName = Symbol('setName');
 
 export default class Flow {
   static validString(s: string): boolean {
     return typeof s === 'string' && Boolean(s.length)
+  }
+
+  static validFlowAction(fa: FlowAction) {
+    return Boolean(fa)
+      && fa.hasOwnProperty('name')
+      && fa.hasOwnProperty('resolve');
   }
 
   private [FlowActions]: FlowAction[];
@@ -98,15 +104,15 @@ export default class Flow {
   }
 
   public [FlowSelectActionResolver](i: number): FlowActionResolver {
-    const flowEntry = this[FlowActions][i];
-    if (!flowEntry) return null;
-    return flowEntry.resolve;
+    const flowAction = this[FlowActions][i];
+    if (!Flow.validFlowAction(flowAction)) return null;
+    return flowAction.resolve;
   }
 
-  public [FlowSelectName](i: number): string {
-    const flowEntry = this[FlowActions][i];
-    if (!flowEntry) return null;
-    return flowEntry.name;
+  public [FlowSelectActionName](i: number): string {
+    const flowAction = this[FlowActions][i];
+    if (!Flow.validFlowAction(flowAction)) return null;
+    return flowAction.name;
   }
 
   public [FlowSetName](name: string) {
