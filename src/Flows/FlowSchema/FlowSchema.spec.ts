@@ -5,7 +5,7 @@ import { uniqueString } from '../../util';
 
 test('FlowSchema base case: one added Flow', () => {
   const f =
-    new Flow(uniqueString()).addAction(
+    new Flow().addAction(
       uniqueString(),
       <FlowActionResolver>(() => null));
   const schemaDef = { [uniqueString()]: f };
@@ -21,11 +21,11 @@ test('FlowSchema base case: one added Flow', () => {
 
 test('FlowSchema should allow multiple uniquely named flows', () => {
   const f1 =
-    new Flow(uniqueString()).addAction(
+    new Flow().addAction(
       uniqueString(),
       <FlowActionResolver>(() => null));
   const f2 =
-    new Flow(uniqueString()).addAction(
+    new Flow().addAction(
       uniqueString(),
       <FlowActionResolver>(() => null));
   const schemaDef = {
@@ -44,11 +44,11 @@ test('FlowSchema should allow multiple uniquely named flows', () => {
 
 test('FlowSchema should allow nesting with other FlowSchema instances', () => {
   const f1 =
-    new Flow(uniqueString()).addAction(
+    new Flow().addAction(
       uniqueString(),
       <FlowActionResolver>(() => null));
   const f2 =
-    new Flow(uniqueString()).addAction(
+    new Flow().addAction(
       uniqueString(),
       <FlowActionResolver>(() => null));
   let caught: Error;

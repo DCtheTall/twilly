@@ -14,7 +14,9 @@
 [x] On interaction end hook
 [x] On message hook
 [x] Error handling
-[ ] Testing
+[x] Testing
+[ ] Take name out of Flow constructor, put naming Flows into the evaluate method
+[ ] Finish Flow tests
 [ ] Documentation
 
 ## Icebox

@@ -1,20 +1,21 @@
-import { evaluateSchema, EvaluatedSchema } from './evaluate';
+import { evaluateSchema, EvaluatedSchema, ROOT } from './evaluate';
 import FlowSchema from '.';
 import Flow from '../Flow';
 import { uniqueString } from '../../util';
 import { Reply } from '../../Actions';
 
 
-function newMockFlow(name = uniqueString()): Flow {
-  const flow = new Flow(name);
+function newMockFlow(): Flow {
+  const flow = new Flow();
   return flow.addAction(
     uniqueString(), () => new Reply(uniqueString()));
 }
 
 
 test('evaluateSchema base case: a schema with one Flow', () => {
-  const root = new Flow(uniqueString());
+  const root = new Flow();
   const flow = newMockFlow();
+  const flowName = uniqueString();
 
   let result: EvaluatedSchema;
   let caught: Error;
@@ -22,23 +23,23 @@ test('evaluateSchema base case: a schema with one Flow', () => {
   try {
     result = evaluateSchema(
       root,
-      new FlowSchema({ [flow.name]: flow }),
+      new FlowSchema({ [flowName]: flow }),
     );
   } catch (err) {
     caught = err;
   }
   expect(caught).toBe(undefined);
   expect(result instanceof Map).toBe(true);
-  expect(result.get(root.name)).toBe(root);
-  expect(result.get(flow.name)).toBe(flow);
+  expect(result.get(ROOT)).toBe(root);
+  expect(flow.name).toBe(flowName);
+  expect(result.get(flowName)).toBe(flow);
 });
 
 
 test('evaluateSchema test: evaluating multiple flows in schema', () => {
-  const root = new Flow(uniqueString());
-  const flow1 = newMockFlow();
-  const flow2 = newMockFlow();
-  const flow3 = newMockFlow();
+  const root = new Flow();
+  const flowNames = [...Array(3)].map(() => uniqueString());
+  const flows = [...Array(3)].map(() => newMockFlow());
 
   let result: EvaluatedSchema;
   let caught: Error;
@@ -47,9 +48,9 @@ test('evaluateSchema test: evaluating multiple flows in schema', () => {
     result = evaluateSchema(
       root,
       new FlowSchema({
-        [flow1.name]: flow1,
-        [flow2.name]: flow2,
-        [flow3.name]: flow3,
+        [flowNames[0]]: flows[0],
+        [flowNames[1]]: flows[1],
+        [flowNames[2]]: flows[2],
       }),
     );
   } catch (err) {
@@ -58,15 +59,23 @@ test('evaluateSchema test: evaluating multiple flows in schema', () => {
   expect(caught).toBe(undefined);
   expect(result instanceof Map).toBe(true);
   expect(result.get(root.name)).toBe(root);
-  expect(result.get(flow1.name)).toBe(flow1);
-  expect(result.get(flow2.name)).toBe(flow2);
-  expect(result.get(flow3.name)).toBe(flow3);
+  [...Array(3)].map(
+    (_, i: number) => expect(result.get(flowNames[i])).toBe(flows[i]));
 });
+
 
 test('evaluateSchema test: evaluating a nested schema', () => {
-  const root = new Flow(uniqueString());
+  const root = new Flow();
+
+  const flow1Name = uniqueString();
   const flow1 = newMockFlow();
+
+  const parentKey1 = uniqueString();
+  const flow2Name = uniqueString();
   const flow2 = newMockFlow();
+
+  const parentKey2 = uniqueString();
+  const flow3Name = uniqueString();
   const flow3 = newMockFlow();
 
   let result: EvaluatedSchema;
@@ -76,11 +85,11 @@ test('evaluateSchema test: evaluating a nested schema', () => {
     result = evaluateSchema(
       root,
       new FlowSchema({
-        [flow1.name]: flow1,
-        [uniqueString()]: new FlowSchema({
-          [flow2.name]: flow2,
-          [uniqueString()]: new FlowSchema({
-            [flow3.name]: flow3,
+        [flow1Name]: flow1,
+        [parentKey1]: new FlowSchema({
+          [flow2Name]: flow2,
+          [parentKey2]: new FlowSchema({
+            [flow3Name]: flow3,
           }),
         }),
       }),
@@ -90,86 +99,19 @@ test('evaluateSchema test: evaluating a nested schema', () => {
   }
   expect(caught).toBe(undefined);
   expect(result instanceof Map).toBe(true);
-  expect(result.get(root.name)).toBe(root);
-  expect(result.get(flow1.name)).toBe(flow1);
-  expect(result.get(flow2.name)).toBe(flow2);
-  expect(result.get(flow3.name)).toBe(flow3);
+  expect(result.get(ROOT)).toBe(root);
+  expect(result.get(flow1Name)).toBe(flow1);
+  expect(result.get(`${parentKey1}.${flow2Name}`)).toBe(flow2);
+  expect(result.get(`${parentKey1}.${parentKey2}.${flow3Name}`)).toBe(flow3);
 });
 
-
-test(
-  'evaluateSchema test: FlowSchemas can share flow name keys '
-  + 'if they point to the same Flow',
-  () => {
-    const root = new Flow(uniqueString());
-    const flow1 = newMockFlow();
-    const flow2 = newMockFlow();
-
-    let result: EvaluatedSchema;
-    let caught: Error;
-
-    try {
-      result = evaluateSchema(
-        root,
-        new FlowSchema({
-          [flow1.name]: flow1,
-          [uniqueString()]: new FlowSchema({
-            [flow2.name]: flow2,
-          }),
-          [uniqueString()]: new FlowSchema({
-            [flow2.name]: flow2,
-          }),
-        }),
-      );
-    } catch (err) {
-      caught = err;
-    }
-    expect(caught).toBe(undefined);
-    expect(result instanceof Map).toBe(true);
-    expect(result.size).toBe(3);
-    expect(result.get(root.name)).toBe(root);
-    expect(result.get(flow1.name)).toBe(flow1);
-    expect(result.get(flow2.name)).toBe(flow2);
-  },
-);
-
-
-test(
-  'evaluateSchema should throw a TypeError if '
-    + 'there are two distinct flows with the same name',
-  () => {
-    const root = new Flow(uniqueString());
-    const flowName = uniqueString();
-    const flow1 = newMockFlow(flowName);
-    const flow2 = newMockFlow(flowName);
-
-    let caught: Error;
-
-    try {
-      evaluateSchema(
-        root,
-        new FlowSchema({
-          [flowName]: flow1,
-          [uniqueString()]: new FlowSchema({
-            [flowName]: flow2,
-          }),
-        }),
-      );
-    } catch (err) {
-      caught = err;
-    }
-    expect(caught.constructor).toBe(TypeError);
-    expect(caught.message).toBe(
-      `All Flows must have unique names. Unexpected duplicate name: ${flowName}`);
-  },
-);
 
 test(
   'evaluateSchema should throw a TypeError '
   + 'if any Flows in the schema perform no actions',
   () => {
-    const root = new Flow(uniqueString());
-    const flow = new Flow(uniqueString());
+    const root = new Flow();
+    const flow = new Flow();
 
     let caught: Error;
 
@@ -191,8 +133,7 @@ test(
 
 
 test('evaluateSchema should throw a TypeError when it receives an empty schema', () => {
-  const root = new Flow(uniqueString());
-  const flow = new Flow(uniqueString());
+  const root = new Flow();
 
   let caught: Error;
 

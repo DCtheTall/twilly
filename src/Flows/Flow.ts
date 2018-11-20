@@ -17,22 +17,19 @@ const FlowActions = Symbol('actions');
 export const FlowActionNames = Symbol('actionNames');
 export const FlowSelectActionResolver = Symbol('selectActionResolver');
 export const FlowSelectName = Symbol('selectName');
+export const FlowSetName = Symbol('setName');
 
 export default class Flow {
   static validString(s: string): boolean {
     return typeof s === 'string' && Boolean(s.length)
   }
 
-  private readonly [FlowActions]: FlowAction[];
+  private [FlowActions]: FlowAction[];
+  private [FlowName]: string;
 
   public readonly [FlowActionNames]: Set<string>;
-  public readonly [FlowName]: string;
 
-  constructor(name: string) {
-    if (typeof name !== 'string' || !name.length) {
-      throw new TypeError(
-        'Flow constructor expects a non-empty string as the first argument');
-    }
+  constructor() {
     this[FlowActionNames] = new Set<string>();
     this[FlowActions] = [];
     this[FlowName] = name;
@@ -111,5 +108,13 @@ export default class Flow {
     const flowEntry = this[FlowActions][i];
     if (!flowEntry) return null;
     return flowEntry.name;
+  }
+
+  public [FlowSetName](name: string) {
+    if (typeof name !== 'string' || !name.length) {
+      throw new TypeError(
+        'Flow constructor expects a non-empty string as the first argument');
+    }
+    this[FlowName] = name;
   }
 }

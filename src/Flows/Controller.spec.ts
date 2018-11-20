@@ -23,7 +23,7 @@ test('FlowController base case: root flow with one action', () => {
   let caught: Error;
   try {
     new FlowController(
-      new Flow(uniqueString()).addAction(
+      new Flow().addAction(
         uniqueString(),
         () => new Reply(uniqueString())));
   } catch (err) {
@@ -68,7 +68,7 @@ test(
     let caught: Error;
     try {
       new FlowController(
-        new Flow(uniqueString()));
+        new Flow());
     } catch (err) {
       caught = err;
     }
@@ -83,11 +83,11 @@ test('FlowController schema parameter: base case', () => {
   let caught: Error;
   try {
     new FlowController(
-      new Flow(uniqueString()).addAction(
+      new Flow().addAction(
         uniqueString(),
         () => new Reply(uniqueString())),
       new FlowSchema({
-        [uniqueString()]: new Flow(uniqueString()).addAction(
+        [uniqueString()]: new Flow().addAction(
           uniqueString(),
           () => new Reply(uniqueString()))
       }),
@@ -107,7 +107,7 @@ test(
       let caught: Error;
       try {
         new FlowController(
-          new Flow(uniqueString()).addAction(
+          new Flow().addAction(
             uniqueString(),
             () => new Reply(uniqueString())),
           schema,
@@ -125,16 +125,16 @@ test(
     executeTest({});
     executeTest(() => { });
     executeTest([]);
-    executeTest(new Flow(uniqueString()));
+    executeTest(new Flow());
   },
 );
 
 
 test(
   'FlowController constructor should throw a TypeError '
-  + 'if the schema does not define any Flows distinct from the root',
+  + 'if the schema does not use each Flow only once',
   () => {
-    const root = new Flow(uniqueString()).addAction(
+    const root = new Flow().addAction(
       uniqueString(),
       () => new Reply(uniqueString()));
     let caught: Error;
@@ -150,7 +150,7 @@ test(
     }
     expect(caught.constructor).toBe(TypeError);
     expect(caught.message).toBe(
-      'If you provide the schema parameter, it must include a flow distinct from the root Flow');
+      `All Flows must be unique. Unexpected duplicate name: ${root.name}`);
   }
 );
 
@@ -232,7 +232,7 @@ test(
     const rootReply = new Reply(replyName);
     const resolver = jest.fn();
     const fc = new FlowController(
-      new Flow(uniqueString()).addAction(replyName, resolver));
+      new Flow().addAction(replyName, resolver));
     const req = getMockTwilioWebhookRequest();
     const user = {};
     const state = createSmsCookie(req);
@@ -255,7 +255,7 @@ test(
     const replyName = uniqueString();
     const rootReply = new Reply(replyName);
     const resolver = jest.fn();
-    const root = new Flow(uniqueString()).addAction(replyName, resolver);
+    const root = new Flow().addAction(replyName, resolver);
     const fc = new FlowController(root);
     const req = getMockTwilioWebhookRequest();
     const user = {};
@@ -278,13 +278,14 @@ test(
   async () => {
     const replyName = uniqueString();
     const flowReply = new Reply(replyName);
+    const flowParentName = uniqueString();
     const flowName = uniqueString();
     const resolver = jest.fn();
     const root = randomFlow();
     const schema = new FlowSchema({
       [uniqueString()]: randomFlow(),
-      [uniqueString()]: new FlowSchema({
-        [uniqueString()]: new Flow(flowName).addAction(replyName, resolver),
+      [flowParentName]: new FlowSchema({
+        [flowName]: new Flow().addAction(replyName, resolver),
       }),
     });
     const fc = new FlowController(root, schema);
@@ -292,7 +293,7 @@ test(
     const user = {};
     const state = createSmsCookie(req);
 
-    state.flow = flowName;
+    state.flow = `${flowParentName}.${flowName}`;
     resolver.mockResolvedValue(flowReply);
     const result = await fc.resolveActionFromState(req, state, user);
 
@@ -337,7 +338,7 @@ test(
     const replyName = uniqueString();
     const reply = new Reply(replyName);
     const resolver = jest.fn();
-    const root = new Flow(uniqueString()).addActions([
+    const root = new Flow().addActions([
       { name: uniqueString(), resolve: () => new Reply(uniqueString()) },
       { name: uniqueString(), resolve: () => new Reply(uniqueString()) },
       { name: replyName, resolve: resolver },
@@ -367,7 +368,7 @@ test(
     const replyName = uniqueString();
     const reply = new Reply(replyName);
     const resolver = jest.fn();
-    const flow = new Flow(uniqueString()).addActions([
+    const flow = new Flow().addActions([
       { name: uniqueString(), resolve: () => new Reply(uniqueString()) },
       { name: replyName, resolve: resolver },
       { name: uniqueString(), resolve: () => new Reply(uniqueString()) },
@@ -766,12 +767,14 @@ test(
 test('FlowController resolveNextStateFromAction should handle Trigger actions', () => {
   const req = getMockTwilioWebhookRequest();
   const state = createSmsCookie(req);
+  const flow1Name = uniqueString();
+  const flow2Name = uniqueString();
   const flow1 = randomFlow();
   const flow2 = randomFlow();
-  const trigger = new Trigger(flow2.name);
+  const trigger = new Trigger(flow2Name);
   const fc = new FlowController(randomFlow(), new FlowSchema({
-    [uniqueString()]: flow1,
-    [uniqueString()]: flow2,
+    [flow1Name]: flow1,
+    [flow2Name]: flow2,
   }));
   const updatedState = { ...state };
   const newState = { ...state };
@@ -779,7 +782,7 @@ test('FlowController resolveNextStateFromAction should handle Trigger actions', 
   const updateContext = jest.spyOn(SmsCookieModule, 'updateContext');
   const handleTrigger = jest.spyOn(SmsCookieModule, 'handleTrigger');
 
-  state.flow = flow1.name;
+  state.flow = flow1Name;
   updateContext.mockReturnValue(updatedState);
   handleTrigger.mockReturnValue(newState);
   const result = fc.resolveNextStateFromAction(req, state, trigger);

@@ -1,26 +1,41 @@
 import Flow, {
-  FlowSelectActionResolver, FlowSelectName,
+  FlowSelectActionResolver,
+  FlowSelectName,
+  FlowSetName,
 } from './Flow';
 import { Action } from '../Actions';
 import { uniqueString } from '../util';
 
 
-test('Flow constructor argument should set name property', () => {
+test('Flow constructor test', () => {
+  let caught: Error;
+  try {
+    new Flow();
+  } catch (err) {
+    caught = err;
+  }
+  expect(caught).toBe(undefined);
+});
+
+
+test('Flow setName should set name property', () => {
   const name = uniqueString();
-  const flow = new Flow(name);
+  const flow = new Flow();
+
+  flow[FlowSetName](name);
 
   expect(flow.name).toBe(name);
 });
 
 
 test(
-  'Flow constructor should throw an error '
+  'Flow setName should throw an error '
     + 'if it does not receive an empty string.',
   () => {
     const executeTest = (name: any) => {
       let caught;
       try {
-        new Flow(name);
+        new Flow()[FlowSetName](name);
       } catch (err) {
         caught = err;
       }
@@ -40,7 +55,7 @@ test(
 
 
 test('Flow addAction should store the action name and resolver', () => {
-  const flow = new Flow(uniqueString());
+  const flow = new Flow();
   const name = uniqueString();
   const resolve = <() => Action>(() => null);
 
@@ -51,7 +66,7 @@ test('Flow addAction should store the action name and resolver', () => {
 
 
 test('Flow addAction should modify the flow\'s length', () => {
-  const flow = new Flow(uniqueString());
+  const flow = new Flow();
 
   expect(flow.length).toBe(0);
   flow.addAction('test', () => null);
@@ -63,7 +78,7 @@ test('Flow addAction should throw a TypeError if the first argument is not a non
   const executeTest = (name: any) => {
     let caught: Error;
     try {
-      const flow = new Flow(uniqueString());
+      const flow = new Flow();
       flow.addAction(name, <() => Action>(() => null));
     } catch (err) {
       caught = err;
@@ -84,7 +99,7 @@ test('Flow addAction should throw a TypeError if the first argument is not a non
 
 
 test('Flow addAction duplicate action names should throw a TypeError', () => {
-  const f = new Flow(uniqueString());
+  const f = new Flow();
   const name = uniqueString();
 
   let caught: Error;
@@ -104,7 +119,7 @@ test('Flow addAction should throw a TypeError if the second argument is not a fu
   const executeTest = (resolve: any) => {
     let caught: Error;
     try {
-      const flow = new Flow(uniqueString());
+      const flow = new Flow();
       flow.addAction(uniqueString(), resolve);
     } catch (err) {
       caught = err;
@@ -124,7 +139,7 @@ test('Flow addAction should throw a TypeError if the second argument is not a fu
 
 
 test('Flow addActions should add multiple actions at once to the flow', () => {
-  const f = new Flow(uniqueString());
+  const f = new Flow();
   const names = [uniqueString(), uniqueString()];
   const resolvers = [
     <() => Action>(() => null),
@@ -144,7 +159,7 @@ test('Flow addActions should add multiple actions at once to the flow', () => {
 
 
 test('Flow addActions should take an array of actions', () => {
-  const f = new Flow(uniqueString());
+  const f = new Flow();
   const names = [uniqueString(), uniqueString()];
   const resolvers = [
     <() => Action>(() => null),
@@ -165,7 +180,7 @@ test('Flow addActions should take an array of actions', () => {
 
 test('Flow addActions should throw a TypeError if an invalid name is provided', () => {
   const executeTest = (param: any) => {
-    const f = new Flow(uniqueString());
+    const f = new Flow();
     let caught: Error;
     try{
       f.addActions(param);
@@ -190,7 +205,7 @@ test('Flow addActions should throw a TypeError if an invalid name is provided', 
 
 
 test('Flow addActions should throw a TypeError', () => {
-  const f = new Flow(uniqueString());
+  const f = new Flow();
   let caught: Error;
   const isTypeError =
     () => expect(

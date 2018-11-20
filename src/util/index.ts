@@ -16,7 +16,7 @@ export function uniqueString(): string {
 }
 
 export function randomFlow(): Flow {
-  return new Flow(uniqueString()).addAction(
+  return new Flow().addAction(
       uniqueString(),
       () => new Reply(uniqueString()),
     );
