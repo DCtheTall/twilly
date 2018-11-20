@@ -133,10 +133,7 @@ async function handleIncomingSmsWebhook(
         );
       }
       if (fc.onInteractionEnd !== null) {
-        await fc.onInteractionEnd(
-          state.interactionContext,
-          userCtx,
-        );
+        await fc.onInteractionEnd(state.interactionContext, userCtx);
       }
     } catch (innerErr) {
       await onCatchError(
