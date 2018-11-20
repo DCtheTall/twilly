@@ -136,7 +136,8 @@ export default class FlowController {
       return null;
     }
 
-    const action = await resolveAction(state.flowContext, userCtx);
+    const action = await resolveAction(
+      Object.freeze({ ...state.flowContext }), userCtx);
     if (action instanceof Question) {
       await action[QuestionEvaluate](req, state);
     }
