@@ -77,7 +77,7 @@ test('SmsCookie handleTrigger', () => {
 
 test('SmsCookie incrementFlowAction flow not yet complete', () => {
   const req = getMockTwilioWebhookRequest();
-  const flow = new Flow(uniqueString());
+  const flow = new Flow();
 
   let cookie = SmsCookieModule.createSmsCookie(req);
 
@@ -97,7 +97,7 @@ test('SmsCookie incrementFlowAction flow not yet complete', () => {
 
 test('SmsCookie incrementFlowAction flow complete', () => {
   const req = getMockTwilioWebhookRequest();
-  const flow = new Flow(uniqueString());
+  const flow = new Flow();
 
   let cookie = SmsCookieModule.createSmsCookie(req);
 

@@ -7,7 +7,7 @@ const app = require('express')();
 const bp = require('body-parser');
 const morgan = require('morgan');
 
-const root = new Flow('root');
+const root = new Flow();
 root.addActions(
   {
     name: 'greeting',
