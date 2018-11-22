@@ -10,14 +10,14 @@ to allow you to defined complex SMS interactions for your users with ease.
 
 The design of the library's exposed interface was built with one goal in mind, make
 interactions as easy to design as they are with tools like [FlowXO](https://flowxo.com/)
-or [Twilio Frame](https://www.twilio.com/flex) but allow the interactions
+or [Twilio Studio](https://www.twilio.com/studio) but allow the interactions
 to be defined with code (in this case, JavaScript).
 
 ---
 
 ## Contents
 
-1. [Setup](#setup)
+1. [Installation and Setup](#installation-and-setup)
 2. [Quick Start](#quick-start)
 3. [Tutorials](#tutorials)
 4. [Documentation](#documentation)
@@ -27,11 +27,13 @@ to be defined with code (in this case, JavaScript).
 
 ---
 
-## Setup
+## Installation and Setup
 
 To add twilly to your Node.js Express application, run
 
-`npm i -s twilly`
+```
+npm i -s twilly
+```
 
 You will download a precompiled version of twilly so there is no need to add
 TypeScript or twilly's settings to your build config.
@@ -55,14 +57,14 @@ us to code this application in just a few lines.
 
 First you need to install the required dependencies,
 
-```
+```javascript
 const bp = require('body-parser');
 const express = require('express');
 ```
 
 and let's set up our Express application,
 
-```
+```javascript
 const app = express();
 
 app.use(bp.urlencoded({ extended: false, limit: '2mb' }));
@@ -83,7 +85,7 @@ The application we want to build just has one Flow, the user sends a message
 and the application replies with "Hello world!". So let's import the `Flow`
 and `Reply` objects from twilly.
 
-```
+```javascript
 const { Flow, Reply } = require('twilly');
 ```
 
@@ -93,7 +95,7 @@ we will see how to initiate other Flows from others.
 
 Now let's set up the root Flow for this interaction,
 
-```
+```javascript
 const root = new Flow();
 
 root.addAction('reply', () => new Reply('Hello world!'));
@@ -107,7 +109,7 @@ actions.
 The last thing we need to do is add the `twilly` middleware to the
 Express app. This is done below:
 
-```
+```javascript
 const { twilly } = require('twilly');
 
 app.use('/twilly', twilly({
@@ -122,7 +124,23 @@ You can see the entire twilly app in working form in `examples/quickstart.js`.
 
 ## Tutorials
 
-with examples
+Create wikis for (provide links here):
+
+Sending multiple replies
+
+Using user data in the actions
+
+Sending messages to other numbers
+
+Triggering other Flows
+
+Asking a text question
+
+Asking a multiple choice question
+
+Using data from other actions
+
+Storing a record of the interaction
 
 ## Documentation
 
@@ -138,4 +156,5 @@ create CONTRIBUTING.md
 
 ## Bugs or Feature Suggestions
 
-link to issues
+To report any bugs or suggest any features or improvements,
+please open an issue [here](https://github.com/DCtheTall/twilly/issues).
