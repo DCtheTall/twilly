@@ -78,8 +78,8 @@ app.get('/', (req, res) => {
 ```
 
 Now let's start defining your SMS app. Twilly separates the different type of
-interactions into linear sequences of actions called _Flows_. A Flow is best
-thought of as a linear collection of actions your app can take.
+interactions into linear sequences of actions called _Flows_. A Flow is a
+linear collection of actions your app can take after receiving a message.
 
 The application we want to build just has one Flow, the user sends a message
 and the application replies with "Hello world!". So let's import the `Flow`
@@ -144,7 +144,8 @@ Storing a record of the interaction
 
 ## Documentation
 
-document all of exposed API
+You can view the documentation of twilly's exposed objects and API
+[here](https://github.com/DCtheTall/twilly/wiki/Documentation).
 
 ## License
 
