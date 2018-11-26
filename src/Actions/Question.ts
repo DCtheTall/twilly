@@ -50,8 +50,8 @@ export interface QuestionOptions {
 const defaultOptions = <QuestionOptions>{
   choices: [],
   continueOnFailure: false,
-  failedToAnswerResponse: 'Sorry, I do not understand your answer. Please try again.',
-  invalidAnswerResponse: 'Hmm. I didn\'t quite understand your answer.',
+  failedToAnswerResponse: 'Sorry, I do not understand your answer.',
+  invalidAnswerResponse: 'Hmm. I didn\'t quite understand your answer. Please try again.',
   maxRetries: 1,
   type: TextQuestion,
   validateAnswer: () => true,
