@@ -77,15 +77,15 @@ export const QuestionShouldContinueOnFail = Symbol('shouldContinueOnFailure');
 export const QuestionSetShouldSendInvalidRes = Symbol('setShouldSendInvalidRes');
 
 export default class Question extends Action {
+  static Types: QuestionTypes = {
+    MultipleChoice: MutlipleChoiceQuestion,
+    Text: TextQuestion,
+  }
+
   static validString(s: any): boolean {
     return (typeof s === 'string')
       && Boolean(s.length);
   }
-
-  static Types: QuestionTypes = {
-    MultipleChoice: MutlipleChoiceQuestion,
-    Text: TextQuestion,
-  };
 
   private [QuestionAnswer]: string | number;
   private [QuestionAnswerValidator]: AnswerValidator;
