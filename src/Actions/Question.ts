@@ -122,11 +122,18 @@ export default class Question extends Action {
         (!choices)
         || (!Array.isArray(choices))
         || (choices.length < 2)
-        || (!choices.every(
-          (v: (answer: string) => boolean) => typeof v === 'function')))
+        || (choices.some(
+          (v: (answer: string) => boolean) => typeof v !== 'function')))
     ) {
       throw new TypeError(
         'Multiple choice Questions must include a \'choices\' option, an array of at least 2 functions of a string which return a boolen');
+    }
+    if (
+      (type === MutlipleChoiceQuestion)
+        && (validateAnswer !== defaultOptions.validateAnswer)
+    ) {
+      throw new TypeError(
+        'Multiple choice Questions cannot have a validateAnswer option');
     }
     if (!Question.validString(failedToAnswerResponse)) {
       throw new TypeError(
@@ -245,8 +252,8 @@ export default class Question extends Action {
   ) {
     if (!state.question.isAnswering) return;
     if (
-      this.type === Question.Types.Text &&
-      await this.validateAnswer(req.body.Body)
+      (this.type === Question.Types.Text)
+        && (await this.validateAnswer(req.body.Body))
     ) {
       this.setAnswer(req.body.Body);
       return;

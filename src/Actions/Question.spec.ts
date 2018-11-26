@@ -84,6 +84,27 @@ test('Multiple choice Question should throw a TypeError if choices input is inva
 });
 
 
+test('Multiple choice Question should throw a TypeError if validateAnswer is provided', () => {
+  let caught: Error;
+
+  try {
+    new Question(uniqueString(), {
+      choices: [
+        () => true,
+        () => true,
+      ],
+      type: Question.Types.MultipleChoice,
+      validateAnswer: () => true,
+    });
+  } catch (err) {
+    caught = err;
+  }
+  expect(caught.constructor).toBe(TypeError);
+  expect(caught.message).toBe(
+    'Multiple choice Questions cannot have a validateAnswer option');
+});
+
+
 test('Question failedToAnswerResponse option should set instance property', () => {
   const failedToAnswerResponse = uniqueString();
   const q = new Question(uniqueString(), { failedToAnswerResponse });
