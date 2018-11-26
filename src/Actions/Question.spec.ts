@@ -44,6 +44,21 @@ test('Question should throw a TypeError if its constructor receives an invalid a
 });
 
 
+test('Text Question should throw a TypeError if a choices option is provided', () => {
+  let caught: Error;
+  try {
+    new Question(uniqueString(), {
+      choices: [],
+    });
+  } catch (err) {
+    caught = err;
+  }
+  expect(caught.constructor).toBe(TypeError);
+  expect(caught.message).toBe(
+    'A text Question cannot have a \'choices\' option');
+});
+
+
 test('Multiple choice Question should include an array of choices (functions)', () => {
   const choices = [
     () => true,

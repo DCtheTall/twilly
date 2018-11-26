@@ -118,6 +118,13 @@ export default class Question extends Action {
         'The first argument of the Question constructor must be a non-empty string');
     }
     if (
+      (type === TextQuestion)
+        && (choices !== defaultOptions.choices)
+    ) {
+      throw new TypeError(
+        'A text Question cannot have a \'choices\' option');
+    }
+    if (
       (type === MutlipleChoiceQuestion) && (
         (!choices)
         || (!Array.isArray(choices))
