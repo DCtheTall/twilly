@@ -46,12 +46,12 @@ export function pipeSmsCookieUpdates(...funcs: SmsCookieUpdate[]): SmsCookieUpda
 export type ExitKeywordTest =
   (body: string) => (boolean | Promise<boolean>);
 
-export type InteractionEndHook =
+export type OnInteractionEndHook =
   (context: InteractionContext, userCtx: any) => any;
 
 
 export interface FlowControllerOptions {
-  onInteractionEnd?: InteractionEndHook;
+  onInteractionEnd?: OnInteractionEndHook;
   testForExit?: ExitKeywordTest;
 }
 
@@ -66,7 +66,7 @@ export default class FlowController {
   private readonly schema: EvaluatedSchema;
   private testForExit: ExitKeywordTest;
 
-  public readonly onInteractionEnd: InteractionEndHook;
+  public readonly onInteractionEnd: OnInteractionEndHook;
 
   constructor(
     root: Flow,

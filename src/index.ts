@@ -11,7 +11,7 @@ import {
   Flow,
   FlowController,
   FlowSchema,
-  InteractionEndHook,
+  OnInteractionEndHook,
 } from './Flows';
 import {
   Message,
@@ -149,7 +149,7 @@ interface TwillyParameters extends TwilioControllerArgs {
   cookieSecret?: string;
   getUserContext?: UserContextGetter;
   onCatchError?: OnCatchErrorHook;
-  onInteractionEnd?: InteractionEndHook;
+  onInteractionEnd?: OnInteractionEndHook;
   onMessage?: OnMessageHook;
   root: Flow,
   schema?: FlowSchema,

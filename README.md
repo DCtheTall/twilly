@@ -122,40 +122,51 @@ app.use('/twilly', twilly({
 
 You can see the entire twilly app in working form in `examples/quickstart.js`.
 
-## Tutorials
-
-Create wikis for (provide links here):
-
-Sending multiple replies
-
-Using user data in the actions
-
-Sending messages to other numbers
-
-Triggering other Flows
-
-Asking a text question
-
-Asking a multiple choice question
-
-Using data from other actions
-
-Storing a record of the interaction
+---
 
 ## Documentation
 
 You can view the documentation of twilly's exposed objects and API
 [here](https://github.com/DCtheTall/twilly/wiki/Documentation).
 
+---
+
 ## License
 
 create LICENSE.md
+
+---
 
 ## Contributing
 
 create CONTRIBUTING.md
 
+---
+
 ## Bugs or Feature Suggestions
 
 To report any bugs or suggest any features or improvements,
 please open an issue [here](https://github.com/DCtheTall/twilly/issues).
+
+---
+
+## Feature Pipeline
+
+Below is a list of the features I plan on adding to twilly in the future.
+I am always open to suggested features and contributions from other developers
+who want to make twilly better!
+
+### Filtering Actions
+
+Right now there is no way to "filter" (or skip) Actions in a Flow. Either
+an Action is performed or the entire interaction ends. The next release I
+plan on doing is adding an ability to filter actions so that interactions
+can continue even if a particular action is not performed.
+
+I am open to suggestions about implementation, but right now I am planning on adding a
+3rd optional argument to `Flow.addAction` which is a function of the Flow
+and user contexts and returns a Boolean which indicates if the Action should
+execute. For `Flow.addActions` this would be an optional `filter` key in each of the
+plain objects. Each Action's contexts would have a `filtered` key which would be `false`
+if an Action is performed or `true` if no Action was performed and the Flow skipped
+to the next Action.
