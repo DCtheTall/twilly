@@ -132,6 +132,38 @@ test(
 
 test(
   'FlowController constructor should throw a TypeError '
+  + 'if testForExit is not a function',
+  () => {
+    const executeTest = (testForExit: any) => {
+      let caught: Error;
+      try {
+        new FlowController(
+          new Flow().addAction(
+            uniqueString(),
+            () => new Reply(uniqueString())),
+          null,
+          { testForExit },
+        );
+      } catch (err) {
+        caught = err;
+      }
+      expect(caught.constructor).toBe(TypeError);
+      expect(caught.message).toBe(
+        'testForExit parameter must be a function');
+    };
+
+    executeTest('abc');
+    executeTest(1);
+    executeTest({});
+    executeTest(new Reply('Test'));
+    executeTest([]);
+    executeTest(new Flow());
+  },
+);
+
+
+test(
+  'FlowController constructor should throw a TypeError '
   + 'if the schema does not use each Flow only once',
   () => {
     const root = new Flow().addAction(

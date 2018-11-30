@@ -94,6 +94,10 @@ export default class FlowController {
       throw new TypeError(
         'schema parameter must be an instance of FlowSchema');
     }
+    if (typeof testForExit !== 'function') {
+      throw new TypeError(
+        'testForExit parameter must be a function');
+    }
     // other type checking here
     this.root = root;
     if (schema) {
