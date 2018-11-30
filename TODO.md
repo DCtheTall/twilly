@@ -17,7 +17,9 @@
 [x] Testing
 [x] Take name out of Flow constructor, put naming Flows into the evaluate method
 [x] Finish Flow tests
-[ ] Documentation
+[x] Documentation
+[x] License
+[ ] Contributing guidelines
 
 ## Icebox
 - Get replies or questions to send xml response (low pri, after testing)

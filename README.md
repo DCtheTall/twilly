@@ -1,17 +1,16 @@
 # twilly 📱💬
 
-Writing the back end of an SMS application should be easy for developers,
-_twilly_ was created to greatly simplify the process of writing automated
-SMS applications.
+Writing the back end of an SMS web application with Twilio should be easy, and
+`twilly` was created to greatly simplify the process of writing such applications.
 
-Twilly is a Node.js library that can be used with TypeScript or JavaScript
-as middleware for an Express.js app, it works in conjunction with the Twilio API
-to allow you to defined complex SMS interactions for your users with ease.
+`twilly` is a Node.js library that can be used with TypeScript or JavaScript
+as middleware for an Express.js app, it works in conjunction with the Twilio
+API to allow you to defined complex SMS interactions for your users with ease.
 
 The design of the library's exposed interface was built with one goal in mind, make
 interactions as easy to design as they are with tools like [FlowXO](https://flowxo.com/)
 or [Twilio Studio](https://www.twilio.com/studio) but allow the interactions
-to be defined with code (in this case, JavaScript).
+to be defined with code (in this case, JavaScript) instead of a GUI.
 
 ---
 
@@ -24,6 +23,7 @@ to be defined with code (in this case, JavaScript).
 5. [License](#license)
 6. [Contributing](#contributing)
 7. [Bugs or Feature Suggestions](#bugs-or-feature-suggestions)
+8. [Feature Pipeline](#feature-pipeline)
 
 ---
 
@@ -133,7 +133,7 @@ You can view the documentation of twilly's exposed objects and API
 
 ## License
 
-create LICENSE.md
+`twilly` is available free of charge under the MIT license. See `LICENSE.md` for details.
 
 ---
 
