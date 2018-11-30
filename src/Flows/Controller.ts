@@ -50,6 +50,12 @@ export type OnInteractionEndHook =
   (context: InteractionContext, userCtx: any) => any;
 
 
+const EXIT_REGEXP = /(\b)(exit)(\b)/i;
+
+export const defaultTestForExit =
+  <ExitKeywordTest>((body: string) => EXIT_REGEXP.test(body))
+
+
 export interface FlowControllerOptions {
   onInteractionEnd?: OnInteractionEndHook;
   testForExit?: ExitKeywordTest;
@@ -57,7 +63,7 @@ export interface FlowControllerOptions {
 
 const defaultOptions = <FlowControllerOptions>{
   onInteractionEnd: () => null,
-  testForExit: null,
+  testForExit: defaultTestForExit,
 };
 
 

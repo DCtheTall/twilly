@@ -7,7 +7,7 @@ import {
   Trigger,
   twilly,
 } from '.'; // tests should fail if not all objects in build are exported
-import FlowController from './Flows/Controller';
+import FlowController, { defaultTestForExit } from './Flows/Controller';
 import TwilioController from './twllio/Controller';
 import { uniqueString, randomFlow, getSha256Hash } from './util';
 import {
@@ -243,7 +243,7 @@ test('twilly base case: all default parameters', () => {
   expect(fcConstructorMock).toBeCalledTimes(1);
   expect(fcConstructorMock).toBeCalledWith(defaultArgs.root, null, {
     onInteractionEnd: null,
-    testForExit: null,
+    testForExit: defaultTestForExit,
   });
 
   expect(tcConstructorMock).toBeCalledTimes(1);
@@ -278,7 +278,7 @@ test('twilly test: schema parameter', () => {
 
   expect(fcConstructorMock).toBeCalledWith(defaultArgs.root, schema, {
     onInteractionEnd: null,
-    testForExit: null,
+    testForExit: defaultTestForExit,
   });
 });
 
@@ -323,7 +323,7 @@ test('twilly test: onInteractionEnd parameter', () => {
 
   expect(fcConstructorMock).toBeCalledWith(defaultArgs.root, null, {
     onInteractionEnd,
-    testForExit: null,
+    testForExit: defaultTestForExit,
   });
 });
 

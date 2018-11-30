@@ -12,6 +12,7 @@ import {
   FlowController,
   FlowSchema,
   OnInteractionEndHook,
+  defaultTestForExit,
 } from './Flows';
 import {
   Message,
@@ -165,7 +166,7 @@ const defaultParameters = <TwillyParameters>{
   onMessage: null,
   schema: null,
   sendOnExit: DEFAULT_EXIT_TEXT,
-  testForExit: null,
+  testForExit: defaultTestForExit,
 };
 
 export function twilly({
