@@ -4,8 +4,8 @@ import Action, {
   ActionSetMessageSids,
   ActionSetName,
   GetContext,
-} from './Action';
-import { uniqueString } from '../util';
+} from '../../src/Actions/Action';
+import { uniqueString } from '../../src/util';
 
 
 test('Action should not have a name or any sid when it is instantiated', () => {

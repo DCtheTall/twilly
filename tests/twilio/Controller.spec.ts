@@ -1,7 +1,11 @@
-import TwilioController, { TwilioControllerArgs } from './Controller';
-import { uniqueString } from '../util';
-import { getMockTwilioWebhookRequest } from './TwilioWebhookRequest';
-import { createSmsCookie } from '../SmsCookie';
+import {
+  TwilioController,
+  TwilioControllerArgs,
+  getMockTwilioWebhookRequest,
+} from '../../src/twllio';
+import TwimlResponse from '../../src/twllio/TwimlResponse';
+import { uniqueString } from '../../src/util';
+import { createSmsCookie } from '../../src/SmsCookie';
 import {
   ActionSetMessageSid,
   ActionSetMessageSids,
@@ -12,12 +16,11 @@ import {
   QuestionSetIsFailed,
   QuestionSetShouldSendInvalidRes,
   Reply,
-} from '../Actions';
-import TwimlResponse from './TwimlResponse';
+} from '../../src/Actions';
 
 
 jest.mock('twilio', () => jest.fn());
-jest.mock('./TwimlResponse', () => jest.fn());
+jest.mock('../../src/twllio/TwimlResponse', () => jest.fn());
 
 
 const twilioMessagesCreate = jest.fn();

@@ -1,9 +1,9 @@
-import * as SmsCookieModule from '.';
-import { getMockTwilioWebhookRequest } from '../twllio';
+import * as SmsCookieModule from '../../src/SmsCookie';
+import { getMockTwilioWebhookRequest } from '../../src/twllio';
 import {
   randomFlow,
   uniqueString,
-} from '../util';
+} from '../../src/util';
 import {
   ActionGetContext,
   ActionSetMessageSids,
@@ -11,12 +11,12 @@ import {
   Question,
   Reply,
   Trigger,
-} from '../Actions';
+} from '../../src/Actions';
 import {
   Flow,
   FlowSetName,
   pipeSmsCookieUpdates,
-} from '../Flows';
+} from '../../src/Flows';
 
 
 test('SmsCookie addQuestionAttempt', () => {

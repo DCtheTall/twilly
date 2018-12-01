@@ -1,12 +1,14 @@
-import Question, {
+import {
+  MAXIMUM_RETRIES_ALLOWED,
+  ActionGetContext,
+  GetContext,
+  Question,
   QuestionTypeMap,
   QuestionEvaluate,
-  MAXIMUM_RETRIES_ALLOWED,
-} from './Question';
-import { GetContext, ActionGetContext } from './Action';
-import { uniqueString } from '../util';
-import { getMockTwilioWebhookRequest } from '../twllio';
-import { createSmsCookie } from '../SmsCookie';
+} from '../../src/Actions';
+import { uniqueString } from '../../src/util';
+import { getMockTwilioWebhookRequest } from '../../src/twllio';
+import { createSmsCookie } from '../../src/SmsCookie';
 
 test('Question should set body from constructor', () => {
   const body = uniqueString();

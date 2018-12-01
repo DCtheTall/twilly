@@ -1,10 +1,11 @@
-import Flow, {
+import {
+  Flow,
   FlowSelectActionResolver,
   FlowSelectActionName,
   FlowSetName,
-} from './Flow';
-import { Action } from '../Actions';
-import { uniqueString } from '../util';
+} from '../../src/Flows';
+import { Action } from '../../src/Actions';
+import { uniqueString } from '../../src/util';
 
 
 test('Flow constructor test', () => {

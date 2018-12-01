@@ -1,9 +1,10 @@
-import TwimlResponse, {
+import {
   DEFAULT_RESPONSE_CODE,
   EMPTY_TWIML_RESPONSE,
-} from './TwimlResponse';
-import { uniqueString, randInt } from '../util';
-import { XmlContentTypeHeader } from './TwilioWebhookRequest';
+  TwimlResponse,
+  XmlContentTypeHeader,
+} from '../../src/twllio';
+import { uniqueString, randInt } from '../../src/util';
 
 
 jest.mock('twilio/lib/twiml/MessagingResponse');

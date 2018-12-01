@@ -1,6 +1,9 @@
-import FlowController from './Controller';
-import Flow, { FlowSelectActionName } from './Flow';
-import FlowSchema from './FlowSchema';
+import {
+  Flow,
+  FlowController,
+  FlowSchema,
+  FlowSelectActionName,
+} from '../../src/Flows';
 import {
   Exit,
   GetContext,
@@ -10,10 +13,10 @@ import {
   QuestionSetIsFailed,
   Reply,
   Trigger,
-} from '../Actions';
-import { uniqueString, randomFlow } from '../util';
-import { getMockTwilioWebhookRequest } from '../twllio';
-import * as SmsCookieModule from '../SmsCookie';
+} from '../../src/Actions';
+import { uniqueString, randomFlow } from '../../src/util';
+import { getMockTwilioWebhookRequest } from '../../src/twllio';
+import * as SmsCookieModule from '../../src/SmsCookie';
 
 
 const createSmsCookie = SmsCookieModule.createSmsCookie;

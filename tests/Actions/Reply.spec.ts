@@ -1,6 +1,5 @@
-import Reply from './Reply';
-import { GetContext } from './Action';
-import { uniqueString } from '../util';
+import { GetContext, Reply } from '../../src/Actions';
+import { uniqueString } from '../../src/util';
 
 
 test('Reply should set constructor argument as body property', () => {

@@ -1,3 +1,4 @@
+import { uniqueString, randomFlow, getSha256Hash } from '../src/util';
 import {
   Flow,
   FlowSchema,
@@ -6,29 +7,31 @@ import {
   Reply,
   Trigger,
   twilly,
-} from '.'; // tests should fail if not all objects in build are exported
-import FlowController, { defaultTestForExit } from './Flows/Controller';
-import TwilioController from './twllio/Controller';
-import { uniqueString, randomFlow, getSha256Hash } from './util';
+} from '../src'; // tests should fail if not all objects in build are exported
+import {
+  FlowController,
+  defaultTestForExit,
+} from '../src/Flows';
 import {
   SmsCookie,
   updateContext,
-} from './SmsCookie';
+} from '../src/SmsCookie';
 import {
+  TwilioController,
   TwilioWebhookRequest,
   getMockTwilioWebhookRequest,
-} from './twllio';
+} from '../src/twllio';
 import {
   QuestionSetIsAnswered,
   QuestionSetIsFailed,
-} from './Actions';
+} from '../src/Actions';
 
 
 jest.mock('cookie-parser');
 
-jest.mock('./Flows/Controller');
-jest.mock('./twllio/Controller');
-jest.mock('./SmsCookie');
+jest.mock('../src/Flows/Controller');
+jest.mock('../src/twllio/Controller');
+jest.mock('../src/SmsCookie');
 
 
 const getHandler = router => router.stack[1].route.stack[0].handle;

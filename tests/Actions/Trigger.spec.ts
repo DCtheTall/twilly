@@ -1,6 +1,5 @@
-import Trigger from './Trigger';
-import { GetContext } from './Action';
-import { uniqueString } from '../util';
+import { GetContext, Trigger } from '../../src/Actions';
+import { uniqueString } from '../../src/util';
 
 
 test('Trigger should set constructor argument as flowName property', () => {

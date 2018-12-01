@@ -1,8 +1,12 @@
-import { evaluateSchema, EvaluatedSchema, ROOT } from './evaluate';
-import FlowSchema from '.';
-import Flow from '../Flow';
-import { uniqueString } from '../../util';
-import { Reply } from '../../Actions';
+import {
+  ROOT,
+  EvaluatedSchema,
+  Flow,
+  FlowSchema,
+  evaluateSchema,
+} from '../../../src/Flows';
+import { uniqueString } from '../../../src/util';
+import { Reply } from '../../../src/Actions';
 
 
 function newMockFlow(): Flow {

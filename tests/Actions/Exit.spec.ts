@@ -1,6 +1,9 @@
-import Exit from './Exit';
-import { GetContext, ActionGetContext } from './Action';
-import { uniqueString } from '../util';
+import {
+  Exit,
+  GetContext,
+  ActionGetContext,
+} from '../../src/Actions';
+import { uniqueString } from '../../src/util';
 
 
 test('Exit should set its messageBody with the constructor and it should be saved to context', () => {

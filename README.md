@@ -139,7 +139,7 @@ You can view the documentation of twilly's exposed objects and API
 
 ## Contributing
 
-create CONTRIBUTING.md
+See `CONTRIBUTING.md` for information on contribution guidlines and community standards.
 
 ---
 

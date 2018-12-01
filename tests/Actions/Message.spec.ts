@@ -1,6 +1,9 @@
-import Message from './Message';
-import { ActionGetContext, GetContext } from './Action';
-import { uniqueString } from '../util';
+import {
+  ActionGetContext,
+  GetContext,
+  Message,
+} from '../../src/Actions';
+import { uniqueString } from '../../src/util';
 
 
 test('Message should set the to and body in the constructor', () => {

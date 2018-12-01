@@ -1,6 +1,9 @@
-import FlowSchema from '.';
-import Flow, { FlowActionResolver } from '../Flow';
-import { uniqueString } from '../../util';
+import {
+  Flow,
+  FlowActionResolver,
+  FlowSchema,
+} from '../../../src/Flows';
+import { uniqueString } from '../../../src/util';
 
 
 test('FlowSchema base case: one added Flow', () => {
