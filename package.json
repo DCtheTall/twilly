@@ -1,13 +1,14 @@
 {
   "name": "twilly",
-  "version": "1.0.0",
+  "version": "0.0.2",
   "description": "unopinionated Node.js Twilio API abstraction server",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "jest",
     "dev": "webpack --mode development --progress --watch",
-    "build": "webpack --mode production"
+    "build": "webpack --mode production",
+    "prepublish": "npm run-script build"
   },
   "repository": {
     "type": "git",
@@ -17,8 +18,14 @@
     "twilio",
     "SMS",
     "node.js",
-    "twilio",
-    "api"
+    "twilly",
+    "api",
+    "phone",
+    "texting",
+    "interactions",
+    "customer service",
+    "node",
+    "typescript"
   ],
   "author": "Dylan Cutler",
   "license": "ISC",
