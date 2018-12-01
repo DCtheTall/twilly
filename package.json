@@ -1,6 +1,6 @@
 {
   "name": "twilly",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Node.js Twilio API abstraction layer for Express applications",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -35,7 +35,6 @@
   "homepage": "https://github.com/DCtheTall/twilio-server#readme",
   "dependencies": {
     "@types/node": "^10.10.2",
-    "@types/cookie-parser": "^1.4.1",
     "cookie-parser": "^1.4.3",
     "express": "^4.16.3",
     "twilio": "^3.20.0"

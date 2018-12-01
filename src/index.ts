@@ -1,4 +1,4 @@
-import { Router, Response } from 'express';
+import { Router, Response, RequestHandler } from 'express';
 
 import { getSha256Hash } from './util';
 import {
@@ -36,7 +36,8 @@ export {
   Trigger,
 } from './Actions';
 
-const cookieParser = require('cookie-parser');
+const cookieParser =
+  <(secret: string) => RequestHandler>require('cookie-parser');
 
 
 const DEFAULT_EXIT_TEXT = 'Goodbye.';
