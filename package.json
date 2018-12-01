@@ -46,7 +46,6 @@
     "@types/jest": "^23.3.9",
     "@types/twilio": "0.0.10",
     "body-parser": "^1.18.3",
-    "dotenv": "^6.0.0",
     "jest": "^23.6.0",
     "morgan": "^1.9.1",
     "ts-jest": "^23.10.4",
