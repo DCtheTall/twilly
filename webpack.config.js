@@ -2,6 +2,7 @@ const { join, resolve } = require('path');
 const nodeExternals = require('webpack-node-externals');
 
 module.exports = {
+  devtool: 'source-map',
   entry: './src/index.ts',
   target: 'node',
   externals: [nodeExternals()],
