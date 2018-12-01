@@ -18,12 +18,11 @@ to be defined with code (in this case, JavaScript) instead of a GUI.
 
 1. [Installation and Setup](#installation-and-setup)
 2. [Quick Start](#quick-start)
-3. [Tutorials](#tutorials)
-4. [Documentation](#documentation)
-5. [License](#license)
-6. [Contributing](#contributing)
-7. [Bugs or Feature Suggestions](#bugs-or-feature-suggestions)
-8. [Feature Pipeline](#feature-pipeline)
+3. [Documentation](#documentation)
+4. [License](#license)
+5. [Contributing](#contributing)
+6. [Bugs or Feature Suggestions](#bugs-or-feature-suggestions)
+7. [Feature Pipeline](#feature-pipeline)
 
 ---
 

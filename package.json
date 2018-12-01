@@ -1,6 +1,6 @@
 {
   "name": "twilly",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Node.js Twilio API abstraction layer for Express applications",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
