@@ -90,7 +90,7 @@ const { Flow, Reply } = require('twilly');
 
 The Flow any user who hasn't already started any application enters is called
 the "root" Flow. Every other Flow is a "child" of this Flow, and later on,
-we will see how to initiate other Flows from others.
+we will see how to initiate Flows within each other using the `Trigger` object.
 
 Now let's set up the root Flow for this interaction,
 
