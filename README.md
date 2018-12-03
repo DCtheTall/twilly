@@ -28,7 +28,7 @@ to be defined with code (in this case, JavaScript) instead of a GUI.
 
 ## Installation and Setup
 
-[Twilly is published on npm](https://www.npmjs.com/package/twilly)
+[Twilly is published on npm](https://www.npmjs.com/package/twilly).
 To add twilly to your Node.js Express application, run
 
 ```
