@@ -84,13 +84,7 @@ test('TwilioController should type check its arguments', () => {
         `${option} twilly option must be a non-empty string`);
     }));
   const executeTests =
-    () =>
-      executeTest('')
-      || executeTest(1)
-      || executeTest({})
-      || executeTest([])
-      || executeTest(() => { })
-      || executeTest(null);
+    () => ['', 1, {}, [], () => {}, null].forEach(testcase => executeTest(testcase));
 
   Object.keys(args).map((option: string) => {
     selectOption(option);

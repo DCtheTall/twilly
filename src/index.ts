@@ -46,10 +46,10 @@ const ROUTE_REGEXP = /^\/?$/i;
 
 
 type OnMessageHook =
-  (context: InteractionContext, user: any, messageBody: string) => any;
+  (context?: InteractionContext, user?: any, messageBody?: string) => any;
 
 type OnCatchErrorHook =
-  (context: InteractionContext, user: any, err: Error) => any;
+  (context?: InteractionContext, user?: any, err?: Error) => any;
 
 type UserContextGetter = (from: string) => any;
 
