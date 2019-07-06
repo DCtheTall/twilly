@@ -45,7 +45,7 @@ const fcMock = {
 };
 const tcMock = {
   clearSmsCookie: jest.fn(),
-  getSmsCookeFromRequest: jest.fn(),
+  getSmsCookieFromRequest: jest.fn(),
   handleAction: jest.fn(),
   sendMessageNotification: jest.fn(),
   sendEmptyResponse: jest.fn(),
@@ -88,7 +88,7 @@ function expectMockToBeCalledWith(fn: jest.Mock, n: number, args: any[][]) {
 
 
 function baseCaseTest(user = null) {
-  expectMockToBeCalledWith(tcMock.getSmsCookeFromRequest, 1, [[reqMock]]);
+  expectMockToBeCalledWith(tcMock.getSmsCookieFromRequest, 1, [[reqMock]]);
   expectMockToBeCalledWith(
     fcMock.resolveActionFromState,
     2,
@@ -203,7 +203,7 @@ beforeEach(() => {
   (<jest.Mock>(<any>FlowController)).mockImplementation(fcConstructorMock);
   (<jest.Mock>(<any>TwilioController)).mockImplementation(tcConstructorMock);
 
-  tcMock.getSmsCookeFromRequest.mockReturnValue(cookieMock);
+  tcMock.getSmsCookieFromRequest.mockReturnValue(cookieMock);
   fcMock.resolveNextStateFromAction.mockResolvedValue(cookieMock);
 
   getUserContextMock = jest.fn();
@@ -229,7 +229,7 @@ afterEach(() => {
   fcMock.resolveNextStateFromAction.mockRestore();
 
   tcMock.clearSmsCookie.mockRestore();
-  tcMock.getSmsCookeFromRequest.mockRestore();
+  tcMock.getSmsCookieFromRequest.mockRestore();
   tcMock.handleAction.mockRestore();
   tcMock.sendMessageNotification.mockRestore();
   tcMock.sendEmptyResponse.mockRestore();
@@ -372,8 +372,8 @@ test('twilly handleIncomingWebhookRequest multiple actions', async () => {
 
   await handleSmsWebhook(reqMock, resMock);
 
-  expect(tcMock.getSmsCookeFromRequest).toBeCalledTimes(1);
-  expect(tcMock.getSmsCookeFromRequest).toBeCalledWith(reqMock);
+  expect(tcMock.getSmsCookieFromRequest).toBeCalledTimes(1);
+  expect(tcMock.getSmsCookieFromRequest).toBeCalledWith(reqMock);
 
   expectMockToBeCalledWith(
     fcMock.resolveActionFromState,
@@ -414,8 +414,8 @@ test('twilly handleIncomingWebhookRequest interaction completed', async () => {
 
   await handleSmsWebhook(reqMock, resMock);
 
-  expect(tcMock.getSmsCookeFromRequest).toBeCalledTimes(1);
-  expect(tcMock.getSmsCookeFromRequest).toBeCalledWith(reqMock);
+  expect(tcMock.getSmsCookieFromRequest).toBeCalledTimes(1);
+  expect(tcMock.getSmsCookieFromRequest).toBeCalledWith(reqMock);
 
   expect(fcMock.resolveActionFromState).toBeCalledTimes(1);
   expect(fcMock.resolveActionFromState).toBeCalledWith(reqMock, cookieMock, null);
@@ -445,8 +445,8 @@ test('twilly handleIncomingWebhookRequest incomplete Question', async () => {
 
   await handleSmsWebhook(reqMock, resMock);
 
-  expect(tcMock.getSmsCookeFromRequest).toBeCalledTimes(1);
-  expect(tcMock.getSmsCookeFromRequest).toBeCalledWith(reqMock);
+  expect(tcMock.getSmsCookieFromRequest).toBeCalledTimes(1);
+  expect(tcMock.getSmsCookieFromRequest).toBeCalledWith(reqMock);
 
   expect(fcMock.resolveActionFromState).toBeCalledTimes(1);
   expect(fcMock.resolveActionFromState).toBeCalledWith(reqMock, cookieMock, null);
@@ -583,7 +583,7 @@ test('twilly onMessage hook success returns a Message action', async () => {
 
   await handleSmsWebhook(reqMock, resMock);
 
-  expectMockToBeCalledWith(tcMock.getSmsCookeFromRequest, 1, [[reqMock]]);
+  expectMockToBeCalledWith(tcMock.getSmsCookieFromRequest, 1, [[reqMock]]);
   expectMockToBeCalledWith(
     fcMock.resolveActionFromState,
     2,
@@ -1050,7 +1050,7 @@ test('twilly onMessage hook: tc.sendMessageNotification throws error', async () 
 
   await handleSmsWebhook(reqMock, resMock);
 
-  expectMockToBeCalledWith(tcMock.getSmsCookeFromRequest, 1, [[reqMock]]);
+  expectMockToBeCalledWith(tcMock.getSmsCookieFromRequest, 1, [[reqMock]]);
   expectMockToBeCalledWith(
     fcMock.resolveActionFromState,
     2,
@@ -1082,7 +1082,7 @@ test('twilly onMessage hook: tc.sendMessageNotification throws error with onCatc
 
   await handleSmsWebhook(reqMock, resMock);
 
-  expectMockToBeCalledWith(tcMock.getSmsCookeFromRequest, 1, [[reqMock]]);
+  expectMockToBeCalledWith(tcMock.getSmsCookieFromRequest, 1, [[reqMock]]);
   expectMockToBeCalledWith(
     fcMock.resolveActionFromState,
     2,
@@ -1118,7 +1118,7 @@ test(
 
     await handleSmsWebhook(reqMock, resMock);
 
-    expectMockToBeCalledWith(tcMock.getSmsCookeFromRequest, 1, [[reqMock]]);
+    expectMockToBeCalledWith(tcMock.getSmsCookieFromRequest, 1, [[reqMock]]);
     expectMockToBeCalledWith(
       fcMock.resolveActionFromState,
       2,

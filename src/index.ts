@@ -67,7 +67,7 @@ async function handleIncomingSmsWebhook(
   let userCtx: any = null;
 
   try {
-    state = tc.getSmsCookeFromRequest(req);
+    state = tc.getSmsCookieFromRequest(req);
     userCtx = await getUserContext(req.body.From); // will throw any errors not caught in promise
 
     let action = await fc.resolveActionFromState(req, state, userCtx);

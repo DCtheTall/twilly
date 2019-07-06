@@ -97,7 +97,7 @@ export default class TwilioController {
     res.clearCookie(this.cookieKey);
   }
 
-  public getSmsCookeFromRequest(req: TwilioWebhookRequest): SmsCookie {
+  public getSmsCookieFromRequest(req: TwilioWebhookRequest): SmsCookie {
     return req.cookies[this.cookieKey] || createSmsCookie(req);
   }
 
