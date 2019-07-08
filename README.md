@@ -156,6 +156,10 @@ Below is a list of the features I plan on adding to twilly in the future.
 I am always open to suggested features and contributions from other developers
 who want to make twilly better!
 
+### Trigger Flows outside of the `twilly()` function
+
+As pointed out in [Issue #3](https://github.com/DCtheTall/twilly/issues/3) it would be nice to be able to trigger flows from other places in your Node application outside of the `twilly` function. This seems like a common use case and seems feasible though I have not actually tried implementing. PRs are welcome if anyone is interested as well. 
+
 ### Filtering Actions
 
 Right now there is no way to "filter" (or skip) Actions in a Flow. Either
