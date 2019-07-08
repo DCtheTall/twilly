@@ -1,10 +1,10 @@
-# twilly 📱💬
+# Twilly 📱💬
 
 Writing the back end of an SMS web application with Twilio should be easy, and
-`twilly` was created to greatly simplify the process of writing such applications.
+Twilly was created to greatly simplify the process of writing such applications.
 
-`twilly` is a Node.js library that can be used with TypeScript or JavaScript
-as middleware for an Express.js app, it works in conjunction with the Twilio
+Twilly is a Node.js library that can be used with TypeScript or JavaScript
+and integrates with Express.js. It works in conjunction with the Twilio
 API to allow you to defined complex SMS interactions for your users with ease.
 
 The design of the library's exposed interface was built with one goal in mind, make
@@ -29,20 +29,20 @@ to be defined with code (in this case, JavaScript) instead of a GUI.
 ## Installation and Setup
 
 [Twilly is published on npm](https://www.npmjs.com/package/twilly).
-To add twilly to your Node.js Express application, run
+To add Twilly to your Node.js Express application, run
 
 ```
 npm i -s twilly
 ```
 
-You will download a precompiled version of twilly so there is no need to add
-TypeScript or twilly's settings to your build config.
+You will download a precompiled version of Twilly so there is no need to add
+TypeScript or Twilly's settings to your build config.
 
-You will need to have an account with Twilio in order to use twilly, if
+You will need to have an account with Twilio in order to use Twilly, if
 there is demand to allow other APIs to be compatible then I am open to adding more.
 For now, you will need to create a messaging service with Twilio using their dashboard.
 You will also need to set your inbound message url to the path of your application
-you use the twilly middleware.
+you use the `twilly` function.
 
 I recommend you download the package [ngrok](https://www.npmjs.com/package/ngrok)
 (or another library like it) while developing with Twilly.
@@ -83,7 +83,7 @@ linear collection of actions your app can take after receiving a message.
 
 The application we want to build just has one Flow, the user sends a message
 and the application replies with "Hello world!". So let's import the `Flow`
-and `Reply` objects from twilly.
+and `Reply` objects from Twilly.
 
 ```javascript
 const { Flow, Reply } = require('twilly');
@@ -106,7 +106,7 @@ to the end of the Flow. The first argument is the name of the action,
 and can be used later to retrieve metadata about the action in later
 actions.
 
-The last thing we need to do is add the `twilly` middleware to the
+The last thing we need to do is add the `twilly` function to the
 Express app. This is done below:
 
 ```javascript
@@ -126,14 +126,14 @@ You can see the entire twilly app in working form in `examples/quickstart.js`.
 
 ## Documentation
 
-You can view the documentation of twilly's exposed objects and API
+You can view the documentation of Twilly's exposed objects and API
 [here](https://github.com/DCtheTall/twilly/wiki/Documentation).
 
 ---
 
 ## License
 
-`twilly` is available free of charge under the MIT license. See `LICENSE.md` for details.
+Twilly is available free of charge under the MIT license. See `LICENSE.md` for details.
 
 ---
 
