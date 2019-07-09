@@ -68,6 +68,7 @@ interface LocalTwillyVariables {
 
 const twillyLocals = new Map<string, LocalTwillyVariables>();
 
+
 async function handleIncomingSmsWebhook(
   locals: LocalTwillyVariables,
   req: TwilioWebhookRequest,
@@ -169,7 +170,7 @@ interface TwillyParameters extends TwilioControllerArgs {
   testForExit?: ExitKeywordTest;
 }
 
-const defaultParameters = <TwillyParameters>{
+const defaultTwillyParameters = <TwillyParameters>{
   cookieKey: null,
   cookieSecret: null,
   getUserContext: <UserContextGetter>(() => null),
@@ -188,23 +189,23 @@ export function twilly({
   messagingServiceSid,
 
   root,
-  schema = defaultParameters.schema,
+  schema = defaultTwillyParameters.schema,
 
-  cookieKey = defaultParameters.cookieKey,
-  cookieSecret = defaultParameters.cookieSecret,
+  cookieKey = defaultTwillyParameters.cookieKey,
+  cookieSecret = defaultTwillyParameters.cookieSecret,
 
-  getUserContext = defaultParameters.getUserContext,
+  getUserContext = defaultTwillyParameters.getUserContext,
 
-  onCatchError = defaultParameters.onCatchError,
-  onInteractionEnd = defaultParameters.onInteractionEnd,
-  onMessage = defaultParameters.onMessage,
+  onCatchError = defaultTwillyParameters.onCatchError,
+  onInteractionEnd = defaultTwillyParameters.onInteractionEnd,
+  onMessage = defaultTwillyParameters.onMessage,
 
-  sendOnExit = defaultParameters.sendOnExit,
-  testForExit = defaultParameters.testForExit,
+  sendOnExit = defaultTwillyParameters.sendOnExit,
+  testForExit = defaultTwillyParameters.testForExit,
 
-  name = defaultParameters.name,
+  name = defaultTwillyParameters.name,
 }: TwillyParameters): Router {
-  if (name !== defaultParameters.name && twillyLocals.has(name)) {
+  if (name !== defaultTwillyParameters.name && twillyLocals.has(name)) {
     console.warn(`There already exists a Twilly instance with the name: ${name}`);
   }
   const locals: LocalTwillyVariables = { hooks: {} };
@@ -238,4 +239,20 @@ export function twilly({
   router.post(
     ROUTE_REGEXP, handleIncomingSmsWebhook.bind(null, locals));
   return router;
+}
+
+
+interface TriggerFlowParameters {
+  name: string;
+}
+
+const defaultTriggerFlowParameters = {
+  name: DEFAULT_TWILLY_NAME,
+};
+
+function triggerFlow(flowName, {
+  name = defaultTriggerFlowParameters.name,
+} = defaultTriggerFlowParameters) {
+  const locals = twillyLocals.get(name);
+  // TODO refactor FlowController to support this.
 }
