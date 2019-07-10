@@ -20,11 +20,10 @@ import {
 
 
 test('SmsCookie addQuestionAttempt', () => {
-  const req = getMockTwilioWebhookRequest();
   const attempt1 = uniqueString();
   const attempt2 = uniqueString();
 
-  let cookie = SmsCookieModule.createSmsCookie(req);
+  let cookie = SmsCookieModule.createSmsCookie();
 
   cookie.question.attempts = [attempt1];
   cookie = SmsCookieModule.addQuestionAttempt(cookie, attempt2);
@@ -33,9 +32,7 @@ test('SmsCookie addQuestionAttempt', () => {
 
 
 test('SmsCookie completeInteraction', () => {
-  const req = getMockTwilioWebhookRequest();
-
-  let cookie = SmsCookieModule.createSmsCookie(req);
+  let cookie = SmsCookieModule.createSmsCookie();
 
   cookie = SmsCookieModule.completeInteraction(cookie);
   expect(cookie.isComplete).toBe(true);
@@ -43,14 +40,12 @@ test('SmsCookie completeInteraction', () => {
 
 
 test('SmsCookie createSmsCookie', () => {
-  const req = getMockTwilioWebhookRequest();
-  const cookie = SmsCookieModule.createSmsCookie(req);
+  const cookie = SmsCookieModule.createSmsCookie();
 
   expect(cookie).toMatchObject({
     flow: null,
     flowContext: {},
     flowKey: 0,
-    from: req.body.From,
     interactionComplete: false,
     interactionContext: [],
     isComplete: false,
@@ -65,10 +60,9 @@ test('SmsCookie createSmsCookie', () => {
 
 
 test('SmsCookie handleTrigger', () => {
-  const req = getMockTwilioWebhookRequest();
   const trigger = new Trigger(uniqueString());
 
-  let cookie = SmsCookieModule.createSmsCookie(req);
+  let cookie = SmsCookieModule.createSmsCookie();
 
   cookie = SmsCookieModule.handleTrigger(cookie, trigger);
   expect(cookie).toMatchObject({
@@ -80,10 +74,9 @@ test('SmsCookie handleTrigger', () => {
 
 
 test('SmsCookie incrementFlowAction flow not yet complete', () => {
-  const req = getMockTwilioWebhookRequest();
   const flow = new Flow();
 
-  let cookie = SmsCookieModule.createSmsCookie(req);
+  let cookie = SmsCookieModule.createSmsCookie();
 
   cookie.flowKey = 1;
   flow.addActions([
@@ -100,10 +93,9 @@ test('SmsCookie incrementFlowAction flow not yet complete', () => {
 
 
 test('SmsCookie incrementFlowAction flow complete', () => {
-  const req = getMockTwilioWebhookRequest();
   const flow = new Flow();
 
-  let cookie = SmsCookieModule.createSmsCookie(req);
+  let cookie = SmsCookieModule.createSmsCookie();
 
   cookie.flowKey = 2;
   flow.addActions([
@@ -120,9 +112,7 @@ test('SmsCookie incrementFlowAction flow complete', () => {
 
 
 test('SmsCookie startQuestion', () => {
-  const req = getMockTwilioWebhookRequest();
-
-  let cookie = SmsCookieModule.createSmsCookie(req);
+  let cookie = SmsCookieModule.createSmsCookie();
 
   cookie = SmsCookieModule.startQuestion(cookie);
   expect(cookie).toMatchObject({
@@ -158,7 +148,7 @@ test(
 
     try {
       SmsCookieModule.updateContext(
-        SmsCookieModule.createSmsCookie(getMockTwilioWebhookRequest()), flow, reply);
+        SmsCookieModule.createSmsCookie(), flow, reply);
     } catch (err) {
       caught = err;
     }
@@ -184,7 +174,7 @@ test('SmsCookie updateContext base case: An interaction with a single reply', ()
 
   const update = state => SmsCookieModule.updateContext(state, flow, reply);
   const cookie = update(
-    SmsCookieModule.createSmsCookie(getMockTwilioWebhookRequest()));
+    SmsCookieModule.createSmsCookie());
 
   expect(cookie.flowContext[reply.name].createdAt.constructor).toBe(Date);
   expect(cookie.flowContext[reply.name]).toMatchObject(rest);
@@ -304,7 +294,7 @@ test('SmsCookie updateContext: recording Question sids', () => {
   let { createdAt, ...rest } = q[ActionGetContext]();
 
   let cookie = SmsCookieModule.updateContext(
-    SmsCookieModule.createSmsCookie(getMockTwilioWebhookRequest()), flow, q);
+    SmsCookieModule.createSmsCookie(), flow, q);
 
   expect(cookie.flowContext[q.name]).toMatchObject(rest);
   expect(cookie.flowContext[q.name].createdAt.constructor).toBe(Date);

@@ -27,10 +27,7 @@ import {
   createSmsCookie,
   FlowContext,
 } from '../SmsCookie';
-import {
-  TwilioWebhookRequest,
-  getMockTwilioWebhookRequest,
-} from '../twllio';
+import { TwilioWebhookRequest } from '../twllio';
 import { compose, deepCopy } from '../util';
 
 
@@ -38,7 +35,7 @@ type SmsCookieUpdate = (state?: SmsCookie) => SmsCookie;
 
 export function pipeSmsCookieUpdates(...funcs: SmsCookieUpdate[]): SmsCookieUpdate {
   return (
-    cookie: SmsCookie = createSmsCookie(getMockTwilioWebhookRequest()),
+    cookie: SmsCookie = createSmsCookie(),
   ): SmsCookie => compose(...funcs)(cookie);
 }
 

@@ -112,7 +112,7 @@ test('TwilioController clearSmsCookie test', () => {
 test('TwilioController getSmsCookeFromRequest with no cookie set', () => {
   const req = getMockTwilioWebhookRequest();
   const tc = new TwilioController(args);
-  const { createdAt, interactionId, ...rest } = createSmsCookie(req);
+  const {createdAt, interactionId, ...rest} = createSmsCookie();
   const cookie = tc.getSmsCookieFromRequest(req);
   expect(cookie).toMatchObject(rest);
   expect(cookie.createdAt.constructor).toBe(Date);
@@ -123,7 +123,7 @@ test('TwilioController getSmsCookeFromRequest with no cookie set', () => {
 test('TwilioController getSmsCookeFromRequest with cookie set', () => {
   const req = getMockTwilioWebhookRequest();
   const tc = new TwilioController(args);
-  const prevCookie = createSmsCookie(req);
+  const prevCookie = createSmsCookie();
 
   req.cookies[args.cookieKey] = prevCookie;
   const cookie = tc.getSmsCookieFromRequest(req);
@@ -378,7 +378,7 @@ test('TwilioController sendSmsResponse test', () => {
 test('TwilioController setSmsCookie test', () => {
   const res = <any>{ cookie: jest.fn() };
   const tc = new TwilioController(args);
-  const cookie = createSmsCookie(getMockTwilioWebhookRequest());
+  const cookie = createSmsCookie();
 
   tc.setSmsCookie(res, cookie);
 

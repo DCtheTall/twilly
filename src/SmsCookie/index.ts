@@ -18,7 +18,6 @@ export type InteractionContext = ActionContext[];
 
 export interface SmsCookie {
   createdAt: Date;
-  from: string;
   flow: string;
   flowContext: FlowContext;
   flowKey: string | number;
@@ -49,13 +48,12 @@ export function completeInteraction(state: SmsCookie) {
 }
 
 
-export function createSmsCookie(req: TwilioWebhookRequest): SmsCookie {
+export function createSmsCookie(): SmsCookie {
   return {
     createdAt: new Date(),
     flow: null,
     flowContext: {},
     flowKey: 0,
-    from: req.body.From,
     interactionComplete: false,
     interactionContext: [],
     interactionId: uniqueString(),

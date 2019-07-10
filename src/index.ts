@@ -22,6 +22,7 @@ import {
 import {
   InteractionContext,
   SmsCookie,
+  createSmsCookie,
   updateContext,
 } from './SmsCookie';
 
@@ -43,7 +44,7 @@ const cookieParser =
 const DEFAULT_EXIT_TEXT = 'Goodbye.';
 const DELAY = process.env.NODE_ENV === 'test' ? 10 : 1000;
 const ROUTE_REGEXP = /^\/?$/i;
-const DEFAULT_TWILLY_NAME = '__DEFAULT_TWILLY_NAME__';
+const DEFAULT_TWILLY_NAME = '__$$_DEFAULT_TWILLY_$$__';
 
 
 type OnMessageHook =
@@ -205,10 +206,10 @@ export function twilly({
 
   name = defaultTwillyParameters.name,
 }: TwillyParameters): Router {
-  if (name !== defaultTwillyParameters.name && twillyLocals.has(name)) {
+  if (twillyLocals.has(name)) {
     console.warn(`There already exists a Twilly instance with the name: ${name}`);
   }
-  const locals: LocalTwillyVariables = { hooks: {} };
+  const locals: LocalTwillyVariables = {hooks: {}};
 
   twillyLocals.set(name, locals);
   locals.hooks.getUserContext = getUserContext;
@@ -243,16 +244,20 @@ export function twilly({
 
 
 interface TriggerFlowParameters {
-  name: string;
+  twillyName?: string;
 }
 
 const defaultTriggerFlowParameters = {
-  name: DEFAULT_TWILLY_NAME,
+  twillyName: DEFAULT_TWILLY_NAME,
 };
 
-function triggerFlow(flowName, {
-  name = defaultTriggerFlowParameters.name,
+export function triggerFlow(flowName, {
+  twillyName = defaultTriggerFlowParameters.twillyName,
 } = defaultTriggerFlowParameters) {
-  const locals = twillyLocals.get(name);
-  // TODO refactor FlowController to support this.
+  const locals = twillyLocals.get(twillyName);
+
+  let state: SmsCookie = null;
+  let userCtx: any = null;
+
+
 }
