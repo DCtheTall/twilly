@@ -18,9 +18,7 @@ import { uniqueString, randomFlow } from '../../src/util';
 import { getMockTwilioWebhookRequest } from '../../src/twllio';
 import * as SmsCookieModule from '../../src/SmsCookie';
 
-
-const createSmsCookie = SmsCookieModule.createSmsCookie;
-
+const { createSmsCookie } = SmsCookieModule;
 
 test('FlowController base case: root flow with one action', () => {
   let caught: Error;
@@ -205,7 +203,7 @@ test(
     const fc = new FlowController(randomFlow());
     const req = getMockTwilioWebhookRequest();
     const user = {};
-    const state = createSmsCookie(req);
+    const state = createSmsCookie();
 
     state.isComplete = true;
     const result = await fc.resolveActionFromState(req, state, user);
@@ -225,7 +223,7 @@ test(
     });
     const req = getMockTwilioWebhookRequest();
     const user = {};
-    const state = createSmsCookie(req);
+    const state = createSmsCookie();
 
     testForExit.mockResolvedValue(false);
     const result = await fc.resolveActionFromState(req, state, user);
@@ -248,7 +246,7 @@ test(
     });
     const req = getMockTwilioWebhookRequest({ body: uniqueString() });
     const user = {};
-    const state = createSmsCookie(req);
+    const state = createSmsCookie();
 
     testForExit.mockResolvedValue(true);
     const result = <Exit>(await fc.resolveActionFromState(req, state, user));
@@ -270,7 +268,7 @@ test(
       new Flow().addAction(replyName, resolver));
     const req = getMockTwilioWebhookRequest();
     const user = {};
-    const state = createSmsCookie(req);
+    const state = createSmsCookie();
 
     resolver.mockResolvedValue(rootReply);
     const result = await fc.resolveActionFromState(req, state, user);
@@ -294,7 +292,7 @@ test(
     const fc = new FlowController(root);
     const req = getMockTwilioWebhookRequest();
     const user = {};
-    const state = createSmsCookie(req);
+    const state = createSmsCookie();
 
     state.flow = root.name;
     resolver.mockResolvedValue(rootReply);
@@ -326,7 +324,7 @@ test(
     const fc = new FlowController(root, schema);
     const req = getMockTwilioWebhookRequest();
     const user = {};
-    const state = createSmsCookie(req);
+    const state = createSmsCookie();
 
     state.flow = `${flowParentName}.${flowName}`;
     resolver.mockResolvedValue(flowReply);
@@ -347,7 +345,7 @@ test(
     const root = randomFlow();
     const req = getMockTwilioWebhookRequest();
     const user = {};
-    const state = createSmsCookie(req);
+    const state = createSmsCookie();
     const fc = new FlowController(root);
 
     let caught: Error;
@@ -382,7 +380,7 @@ test(
     const fc = new FlowController(root);
     const req = getMockTwilioWebhookRequest();
     const user = {};
-    const state = createSmsCookie(req);
+    const state = createSmsCookie();
 
     state.flowKey = 2;
     resolver.mockResolvedValue(reply);
@@ -415,7 +413,7 @@ test(
     }));
     const req = getMockTwilioWebhookRequest();
     const user = {};
-    const state = createSmsCookie(req);
+    const state = createSmsCookie();
 
     state.flow = flow.name;
     state.flowKey = 1;
@@ -438,7 +436,7 @@ test(
     const fc = new FlowController(root);
     const req = getMockTwilioWebhookRequest();
     const user = {};
-    const state = createSmsCookie(req);
+    const state = createSmsCookie();
 
     state.flowKey = 1;
     let result = await fc.resolveActionFromState(req, state, user);
@@ -467,7 +465,7 @@ test(
 
     const req = getMockTwilioWebhookRequest();
     const user = {};
-    const state = createSmsCookie(req);
+    const state = createSmsCookie();
     const fc = new FlowController(root);
 
     resolver.mockResolvedValue(q);
@@ -493,7 +491,7 @@ test(
 
       const req = getMockTwilioWebhookRequest();
       const user = {};
-      const state = createSmsCookie(req);
+      const state = createSmsCookie();
       const fc = new FlowController(root);
 
       resolver.mockResolvedValue(obj);
@@ -520,7 +518,7 @@ test(
     const executeTest = (action: any) => {
       const fc = new FlowController(randomFlow());
       const req = getMockTwilioWebhookRequest();
-      const state = createSmsCookie(req);
+      const state = createSmsCookie();
       const newState = { ...state };
 
       const completeInteraction = jest.spyOn(SmsCookieModule, 'completeInteraction');
@@ -551,7 +549,7 @@ test(
   () => {
     const root = randomFlow();
     const req = getMockTwilioWebhookRequest();
-    const state = createSmsCookie(req);
+    const state = createSmsCookie();
     const exit = new Exit(uniqueString());
     const fc = new FlowController(root);
     const updatedState = { ...state };
@@ -581,7 +579,7 @@ test(
   () => {
     const root = randomFlow();
     const req = getMockTwilioWebhookRequest();
-    const state = createSmsCookie(req);
+    const state = createSmsCookie();
     const stateWithAttempt = { ...state };
     const updatedState = { ...state };
     const newState = { ...state };
@@ -620,7 +618,7 @@ test(
   () => {
     const root = randomFlow();
     const req = getMockTwilioWebhookRequest();
-    const state = createSmsCookie(req);
+    const state = createSmsCookie();
     const stateWithAttempt = { ...state };
     const updatedState = { ...state };
     const newState = { ...state };
@@ -659,7 +657,7 @@ test(
   () => {
     const root = randomFlow();
     const req = getMockTwilioWebhookRequest();
-    const state = createSmsCookie(req);
+    const state = createSmsCookie();
     const stateWithAttempt = { ...state };
     const updatedState = { ...state };
     const newState = { ...state };
@@ -698,7 +696,7 @@ test(
   () => {
     const root = randomFlow();
     const req = getMockTwilioWebhookRequest();
-    const state = createSmsCookie(req);
+    const state = createSmsCookie();
     const stateWithAttempt = { ...state };
     const newState = { ...state };
     const q = new Question(uniqueString());
@@ -727,7 +725,7 @@ test(
 test('FlowController resolveNextStateFromAction should start an unstarted Question', () => {
   const root = randomFlow();
   const req = getMockTwilioWebhookRequest();
-  const state = createSmsCookie(req);
+  const state = createSmsCookie();
   const stateStartedQuestion = { ...state };
   const newState = { ...state };
   const q = new Question(uniqueString());
@@ -756,7 +754,7 @@ test(
     + 'if there is no defined schema',
   () => {
     const req = getMockTwilioWebhookRequest();
-    const state = createSmsCookie(req);
+    const state = createSmsCookie();
     const trigger = new Trigger(uniqueString());
     const fc = new FlowController(randomFlow());
 
@@ -779,7 +777,7 @@ test(
     + 'if the Flow the Trigger starts is not in the schema',
   () => {
     const req = getMockTwilioWebhookRequest();
-    const state = createSmsCookie(req);
+    const state = createSmsCookie();
     const trigger = new Trigger(uniqueString());
     const fc = new FlowController(randomFlow(), new FlowSchema({
       [uniqueString()]: randomFlow(),
@@ -801,7 +799,7 @@ test(
 
 test('FlowController resolveNextStateFromAction should handle Trigger actions', () => {
   const req = getMockTwilioWebhookRequest();
-  const state = createSmsCookie(req);
+  const state = createSmsCookie();
   const flow1Name = uniqueString();
   const flow2Name = uniqueString();
   const flow1 = randomFlow();
@@ -838,7 +836,7 @@ test(
     + 'and update the context by default',
   () => {
     const req = getMockTwilioWebhookRequest();
-    const state = createSmsCookie(req);
+    const state = createSmsCookie();
     const root = randomFlow();
     const fc = new FlowController(root);
     const updatedState = { ...state };

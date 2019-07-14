@@ -209,12 +209,10 @@ export function twilly({
   if (twillyLocals.has(name)) {
     console.warn(`There already exists a Twilly instance with the name: ${name}`);
   }
-  const locals: LocalTwillyVariables = {hooks: {}};
-
+  const locals: LocalTwillyVariables = {
+    hooks: { getUserContext, onCatchError, onMessage },
+  };
   twillyLocals.set(name, locals);
-  locals.hooks.getUserContext = getUserContext;
-  locals.hooks.onCatchError = onCatchError;
-  locals.hooks.onMessage = onMessage;
 
   if (!cookieKey) {
     cookieKey = getSha256Hash(accountSid, accountSid).slice(0, 16);

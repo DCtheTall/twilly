@@ -283,7 +283,7 @@ test('Question evaluating valid text answer', async () => {
   const answer = uniqueString();
   const q = new Question(uniqueString(), { validateAnswer: ans => ans === answer });
   const reqMock = getMockTwilioWebhookRequest({ body: answer });
-  const stateMock = createSmsCookie(reqMock);
+  const stateMock = createSmsCookie();
 
   stateMock.question.isAnswering = true;
   await q[QuestionEvaluate](reqMock, stateMock);
@@ -304,7 +304,7 @@ test('Question evaluating invalid text answer with retry left', async () => {
   });
   const reqMock = getMockTwilioWebhookRequest({ body: answer });
   const errorHandlerStub = jest.fn();
-  const stateMock = createSmsCookie(reqMock);
+  const stateMock = createSmsCookie();
 
   stateMock.question.isAnswering = true;
   await q[QuestionEvaluate](reqMock, stateMock);
@@ -324,7 +324,7 @@ test('Question evaluating invalid text answer without retry left', async () => {
     validateAnswer: ans => Promise.resolve(ans !== answer),
   });
   const reqMock = getMockTwilioWebhookRequest({ body: answer });
-  const stateMock = createSmsCookie(reqMock);
+  const stateMock = createSmsCookie();
 
   stateMock.question.isAnswering = true;
   stateMock.question.attempts = [uniqueString()];
@@ -349,7 +349,7 @@ test('Question evaluating valid multiple choice answer', async () => {
     ],
   });
   const reqMock = getMockTwilioWebhookRequest({ body: answer });
-  const stateMock = createSmsCookie(reqMock);
+  const stateMock = createSmsCookie();
 
   stateMock.question.isAnswering = true;
   await q[QuestionEvaluate](reqMock, stateMock);
@@ -374,7 +374,7 @@ test('Question validates multiple choices selected with retry left', async () =>
   });
   const reqMock = getMockTwilioWebhookRequest({ body: answer });
   const errorHandlerStub = jest.fn();
-  const stateMock = createSmsCookie(reqMock);
+  const stateMock = createSmsCookie();
 
   stateMock.question.isAnswering = true;
   await q[QuestionEvaluate](reqMock, stateMock);
@@ -398,7 +398,7 @@ test('Question validates multiple choices selected without retry left', async ()
     ],
   });
   const reqMock = getMockTwilioWebhookRequest({ body: answer });
-  const stateMock = createSmsCookie(reqMock);
+  const stateMock = createSmsCookie();
 
   stateMock.question.isAnswering = true;
   stateMock.question.attempts = [uniqueString()];
@@ -423,7 +423,7 @@ test('Question evaluating invalid multiple choice answer with retry left', async
     ],
   });
   const reqMock = getMockTwilioWebhookRequest({ body: answer });
-  const stateMock = createSmsCookie(reqMock);
+  const stateMock = createSmsCookie();
 
   stateMock.question.isAnswering = true;
   await q[QuestionEvaluate](reqMock, stateMock);
@@ -447,7 +447,7 @@ test('Question evaluating invalid multiple choice answer without retry left', as
     ],
   });
   const reqMock = getMockTwilioWebhookRequest({ body: answer });
-  const stateMock = createSmsCookie(reqMock);
+  const stateMock = createSmsCookie();
 
   stateMock.question.isAnswering = true;
   stateMock.question.attempts = [uniqueString()];
@@ -469,7 +469,7 @@ test('Question evaluating with more maxRetries than 1', async () => {
     maxRetries: 3,
   });
   const reqMock = getMockTwilioWebhookRequest({ body: answer });
-  const stateMock = createSmsCookie(reqMock);
+  const stateMock = createSmsCookie();
 
   stateMock.question.isAnswering = true;
   stateMock.question.attempts = [uniqueString(), uniqueString()];
@@ -492,7 +492,7 @@ test('Question should not evaluate when not answering the question yet', async (
     maxRetries: 3,
   });
   const reqMock = getMockTwilioWebhookRequest({ body: answer });
-  const stateMock = createSmsCookie(reqMock);
+  const stateMock = createSmsCookie();
 
   await q[QuestionEvaluate](reqMock, stateMock);
 
