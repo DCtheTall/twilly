@@ -156,6 +156,11 @@ export default class FlowController {
     return this.resolveActionFromState(req.body.Body, state, userCtx);
   }
 
+  // TODO: test this method.
+  public async resolveActionFromFlowTrigger(state: SmsCookie, userCtx: any) {
+    return this.resolveActionFromState(null, state, userCtx);
+  }
+
   public resolveNextStateFromAction(
     req: TwilioWebhookRequest,
     state: SmsCookie,

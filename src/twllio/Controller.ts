@@ -102,7 +102,7 @@ export default class TwilioController {
   }
 
   public async handleAction(
-    req: TwilioWebhookRequest,
+    phoneNumber: string,
     action: Action,
   ): Promise<void> {
     let sid: string;
@@ -111,17 +111,15 @@ export default class TwilioController {
     switch (action.constructor) {
       case Exit:
         sid = <string>(await this.sendSmsMessage(
-          req.body.From,
-          this.sendOnExit,
-        ));
+          phoneNumber,
+          this.sendOnExit));
         action[ActionSetMessageSid](<string>sid);
         return;
 
       case Message:
         sids = <string[]>(await this.sendSmsMessage(
           (<Message>action).to,
-          (<Message>action).body,
-        ));
+          (<Message>action).body));
         action[ActionSetMessageSids](sids);
         return;
 
@@ -132,31 +130,27 @@ export default class TwilioController {
           if (question.isAnswered) return;
           if (question.isFailed) {
             sids.push(<string>(await this.sendSmsMessage(
-              req.body.From,
-              question.failedAnswerResponse,
-            )));
+              phoneNumber,
+              question.failedAnswerResponse)));
             action[ActionSetMessageSids](sids);
             return;
           }
           if (question.shouldSendInvalidRes) {
             sids.push(<string>(await this.sendSmsMessage(
-              req.body.From,
-              question.invalidAnswerResponse,
-            )));
+              phoneNumber,
+              question.invalidAnswerResponse)));
           }
           sids.push(<string>(await this.sendSmsMessage(
-            req.body.From,
-            question.body,
-          )));
+            phoneNumber,
+            question.body)));
           action[ActionSetMessageSids](sids);
         })();
         return;
 
       case Reply:
         sid = <string>(await this.sendSmsMessage(
-          req.body.From,
-          (<Reply>action).body,
-        ));
+          phoneNumber,
+          (<Reply>action).body));
         action[ActionSetMessageSid](sid);
         return;
 

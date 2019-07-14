@@ -140,7 +140,7 @@ test('TwilioController handleAction receives Exit action', async () => {
 
   exit[ActionSetMessageSid] = jest.fn();
   twilioMessagesCreate.mockResolvedValue({ sid });
-  await tc.handleAction(req, exit);
+  await tc.handleAction(req.body.From, exit);
 
   expect(twilioMessagesCreate).toBeCalledTimes(1);
   expect(twilioMessagesCreate).toBeCalledWith({
@@ -161,7 +161,7 @@ test('TwilioController handleAction receives Message action with single recipien
 
   msg[ActionSetMessageSids] = jest.fn();
   twilioMessagesCreate.mockResolvedValue({ sid });
-  await tc.handleAction(req, msg);
+  await tc.handleAction(req.body.From, msg);
 
   expect(twilioMessagesCreate).toBeCalledTimes(1);
   expect(twilioMessagesCreate).toBeCalledWith({
@@ -193,7 +193,7 @@ test('TwilioController handleAction receives Message action with multiple recipi
     twilioMessagesCreate.mockResolvedValueOnce({ sid }));
   msg[ActionSetMessageSids] = setSids = jest.fn();
 
-  await tc.handleAction(req, msg);
+  await tc.handleAction(req.body.From, msg);
 
   expect(twilioMessagesCreate).toBeCalledTimes(3);
   [...Array(3)].map(
@@ -216,7 +216,7 @@ test('TwilioController handleAction receives Question that has been answered', a
   q[ActionSetMessageSids] = setSids = jest.fn();
   q[QuestionSetIsAnswered]();
 
-  await tc.handleAction(req, q);
+  await tc.handleAction(req.body.From, q);
 
   expect(twilioMessagesCreate).toBeCalledTimes(0);
   expect(setSids).toBeCalledTimes(0);
@@ -233,7 +233,7 @@ test('TwilioController handleAction receives Question that has been failed', asy
   twilioMessagesCreate.mockResolvedValue({ sid });
   q[QuestionSetIsFailed]();
 
-  await tc.handleAction(req, q);
+  await tc.handleAction(req.body.From, q);
 
   expect(twilioMessagesCreate).toBeCalledTimes(1);
   expect(twilioMessagesCreate).toBeCalledWith({
@@ -263,7 +263,7 @@ test(
     q[QuestionSetShouldSendInvalidRes]();
     q[ActionSetMessageSids] = setSids = jest.fn();
 
-    await tc.handleAction(req, q);
+    await tc.handleAction(req.body.From, q);
 
     expect(twilioMessagesCreate).toBeCalledTimes(2);
     expect(twilioMessagesCreate.mock.calls[0][0]).toEqual({
@@ -291,7 +291,7 @@ test('TwilioController handleAction receives Question that has not yet been answ
   twilioMessagesCreate.mockResolvedValueOnce({ sid });
   q[ActionSetMessageSids] = setSids = jest.fn();
 
-  await tc.handleAction(req, q);
+  await tc.handleAction(req.body.From, q);
 
   expect(twilioMessagesCreate).toBeCalledTimes(1);
   expect(twilioMessagesCreate).toBeCalledWith({
@@ -313,7 +313,7 @@ test('TwilioController handleAction receives Reply', async () => {
   twilioMessagesCreate.mockResolvedValueOnce({ sid });
   reply[ActionSetMessageSid] = jest.fn();
 
-  await tc.handleAction(req, reply);
+  await tc.handleAction(req.body.From, reply);
 
   expect(twilioMessagesCreate).toBeCalledTimes(1);
   expect(twilioMessagesCreate).toBeCalledWith({

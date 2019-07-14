@@ -97,7 +97,7 @@ async function handleIncomingSmsWebhook(
     }
 
     while (action !== null) {
-      await locals.twilioController.handleAction(req, action);
+      await locals.twilioController.handleAction(req.body.From, action);
       await new Promise(
         resolve => setTimeout(resolve, DELAY)); // for preserving message order
 
@@ -139,7 +139,7 @@ async function handleIncomingSmsWebhook(
 
     try {
       if (result instanceof Reply) {
-        await locals.twilioController.handleAction(req, result);
+        await locals.twilioController.handleAction(req.body.From, result);
         state = updateContext(
           state,
           locals.flowController.getCurrentFlow(state),
@@ -259,5 +259,11 @@ export async function triggerFlow(to: string, flowName: string, {
 
   try {
     userCtx = await locals.hooks.getUserContext(to);
+
+    let action = await locals.flowController.resolveActionFromFlowTrigger(state, userCtx);
+
+    while (action !== null) {
+      await locals.twilioController.handleAction(to, action);
+    }
   } catch (err) {}
 }

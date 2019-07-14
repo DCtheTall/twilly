@@ -198,7 +198,7 @@ test('FlowController should take an onInteractionEnd option', () => {
 
 
 test(
-  'FlowController resolveActionFromState should return null if interaction is complete',
+  'FlowController resolveActionFromRequest should return null if interaction is complete',
   async () => {
     const fc = new FlowController(randomFlow());
     const req = getMockTwilioWebhookRequest();
@@ -214,7 +214,7 @@ test(
 
 
 test(
-  'FlowController resolveActionFromState should test if the user wants to exit the interaction',
+  'FlowController resolveActionFromRequest should test if the user wants to exit the interaction',
   async () => {
     const testForExit = jest.fn();
     const flow = randomFlow();
@@ -236,7 +236,7 @@ test(
 
 
 test(
-  'FlowController resolveActionFromState should return an Exit action '
+  'FlowController resolveActionFromRequest should return an Exit action '
   + 'if the testForExit test resolves true',
   async () => {
     const testForExit = jest.fn();
@@ -258,7 +258,7 @@ test(
 
 
 test(
-  'FlowController resolveActionFromState should default to the first action '
+  'FlowController resolveActionFromRequest should default to the first action '
   + 'of the root if no Flow has been started',
   async () => {
     const replyName = uniqueString();
@@ -282,7 +282,7 @@ test(
 
 
 test(
-  'FlowController resolveActionFromState should resolve an action in the root flow '
+  'FlowController resolveActionFromRequest should resolve an action in the root flow '
   + 'if the current flow in the SMS cookie is the root',
   async () => {
     const replyName = uniqueString();
@@ -307,7 +307,7 @@ test(
 
 
 test(
-  'FlowController resolveActionFromState should resolve the current flow from the schema',
+  'FlowController resolveActionFromRequest should resolve the current flow from the schema',
   async () => {
     const replyName = uniqueString();
     const flowReply = new Reply(replyName);
@@ -339,7 +339,7 @@ test(
 
 
 test(
-  'FlowController resolveActionFromState should throw an error '
+  'FlowController resolveActionFromRequest should throw an error '
   + 'if the state specifies a flow not in the schema',
   async () => {
     const root = randomFlow();
@@ -365,7 +365,7 @@ test(
 
 
 test(
-  'FlowController resolveActionFromState should determine '
+  'FlowController resolveActionFromRequest should determine '
   + 'which action in the root Flow to resolve',
   async () => {
     const replyName = uniqueString();
@@ -395,7 +395,7 @@ test(
 
 
 test(
-  'FlowController resolveActionFromState should determine '
+  'FlowController resolveActionFromRequest should determine '
   + 'which action to use in the Flow schema',
   async () => {
     const replyName = uniqueString();
@@ -429,7 +429,7 @@ test(
 
 
 test(
-  'FlowController resolveActionFromState should return null '
+  'FlowController resolveActionFromRequest should return null '
   + 'if there is no action left to take',
   async () => {
     const root = randomFlow();
@@ -453,7 +453,7 @@ test(
 
 
 test(
-  'FlowController resolveActionFromState should evaluate the state of a Question action',
+  'FlowController resolveActionFromRequest should evaluate the state of a Question action',
   async () => {
     const root = randomFlow();
     const q = new Question(uniqueString());
@@ -480,7 +480,7 @@ test(
 
 
 test(
-  'FlowController resolveActionFromState should return null '
+  'FlowController resolveActionFromRequest should return null '
   + 'if the resolver returns any object that is not an Action',
   async () => {
     const executeTest = async (obj: any) => {
