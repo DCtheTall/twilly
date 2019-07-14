@@ -201,16 +201,11 @@ test('SmsCookie updateContext: Interaction with mutliple actions', () => {
   const { createdAt: c1, ...rest1 } = reply1[ActionGetContext]();
   const { createdAt: c2, ...rest2 } = reply2[ActionGetContext]();
 
-  const update1 =
-    (state: SmsCookieModule.SmsCookie) =>
-      SmsCookieModule.updateContext(state, flow, reply1);
-  const update2 =
-    (state: SmsCookieModule.SmsCookie) =>
-      SmsCookieModule.updateContext(state, flow, reply2);
-
   const cookie = pipeSmsCookieUpdates(
-    update1,
-    update2,
+    (state: SmsCookieModule.SmsCookie) =>
+      SmsCookieModule.updateContext(state, flow, reply1),
+    (state: SmsCookieModule.SmsCookie) =>
+      SmsCookieModule.updateContext(state, flow, reply2),
   )();
 
   expect(cookie.flowContext[reply1.name]).toMatchObject(rest1);
@@ -243,21 +238,14 @@ test('SmsCookie updateContext: Interaction with multiple Flows', () => {
   const { createdAt: c2, ...r2Rest } = reply2[ActionGetContext]();
   const { createdAt: c3, ...tRest } = trigger[ActionGetContext]();
 
-  const update1 =
+  const cookie = pipeSmsCookieUpdates(
     (state: SmsCookieModule.SmsCookie) =>
-      SmsCookieModule.updateContext(state, flow1, reply1);
-  const update2 =
+      SmsCookieModule.updateContext(state, flow1, reply1),
     (state: SmsCookieModule.SmsCookie) =>
       SmsCookieModule.handleTrigger(
-        SmsCookieModule.updateContext(state, flow1, trigger), trigger);
-  const update3 =
+        SmsCookieModule.updateContext(state, flow1, trigger), trigger),
     (state: SmsCookieModule.SmsCookie) =>
-      SmsCookieModule.updateContext(state, flow2, reply2);
-
-  const cookie = pipeSmsCookieUpdates(
-    update1,
-    update2,
-    update3,
+      SmsCookieModule.updateContext(state, flow2, reply2),
   )();
 
   expect(cookie.flowContext).not.toHaveProperty(reply1.name);
