@@ -206,7 +206,7 @@ test(
     const state = createSmsCookie();
 
     state.isComplete = true;
-    const result = await fc.resolveActionFromState(req, state, user);
+    const result = await fc.resolveActionFromRequest(req, state, user);
 
     expect(result).toBe(null);
   },
@@ -226,7 +226,7 @@ test(
     const state = createSmsCookie();
 
     testForExit.mockResolvedValue(false);
-    const result = await fc.resolveActionFromState(req, state, user);
+    const result = await fc.resolveActionFromRequest(req, state, user);
 
     expect(testForExit).toBeCalledTimes(1);
     expect(testForExit).toBeCalledWith(req.body.Body);
@@ -249,7 +249,7 @@ test(
     const state = createSmsCookie();
 
     testForExit.mockResolvedValue(true);
-    const result = <Exit>(await fc.resolveActionFromState(req, state, user));
+    const result = <Exit>(await fc.resolveActionFromRequest(req, state, user));
 
     expect(result instanceof Exit).toBeTruthy();
     expect(result[GetContext]()).toEqual({ messageBody: req.body.Body });
@@ -271,7 +271,7 @@ test(
     const state = createSmsCookie();
 
     resolver.mockResolvedValue(rootReply);
-    const result = await fc.resolveActionFromState(req, state, user);
+    const result = await fc.resolveActionFromRequest(req, state, user);
 
     expect(resolver).toBeCalledTimes(1);
     expect(resolver).toBeCalledWith(state.flowContext, user);
@@ -296,7 +296,7 @@ test(
 
     state.flow = root.name;
     resolver.mockResolvedValue(rootReply);
-    const result = await fc.resolveActionFromState(req, state, user);
+    const result = await fc.resolveActionFromRequest(req, state, user);
 
     expect(resolver).toBeCalledTimes(1);
     expect(resolver).toBeCalledWith(state.flowContext, user);
@@ -328,7 +328,7 @@ test(
 
     state.flow = `${flowParentName}.${flowName}`;
     resolver.mockResolvedValue(flowReply);
-    const result = await fc.resolveActionFromState(req, state, user);
+    const result = await fc.resolveActionFromRequest(req, state, user);
 
     expect(resolver).toBeCalledTimes(1);
     expect(resolver).toBeCalledWith(state.flowContext, user);
@@ -352,7 +352,7 @@ test(
 
     try {
       state.flow = uniqueString();
-      await fc.resolveActionFromState(req, state, user);
+      await fc.resolveActionFromRequest(req, state, user);
     } catch (err) {
       caught = err;
     }
@@ -384,7 +384,7 @@ test(
 
     state.flowKey = 2;
     resolver.mockResolvedValue(reply);
-    const result = await fc.resolveActionFromState(req, state, user);
+    const result = await fc.resolveActionFromRequest(req, state, user);
 
     expect(resolver).toBeCalledTimes(1);
     expect(resolver).toBeCalledWith(state.flowContext, user);
@@ -418,7 +418,7 @@ test(
     state.flow = flow.name;
     state.flowKey = 1;
     resolver.mockResolvedValue(reply);
-    const result = await fc.resolveActionFromState(req, state, user);
+    const result = await fc.resolveActionFromRequest(req, state, user);
 
     expect(resolver).toBeCalledTimes(1);
     expect(resolver).toBeCalledWith(state.flowContext, user);
@@ -439,13 +439,13 @@ test(
     const state = createSmsCookie();
 
     state.flowKey = 1;
-    let result = await fc.resolveActionFromState(req, state, user);
+    let result = await fc.resolveActionFromRequest(req, state, user);
 
     expect(result).toBe(null);
 
     root.addAction(uniqueString(), () => new Reply(uniqueString()));
     state.flowKey = 2;
-    result = await fc.resolveActionFromState(req, state, user);
+    result = await fc.resolveActionFromRequest(req, state, user);
 
     expect(result).toBe(null);
   },
@@ -470,11 +470,11 @@ test(
 
     resolver.mockResolvedValue(q);
     state.flowKey = 1;
-    const result = await fc.resolveActionFromState(req, state, user);
+    const result = await fc.resolveActionFromRequest(req, state, user);
 
     expect(result).toBe(q);
     expect(q[QuestionEvaluate]).toBeCalledTimes(1);
-    expect(q[QuestionEvaluate]).toBeCalledWith(req, state);
+    expect(q[QuestionEvaluate]).toBeCalledWith(req.body.Body, state);
   },
 );
 
@@ -496,7 +496,7 @@ test(
 
       resolver.mockResolvedValue(obj);
       state.flowKey = 1;
-      const result = await fc.resolveActionFromState(req, state, user);
+      const result = await fc.resolveActionFromRequest(req, state, user);
 
       expect(result).toBe(null);
     };

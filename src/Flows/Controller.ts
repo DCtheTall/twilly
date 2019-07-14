@@ -125,16 +125,16 @@ export default class FlowController {
     return this.schema.get(state.flow);
   }
 
-  public async resolveActionFromState(
-    req: TwilioWebhookRequest,
+  private async resolveActionFromState(
+    messageBody: string,
     state: SmsCookie,
     userCtx: any,
   ): Promise<Action> {
     if (state.isComplete) {
       return null;
     }
-    if (this.testForExit && await this.testForExit(req.body.Body)) {
-      return new Exit(req.body.Body);
+    if (this.testForExit && await this.testForExit(messageBody)) {
+      return new Exit(messageBody);
     }
 
     const key = Number(state.flowKey);
@@ -147,7 +147,7 @@ export default class FlowController {
 
     const action = await resolveAction(deepCopy<FlowContext>(state.flowContext), userCtx);
     if (action instanceof Question) {
-      await action[QuestionEvaluate](req, state);
+      await action[QuestionEvaluate](messageBody, state);
     }
     if (!(action instanceof Action)) {
       return null;
@@ -155,6 +155,14 @@ export default class FlowController {
     action[ActionSetName](currFlow[FlowSelectActionName](key));
 
     return action;
+  }
+
+  public async resolveActionFromRequest(
+    req: TwilioWebhookRequest,
+    state: SmsCookie,
+    userCtx: any,
+  ): Promise<Action> {
+    return this.resolveActionFromState(req.body.Body, state, userCtx);
   }
 
   public resolveNextStateFromAction(

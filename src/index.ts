@@ -22,6 +22,7 @@ import {
 import {
   InteractionContext,
   SmsCookie,
+  createSmsCookie,
   updateContext,
 } from './SmsCookie';
 
@@ -81,7 +82,7 @@ async function handleIncomingSmsWebhook(
     state = locals.twilioController.getSmsCookieFromRequest(req);
     userCtx = await locals.hooks.getUserContext(req.body.From); // will throw any errors not caught in promise
 
-    let action = await locals.flowController.resolveActionFromState(req, state, userCtx);
+    let action = await locals.flowController.resolveActionFromRequest(req, state, userCtx);
 
     if (locals.hooks.onMessage) {
       try {
@@ -109,7 +110,7 @@ async function handleIncomingSmsWebhook(
           && !(<Question>action).isComplete
         )
       ) break;
-      action = await locals.flowController.resolveActionFromState(req, state, userCtx);
+      action = await locals.flowController.resolveActionFromRequest(req, state, userCtx);
       if (action === null) break;
     }
 
@@ -248,13 +249,15 @@ const defaultTriggerFlowParameters = {
   twillyName: DEFAULT_TWILLY_NAME,
 };
 
-export function triggerFlow(flowName, {
+export async function triggerFlow(to: string, flowName: string, {
   twillyName = defaultTriggerFlowParameters.twillyName,
 } = defaultTriggerFlowParameters) {
   const locals = twillyLocals.get(twillyName);
 
-  let state: SmsCookie = null;
+  let state: SmsCookie = createSmsCookie();
   let userCtx: any = null;
 
-
+  try {
+    userCtx = await locals.hooks.getUserContext(to);
+  } catch (err) {}
 }
