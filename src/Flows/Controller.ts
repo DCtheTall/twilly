@@ -116,7 +116,7 @@ export default class FlowController {
     return this.schema.get(state.flow);
   }
 
-  private async resolveActionFromState(
+  public async resolveActionFromState(
     messageBody: string,
     state: SmsCookie,
     userCtx: any,
@@ -146,19 +146,6 @@ export default class FlowController {
     action[ActionSetName](currFlow[FlowSelectActionName](key));
 
     return action;
-  }
-
-  public async resolveActionFromRequest(
-    req: TwilioWebhookRequest,
-    state: SmsCookie,
-    userCtx: any,
-  ): Promise<Action> {
-    return this.resolveActionFromState(req.body.Body, state, userCtx);
-  }
-
-  // TODO: test this method.
-  public async resolveActionFromFlowTrigger(state: SmsCookie, userCtx: any) {
-    return this.resolveActionFromState(null, state, userCtx);
   }
 
   public resolveNextStateFromAction(

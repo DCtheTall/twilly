@@ -81,8 +81,7 @@ async function handleIncomingSmsWebhook(
   try {
     state = locals.twilioController.getSmsCookieFromRequest(req);
     userCtx = await locals.hooks.getUserContext(req.body.From); // will throw any errors not caught in promise
-
-    let action = await locals.flowController.resolveActionFromRequest(req, state, userCtx);
+    let action = await locals.flowController.resolveActionFromState(req.body.Body, state, userCtx);
 
     if (locals.hooks.onMessage) {
       try {
@@ -110,7 +109,7 @@ async function handleIncomingSmsWebhook(
           && !(<Question>action).isComplete
         )
       ) break;
-      action = await locals.flowController.resolveActionFromRequest(req, state, userCtx);
+      action = await locals.flowController.resolveActionFromState(req.body.Body, state, userCtx);
       if (action === null) break;
     }
 
@@ -258,8 +257,7 @@ export async function triggerFlow(to: string, flowName: string, {
 
   try {
     userCtx = await locals.hooks.getUserContext(to);
-
-    let action = await locals.flowController.resolveActionFromFlowTrigger(state, userCtx);
+    let action = await locals.flowController.resolveActionFromState(null, state, userCtx);
 
     while (action !== null) {
       await locals.twilioController.handleAction(to, action);

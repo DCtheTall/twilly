@@ -198,7 +198,7 @@ test('FlowController should take an onInteractionEnd option', () => {
 
 
 test(
-  'FlowController resolveActionFromRequest should return null if interaction is complete',
+  'FlowController resolveActionFromState should return null if interaction is complete',
   async () => {
     const fc = new FlowController(randomFlow());
     const req = getMockTwilioWebhookRequest();
@@ -206,7 +206,7 @@ test(
     const state = createSmsCookie();
 
     state.isComplete = true;
-    const result = await fc.resolveActionFromRequest(req, state, user);
+    const result = await fc.resolveActionFromState(req.body.Body, state, user);
 
     expect(result).toBe(null);
   },
@@ -214,7 +214,7 @@ test(
 
 
 test(
-  'FlowController resolveActionFromRequest should test if the user wants to exit the interaction',
+  'FlowController resolveActionFromState should test if the user wants to exit the interaction',
   async () => {
     const testForExit = jest.fn();
     const flow = randomFlow();
@@ -226,7 +226,7 @@ test(
     const state = createSmsCookie();
 
     testForExit.mockResolvedValue(false);
-    const result = await fc.resolveActionFromRequest(req, state, user);
+    const result = await fc.resolveActionFromState(req.body.Body, state, user);
 
     expect(testForExit).toBeCalledTimes(1);
     expect(testForExit).toBeCalledWith(req.body.Body);
@@ -236,7 +236,7 @@ test(
 
 
 test(
-  'FlowController resolveActionFromRequest should return an Exit action '
+  'FlowController resolveActionFromState should return an Exit action '
   + 'if the testForExit test resolves true',
   async () => {
     const testForExit = jest.fn();
@@ -249,7 +249,7 @@ test(
     const state = createSmsCookie();
 
     testForExit.mockResolvedValue(true);
-    const result = <Exit>(await fc.resolveActionFromRequest(req, state, user));
+    const result = <Exit>(await fc.resolveActionFromState(req.body.Body, state, user));
 
     expect(result instanceof Exit).toBeTruthy();
     expect(result[GetContext]()).toEqual({ messageBody: req.body.Body });
@@ -258,7 +258,7 @@ test(
 
 
 test(
-  'FlowController resolveActionFromRequest should default to the first action '
+  'FlowController resolveActionFromState should default to the first action '
   + 'of the root if no Flow has been started',
   async () => {
     const replyName = uniqueString();
@@ -271,7 +271,7 @@ test(
     const state = createSmsCookie();
 
     resolver.mockResolvedValue(rootReply);
-    const result = await fc.resolveActionFromRequest(req, state, user);
+    const result = await fc.resolveActionFromState(req.body.Body, state, user);
 
     expect(resolver).toBeCalledTimes(1);
     expect(resolver).toBeCalledWith(state.flowContext, user);
@@ -282,7 +282,7 @@ test(
 
 
 test(
-  'FlowController resolveActionFromRequest should resolve an action in the root flow '
+  'FlowController resolveActionFromState should resolve an action in the root flow '
   + 'if the current flow in the SMS cookie is the root',
   async () => {
     const replyName = uniqueString();
@@ -296,7 +296,7 @@ test(
 
     state.flow = root.name;
     resolver.mockResolvedValue(rootReply);
-    const result = await fc.resolveActionFromRequest(req, state, user);
+    const result = await fc.resolveActionFromState(req.body.Body, state, user);
 
     expect(resolver).toBeCalledTimes(1);
     expect(resolver).toBeCalledWith(state.flowContext, user);
@@ -307,7 +307,7 @@ test(
 
 
 test(
-  'FlowController resolveActionFromRequest should resolve the current flow from the schema',
+  'FlowController resolveActionFromState should resolve the current flow from the schema',
   async () => {
     const replyName = uniqueString();
     const flowReply = new Reply(replyName);
@@ -328,7 +328,7 @@ test(
 
     state.flow = `${flowParentName}.${flowName}`;
     resolver.mockResolvedValue(flowReply);
-    const result = await fc.resolveActionFromRequest(req, state, user);
+    const result = await fc.resolveActionFromState(req.body.Body, state, user);
 
     expect(resolver).toBeCalledTimes(1);
     expect(resolver).toBeCalledWith(state.flowContext, user);
@@ -339,7 +339,7 @@ test(
 
 
 test(
-  'FlowController resolveActionFromRequest should throw an error '
+  'FlowController resolveActionFromState should throw an error '
   + 'if the state specifies a flow not in the schema',
   async () => {
     const root = randomFlow();
@@ -352,7 +352,7 @@ test(
 
     try {
       state.flow = uniqueString();
-      await fc.resolveActionFromRequest(req, state, user);
+      await fc.resolveActionFromState(req.body.Body, state, user);
     } catch (err) {
       caught = err;
     }
@@ -365,7 +365,7 @@ test(
 
 
 test(
-  'FlowController resolveActionFromRequest should determine '
+  'FlowController resolveActionFromState should determine '
   + 'which action in the root Flow to resolve',
   async () => {
     const replyName = uniqueString();
@@ -384,7 +384,7 @@ test(
 
     state.flowKey = 2;
     resolver.mockResolvedValue(reply);
-    const result = await fc.resolveActionFromRequest(req, state, user);
+    const result = await fc.resolveActionFromState(req.body.Body, state, user);
 
     expect(resolver).toBeCalledTimes(1);
     expect(resolver).toBeCalledWith(state.flowContext, user);
@@ -395,7 +395,7 @@ test(
 
 
 test(
-  'FlowController resolveActionFromRequest should determine '
+  'FlowController resolveActionFromState should determine '
   + 'which action to use in the Flow schema',
   async () => {
     const replyName = uniqueString();
@@ -418,7 +418,7 @@ test(
     state.flow = flow.name;
     state.flowKey = 1;
     resolver.mockResolvedValue(reply);
-    const result = await fc.resolveActionFromRequest(req, state, user);
+    const result = await fc.resolveActionFromState(req.body.Body, state, user);
 
     expect(resolver).toBeCalledTimes(1);
     expect(resolver).toBeCalledWith(state.flowContext, user);
@@ -429,7 +429,7 @@ test(
 
 
 test(
-  'FlowController resolveActionFromRequest should return null '
+  'FlowController resolveActionFromState should return null '
   + 'if there is no action left to take',
   async () => {
     const root = randomFlow();
@@ -439,13 +439,13 @@ test(
     const state = createSmsCookie();
 
     state.flowKey = 1;
-    let result = await fc.resolveActionFromRequest(req, state, user);
+    let result = await fc.resolveActionFromState(req.body.Body, state, user);
 
     expect(result).toBe(null);
 
     root.addAction(uniqueString(), () => new Reply(uniqueString()));
     state.flowKey = 2;
-    result = await fc.resolveActionFromRequest(req, state, user);
+    result = await fc.resolveActionFromState(req.body.Body, state, user);
 
     expect(result).toBe(null);
   },
@@ -453,7 +453,7 @@ test(
 
 
 test(
-  'FlowController resolveActionFromRequest should evaluate the state of a Question action',
+  'FlowController resolveActionFromState should evaluate the state of a Question action',
   async () => {
     const root = randomFlow();
     const q = new Question(uniqueString());
@@ -470,7 +470,7 @@ test(
 
     resolver.mockResolvedValue(q);
     state.flowKey = 1;
-    const result = await fc.resolveActionFromRequest(req, state, user);
+    const result = await fc.resolveActionFromState(req.body.Body, state, user);
 
     expect(result).toBe(q);
     expect(q[QuestionEvaluate]).toBeCalledTimes(1);
@@ -480,7 +480,7 @@ test(
 
 
 test(
-  'FlowController resolveActionFromRequest should return null '
+  'FlowController resolveActionFromState should return null '
   + 'if the resolver returns any object that is not an Action',
   async () => {
     const executeTest = async (obj: any) => {
@@ -496,7 +496,7 @@ test(
 
       resolver.mockResolvedValue(obj);
       state.flowKey = 1;
-      const result = await fc.resolveActionFromRequest(req, state, user);
+      const result = await fc.resolveActionFromState(req.body.Body, state, user);
 
       expect(result).toBe(null);
     };
