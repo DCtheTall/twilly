@@ -44,11 +44,11 @@ export function completeInteraction(state: SmsCookie) {
   return { ...state, isComplete: true };
 }
 
-
-export function createSmsCookie(): SmsCookie {
+// TODO: test when flow name is supplied.
+export function createSmsCookie(flowName: string = null): SmsCookie {
   return {
     createdAt: new Date(),
-    flow: null,
+    flow: flowName,
     flowContext: {},
     flowKey: 0,
     interactionComplete: false,

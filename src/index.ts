@@ -143,8 +143,7 @@ async function handleIncomingSmsWebhook(
         state = updateContext(
           state,
           locals.flowController.getCurrentFlow(state),
-          result,
-        );
+          result);
       }
       if (locals.flowController.onInteractionEnd !== null) {
         await locals.flowController.onInteractionEnd(state.interactionContext, userCtx);
@@ -254,7 +253,7 @@ export async function triggerFlow(to: string, flowName: string, {
 } = defaultTriggerFlowParameters) {
   const locals = twillyLocals.get(twillyName);
 
-  let state: SmsCookie = createSmsCookie();
+  let state: SmsCookie = createSmsCookie(flowName);
   let userCtx: any = null;
 
   try {
@@ -264,6 +263,10 @@ export async function triggerFlow(to: string, flowName: string, {
 
     while (action !== null) {
       await locals.twilioController.handleAction(to, action);
+      await new Promise(
+        resolve => setTimeout(resolve, DELAY));
+
+      // state = await locals.flowController.reso(state, action);
     }
   } catch (err) {}
 }
