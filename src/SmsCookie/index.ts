@@ -1,4 +1,4 @@
-import { uniqueString, compose } from '../util';
+import { compose, uniqueString } from '../util';
 import {
   Action,
   ActionContext,
@@ -8,9 +8,6 @@ import {
   ActionGetContext,
 } from '../Actions';
 import { Flow, FlowActionNames } from '../Flows';
-import {
-  TwilioWebhookRequest,
-} from '../twllio';
 
 
 export type FlowContext = { [index: string]: ActionContext };
@@ -145,4 +142,12 @@ export function updateContext(
       },
     ],
   };
+}
+
+type SmsCookieUpdate = (state?: SmsCookie) => SmsCookie;
+
+export function pipeSmsCookieUpdates(...funcs: SmsCookieUpdate[]): SmsCookieUpdate {
+  return (
+    cookie: SmsCookie = createSmsCookie(),
+  ): SmsCookie => compose(...funcs)(cookie);
 }

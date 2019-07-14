@@ -1,5 +1,4 @@
 import * as SmsCookieModule from '../../src/SmsCookie';
-import { getMockTwilioWebhookRequest } from '../../src/twllio';
 import {
   randomFlow,
   uniqueString,
@@ -15,9 +14,9 @@ import {
 import {
   Flow,
   FlowSetName,
-  pipeSmsCookieUpdates,
 } from '../../src/Flows';
 
+const { pipeSmsCookieUpdates } = SmsCookieModule;
 
 test('SmsCookie addQuestionAttempt', () => {
   const attempt1 = uniqueString();

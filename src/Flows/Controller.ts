@@ -16,6 +16,7 @@ import {
   QuestionEvaluate,
 } from '../Actions';
 import {
+  FlowContext,
   InteractionContext,
   SmsCookie,
   completeInteraction,
@@ -24,20 +25,10 @@ import {
   startQuestion,
   updateContext,
   addQuestionAttempt,
-  createSmsCookie,
-  FlowContext,
+  pipeSmsCookieUpdates,
 } from '../SmsCookie';
 import { TwilioWebhookRequest } from '../twllio';
 import { compose, deepCopy } from '../util';
-
-
-type SmsCookieUpdate = (state?: SmsCookie) => SmsCookie;
-
-export function pipeSmsCookieUpdates(...funcs: SmsCookieUpdate[]): SmsCookieUpdate {
-  return (
-    cookie: SmsCookie = createSmsCookie(),
-  ): SmsCookie => compose(...funcs)(cookie);
-}
 
 
 export type ExitKeywordTest =
