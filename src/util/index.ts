@@ -38,7 +38,7 @@ export function randInt(): number {
 
 
 /**
- * Create a static deep copy of a serealizable object
+ * Create a static deep copy of a JSON serealizable object.
  */
 export function deepCopy<T>(obj: T): T {
   const result = <T>{};
@@ -56,4 +56,8 @@ export function deepCopy<T>(obj: T): T {
       }
     });
   return result;
+}
+
+export function warn(...args: any[]): void {
+  console.warn(args);
 }

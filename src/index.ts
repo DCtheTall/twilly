@@ -1,6 +1,6 @@
 import { Router, Response, RequestHandler } from 'express';
 
-import { getSha256Hash } from './util';
+import { getSha256Hash, warn } from './util';
 import {
   TwilioController,
   TwilioControllerArgs,
@@ -22,7 +22,6 @@ import {
 import {
   InteractionContext,
   SmsCookie,
-  createSmsCookie,
   updateContext,
 } from './SmsCookie';
 
@@ -207,7 +206,7 @@ export function twilly({
   name = defaultTwillyParameters.name,
 }: TwillyParameters): Router {
   if (twillyLocals.has(name)) {
-    console.warn(`There already exists a Twilly instance with the name: ${name}`);
+    warn(`There already exists a Twilly instance with the name: ${name}`);
   }
   const locals: LocalTwillyVariables = {
     hooks: { getUserContext, onCatchError, onMessage },
