@@ -110,7 +110,6 @@ async function handleIncomingSmsWebhook(
         )
       ) break;
       action = await locals.flowController.resolveActionFromState(req.body.Body, state, userCtx);
-      if (action === null) break;
     }
 
     if (state.isComplete) {
@@ -247,24 +246,25 @@ const defaultTriggerFlowParameters = {
   twillyName: DEFAULT_TWILLY_NAME,
 };
 
-export async function triggerFlow(to: string, flowName: string, {
+export async function triggerFlow(to: string, flow: Flow, {
   twillyName = defaultTriggerFlowParameters.twillyName,
 } = defaultTriggerFlowParameters) {
   const locals = twillyLocals.get(twillyName);
 
-  let state: SmsCookie = createSmsCookie(flowName);
-  let userCtx: any = null;
+  // TODO: refactor to have it just evaluate this Flow in the function. Disallow Exit, Trigger, and Question actions.
+  // let state: SmsCookie = createSmsCookie(flow.name);
+  // let userCtx: any = null;
 
-  try {
-    userCtx = await locals.hooks.getUserContext(to);
-    let action = await locals.flowController.resolveActionFromState(null, state, userCtx);
+  // try {
+  //   userCtx = await locals.hooks.getUserContext(to);
+  //   let action = await locals.flowController.resolveActionFromState(null, state, userCtx);
 
-    while (action !== null) {
-      await locals.twilioController.handleAction(to, action);
-      await new Promise(
-        resolve => setTimeout(resolve, DELAY));
+  //   while (action !== null) {
+  //     await locals.twilioController.handleAction(to, action);
+  //     await new Promise(
+  //       resolve => setTimeout(resolve, DELAY));
 
-      // state = await locals.flowController.reso(state, action);
-    }
-  } catch (err) {}
+  //     // state = await locals.flowController.reso(state, action);
+  //   }
+  // } catch (err) {}
 }
