@@ -14,9 +14,7 @@ export interface RequestHeader {
 }
 
 
-export const XmlContentTypeHeader = <RequestHeader>{
-  'Content-Type': 'text/xml',
-};
+export const XmlContentTypeHeader = <RequestHeader>{'Content-Type': 'text/xml'};
 
 
 export interface TwilioWebhookRequestBody {

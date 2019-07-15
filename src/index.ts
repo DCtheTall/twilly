@@ -15,6 +15,7 @@ import {
   defaultTestForExit,
 } from './Flows';
 import {
+  Action,
   Message,
   Question,
   Reply,
@@ -99,8 +100,7 @@ async function handleIncomingSmsWebhook(
       await locals.twilioController.handleAction(req.body.From, action);
       await new Promise(
         resolve => setTimeout(resolve, DELAY)); // for preserving message order
-
-      state = await locals.flowController.resolveNextStateFromAction(req, state, action);
+      state = await locals.flowController.resolveNextStateFromAction(req.body.Body, state, action);
 
       if (
         (state.isComplete)

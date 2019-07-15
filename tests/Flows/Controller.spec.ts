@@ -517,14 +517,14 @@ test(
   () => {
     const executeTest = (action: any) => {
       const fc = new FlowController(randomFlow());
-      const req = getMockTwilioWebhookRequest();
+      const body = uniqueString();
       const state = createSmsCookie();
       const newState = { ...state };
 
       const completeInteraction = jest.spyOn(SmsCookieModule, 'completeInteraction');
 
       completeInteraction.mockReturnValue(newState);
-      const result = fc.resolveNextStateFromAction(req, state, action);
+      const result = fc.resolveNextStateFromAction(body, state, action);
 
       expect(completeInteraction).toBeCalledTimes(1);
       expect(completeInteraction).toBeCalledWith(state);
@@ -548,7 +548,7 @@ test(
     + 'if it receives an Exit action',
   () => {
     const root = randomFlow();
-    const req = getMockTwilioWebhookRequest();
+    const body = uniqueString();
     const state = createSmsCookie();
     const exit = new Exit(uniqueString());
     const fc = new FlowController(root);
@@ -560,7 +560,7 @@ test(
 
     updateContext.mockReturnValue(updatedState);
     completeInteraction.mockReturnValue(newState);
-    const result = fc.resolveNextStateFromAction(req, state, exit);
+    const result = fc.resolveNextStateFromAction(body, state, exit);
 
     expect(updateContext).toBeCalledTimes(1);
     expect(updateContext).toBeCalledWith(state, root, exit);
@@ -578,7 +578,7 @@ test(
   'FlowController resolveNextStateFromAction should handle an answered Question',
   () => {
     const root = randomFlow();
-    const req = getMockTwilioWebhookRequest();
+    const body = uniqueString();
     const state = createSmsCookie();
     const stateWithAttempt = { ...state };
     const updatedState = { ...state };
@@ -595,10 +595,10 @@ test(
     addQuestionAttempt.mockReturnValue(stateWithAttempt);
     updateContext.mockReturnValue(updatedState);
     incrementFlowAction.mockReturnValue(newState);
-    const result = fc.resolveNextStateFromAction(req, state, q);
+    const result = fc.resolveNextStateFromAction(body, state, q);
 
     expect(addQuestionAttempt).toBeCalledTimes(1);
-    expect(addQuestionAttempt).toBeCalledWith(state, req.body.Body);
+    expect(addQuestionAttempt).toBeCalledWith(state, body);
     expect(updateContext).toBeCalledTimes(1);
     expect(updateContext).toBeCalledWith(stateWithAttempt, root, q);
     expect(incrementFlowAction).toBeCalledTimes(1);
@@ -617,7 +617,7 @@ test(
     + 'when it should continue on fail',
   () => {
     const root = randomFlow();
-    const req = getMockTwilioWebhookRequest();
+    const body = uniqueString();
     const state = createSmsCookie();
     const stateWithAttempt = { ...state };
     const updatedState = { ...state };
@@ -634,10 +634,10 @@ test(
     addQuestionAttempt.mockReturnValue(stateWithAttempt);
     updateContext.mockReturnValue(updatedState);
     incrementFlowAction.mockReturnValue(newState);
-    const result = fc.resolveNextStateFromAction(req, state, q);
+    const result = fc.resolveNextStateFromAction(body, state, q);
 
     expect(addQuestionAttempt).toBeCalledTimes(1);
-    expect(addQuestionAttempt).toBeCalledWith(state, req.body.Body);
+    expect(addQuestionAttempt).toBeCalledWith(state, body);
     expect(updateContext).toBeCalledTimes(1);
     expect(updateContext).toBeCalledWith(stateWithAttempt, root, q);
     expect(incrementFlowAction).toBeCalledTimes(1);
@@ -656,7 +656,7 @@ test(
   + 'when it should not continue on fail',
   () => {
     const root = randomFlow();
-    const req = getMockTwilioWebhookRequest();
+    const body = uniqueString();
     const state = createSmsCookie();
     const stateWithAttempt = { ...state };
     const updatedState = { ...state };
@@ -673,10 +673,10 @@ test(
     addQuestionAttempt.mockReturnValue(stateWithAttempt);
     updateContext.mockReturnValue(updatedState);
     completeInteraction.mockReturnValue(newState);
-    const result = fc.resolveNextStateFromAction(req, state, q);
+    const result = fc.resolveNextStateFromAction(body, state, q);
 
     expect(addQuestionAttempt).toBeCalledTimes(1);
-    expect(addQuestionAttempt).toBeCalledWith(state, req.body.Body);
+    expect(addQuestionAttempt).toBeCalledWith(state, body);
     expect(updateContext).toBeCalledTimes(1);
     expect(updateContext).toBeCalledWith(stateWithAttempt, root, q);
     expect(completeInteraction).toBeCalledTimes(1);
@@ -695,7 +695,7 @@ test(
     + 'while a Question is being answered',
   () => {
     const root = randomFlow();
-    const req = getMockTwilioWebhookRequest();
+    const body = uniqueString();
     const state = createSmsCookie();
     const stateWithAttempt = { ...state };
     const newState = { ...state };
@@ -708,10 +708,10 @@ test(
     state.question.isAnswering = true;
     addQuestionAttempt.mockReturnValue(stateWithAttempt);
     updateContext.mockReturnValue(newState);
-    const result = fc.resolveNextStateFromAction(req, state, q);
+    const result = fc.resolveNextStateFromAction(body, state, q);
 
     expect(addQuestionAttempt).toBeCalledTimes(1);
-    expect(addQuestionAttempt).toBeCalledWith(state, req.body.Body);
+    expect(addQuestionAttempt).toBeCalledWith(state, body);
     expect(updateContext).toBeCalledTimes(1);
     expect(updateContext).toBeCalledWith(stateWithAttempt, root, q);
     expect(result).toBe(newState);
@@ -724,7 +724,7 @@ test(
 
 test('FlowController resolveNextStateFromAction should start an unstarted Question', () => {
   const root = randomFlow();
-  const req = getMockTwilioWebhookRequest();
+  const body = uniqueString();
   const state = createSmsCookie();
   const stateStartedQuestion = { ...state };
   const newState = { ...state };
@@ -736,7 +736,7 @@ test('FlowController resolveNextStateFromAction should start an unstarted Questi
 
   startQuestion.mockReturnValue(stateStartedQuestion);
   updateContext.mockReturnValue(newState);
-  const result = fc.resolveNextStateFromAction(req, state, q);
+  const result = fc.resolveNextStateFromAction(body, state, q);
 
   expect(startQuestion).toBeCalledTimes(1);
   expect(startQuestion).toBeCalledWith(state);
@@ -753,7 +753,7 @@ test(
   'FlowController resolveNextStateFromAction Trigger should throw a TypeError '
     + 'if there is no defined schema',
   () => {
-    const req = getMockTwilioWebhookRequest();
+    const body = uniqueString();
     const state = createSmsCookie();
     const trigger = new Trigger(uniqueString());
     const fc = new FlowController(randomFlow());
@@ -761,7 +761,7 @@ test(
     let caught: Error;
 
     try {
-      fc.resolveNextStateFromAction(req, state, trigger);
+      fc.resolveNextStateFromAction(body, state, trigger);
     } catch (err) {
       caught = err;
     }
@@ -776,7 +776,7 @@ test(
   'FlowController resolveNextStateFromAction Trigger should throw a TypeError '
     + 'if the Flow the Trigger starts is not in the schema',
   () => {
-    const req = getMockTwilioWebhookRequest();
+    const body = uniqueString();
     const state = createSmsCookie();
     const trigger = new Trigger(uniqueString());
     const fc = new FlowController(randomFlow(), new FlowSchema({
@@ -786,7 +786,7 @@ test(
     let caught: Error;
 
     try {
-      fc.resolveNextStateFromAction(req, state, trigger);
+      fc.resolveNextStateFromAction(body, state, trigger);
     } catch (err) {
       caught = err;
     }
@@ -798,7 +798,7 @@ test(
 
 
 test('FlowController resolveNextStateFromAction should handle Trigger actions', () => {
-  const req = getMockTwilioWebhookRequest();
+  const body = uniqueString();
   const state = createSmsCookie();
   const flow1Name = uniqueString();
   const flow2Name = uniqueString();
@@ -818,7 +818,7 @@ test('FlowController resolveNextStateFromAction should handle Trigger actions', 
   state.flow = flow1Name;
   updateContext.mockReturnValue(updatedState);
   handleTrigger.mockReturnValue(newState);
-  const result = fc.resolveNextStateFromAction(req, state, trigger);
+  const result = fc.resolveNextStateFromAction(body, state, trigger);
 
   expect(updateContext).toBeCalledTimes(1);
   expect(updateContext).toBeCalledWith(state, flow1, trigger);
@@ -835,7 +835,7 @@ test(
   'FlowController resolveNextStateFromAction should increment the flow action '
     + 'and update the context by default',
   () => {
-    const req = getMockTwilioWebhookRequest();
+    const body = uniqueString();
     const state = createSmsCookie();
     const root = randomFlow();
     const fc = new FlowController(root);
@@ -848,7 +848,7 @@ test(
 
     updateContext.mockReturnValue(updatedState);
     incrementFlowAction.mockReturnValue(newState);
-    const result = fc.resolveNextStateFromAction(req, state, reply);
+    const result = fc.resolveNextStateFromAction(body, state, reply);
 
     expect(updateContext).toBeCalledTimes(1);
     expect(updateContext).toBeCalledWith(state, root, reply);

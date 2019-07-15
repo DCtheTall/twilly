@@ -149,18 +149,18 @@ export default class FlowController {
   }
 
   public resolveNextStateFromAction(
-    req: TwilioWebhookRequest,
+    messageBody: string,
     state: SmsCookie,
     action: Action,
   ): SmsCookie {
-    const currFlow = this.getCurrentFlow(state);
+    const curFlow = this.getCurrentFlow(state);
 
     if (!(action instanceof Action)) {
       return completeInteraction(state);
     }
     if (action instanceof Exit) {
       return pipeSmsCookieUpdates(
-        (s: SmsCookie) => updateContext(s, currFlow, action),
+        (s: SmsCookie) => updateContext(s, curFlow, action),
         completeInteraction,
       )(state);
     }
@@ -171,33 +171,33 @@ export default class FlowController {
           const question = <Question>action;
 
           if (state.question.isAnswering) {
-            state = addQuestionAttempt(state, req.body.Body);
+            state = addQuestionAttempt(state, messageBody);
           }
           if (question.isAnswered) {
             return pipeSmsCookieUpdates(
-              (s: SmsCookie) => updateContext(s, currFlow, action),
-              (s: SmsCookie) => incrementFlowAction(s, currFlow),
+              (s: SmsCookie) => updateContext(s, curFlow, action),
+              (s: SmsCookie) => incrementFlowAction(s, curFlow),
             )(state);
           }
           if (question.isFailed) {
             if (question[QuestionShouldContinueOnFail]) {
               return pipeSmsCookieUpdates(
-                (s: SmsCookie) => updateContext(s, currFlow, action),
-                (s: SmsCookie) => incrementFlowAction(s, currFlow),
+                (s: SmsCookie) => updateContext(s, curFlow, action),
+                (s: SmsCookie) => incrementFlowAction(s, curFlow),
               )(state);
             }
             return pipeSmsCookieUpdates(
-              (s: SmsCookie) => updateContext(s, currFlow, action),
+              (s: SmsCookie) => updateContext(s, curFlow, action),
               completeInteraction,
             )(state);
           }
           if (state.question.isAnswering) {
-            return updateContext(state, currFlow, action);
+            return updateContext(state, curFlow, action);
           }
 
           return pipeSmsCookieUpdates(
             startQuestion,
-            (s: SmsCookie) => updateContext(s, currFlow, action),
+            (s: SmsCookie) => updateContext(s, curFlow, action),
           )(state);
         })();
 
@@ -205,7 +205,7 @@ export default class FlowController {
         return ((): SmsCookie => {
           const trigger = <Trigger>action;
 
-          if ((currFlow === this.root) && (!this.schema)) {
+          if ((curFlow === this.root) && (!this.schema)) {
             throw new Error(
               'Cannot use Trigger action without a defined Flow schema');
           }
@@ -218,15 +218,15 @@ export default class FlowController {
           }
 
           return pipeSmsCookieUpdates(
-            (s: SmsCookie) => updateContext(s, currFlow, action),
+            (s: SmsCookie) => updateContext(s, curFlow, action),
             (s: SmsCookie) => handleTrigger(s, trigger),
           )(state);
         })();
 
       default:
         return pipeSmsCookieUpdates(
-          (s: SmsCookie) => updateContext(s, currFlow, action),
-          (s: SmsCookie) => incrementFlowAction(s, currFlow),
+          (s: SmsCookie) => updateContext(s, curFlow, action),
+          (s: SmsCookie) => incrementFlowAction(s, curFlow),
         )(state);
     }
   }

@@ -98,7 +98,7 @@ function baseCaseTest(user = null) {
   expect(tcMock.sendMessageNotification).not.toBeCalled();
   expectMockToBeCalledWith(tcMock.handleAction, 1, [[reqMock.body.From, actionMock]]);
   expectMockToBeCalledWith(
-    fcMock.resolveNextStateFromAction, 1, [[reqMock, cookieMock, actionMock]]);
+    fcMock.resolveNextStateFromAction, 1, [[reqMock.body.Body, cookieMock, actionMock]]);
   expectMockToBeCalledWith(tcMock.setSmsCookie, 1, [[resMock, cookieMock]]);
   expectMockToBeCalledWith(tcMock.sendEmptyResponse, 1, [[resMock]]);
 }
@@ -396,7 +396,7 @@ test('twilly handleIncomingWebhookRequest multiple actions', async () => {
     fcMock.resolveNextStateFromAction,
     3,
     actionMocks.map(
-      (mock: any) => [reqMock, cookieMock, mock]),
+      (mock: any) => [reqMock.body.Body, cookieMock, mock]),
   );
 
   expect(tcMock.setSmsCookie).toBeCalledTimes(1);
@@ -428,7 +428,7 @@ test('twilly handleIncomingWebhookRequest interaction completed', async () => {
   expect(tcMock.handleAction).toBeCalledWith(reqMock.body.From, actionMock);
 
   expect(fcMock.resolveNextStateFromAction).toBeCalledTimes(1);
-  expect(fcMock.resolveNextStateFromAction).toBeCalledWith(reqMock, cookieMock, actionMock);
+  expect(fcMock.resolveNextStateFromAction).toBeCalledWith(reqMock.body.Body, cookieMock, actionMock);
 
   expect(tcMock.clearSmsCookie).toBeCalledTimes(1);
   expect(tcMock.clearSmsCookie).toBeCalledWith(resMock);
@@ -459,7 +459,7 @@ test('twilly handleIncomingWebhookRequest incomplete Question', async () => {
   expect(tcMock.handleAction).toBeCalledWith(reqMock.body.From, actionMock);
 
   expect(fcMock.resolveNextStateFromAction).toBeCalledTimes(1);
-  expect(fcMock.resolveNextStateFromAction).toBeCalledWith(reqMock, cookieMock, actionMock);
+  expect(fcMock.resolveNextStateFromAction).toBeCalledWith(reqMock.body.Body, cookieMock, actionMock);
 
   expect(tcMock.setSmsCookie).toBeCalledTimes(1);
   expect(tcMock.setSmsCookie).toBeCalledWith(resMock, cookieMock);
@@ -596,7 +596,7 @@ test('twilly onMessage hook success returns a Message action', async () => {
     tcMock.sendMessageNotification, 1, [[msg]]);
   expectMockToBeCalledWith(tcMock.handleAction, 1, [[reqMock.body.From, actionMock]]);
   expectMockToBeCalledWith(
-    fcMock.resolveNextStateFromAction, 1, [[reqMock, cookieMock, actionMock]]);
+    fcMock.resolveNextStateFromAction, 1, [[reqMock.body.Body, cookieMock, actionMock]]);
   expectMockToBeCalledWith(tcMock.setSmsCookie, 1, [[resMock, cookieMock]]);
   expectMockToBeCalledWith(tcMock.sendEmptyResponse, 1, [[resMock]]);
 });
@@ -1061,7 +1061,7 @@ test('twilly onMessage hook: tc.sendMessageNotification throws error', async () 
   );
   expectMockToBeCalledWith(tcMock.handleAction, 1, [[reqMock.body.From, actionMock]]);
   expectMockToBeCalledWith(
-    fcMock.resolveNextStateFromAction, 1, [[reqMock, cookieMock, actionMock]]);
+    fcMock.resolveNextStateFromAction, 1, [[reqMock.body.Body, cookieMock, actionMock]]);
   expectMockToBeCalledWith(tcMock.setSmsCookie, 1, [[resMock, cookieMock]]);
   expectMockToBeCalledWith(tcMock.sendEmptyResponse, 1, [[resMock]]);
 });
@@ -1093,7 +1093,7 @@ test('twilly onMessage hook: tc.sendMessageNotification throws error with onCatc
   );
   expectMockToBeCalledWith(tcMock.handleAction, 1, [[reqMock.body.From, actionMock]]);
   expectMockToBeCalledWith(
-    fcMock.resolveNextStateFromAction, 1, [[reqMock, cookieMock, actionMock]]);
+    fcMock.resolveNextStateFromAction, 1, [[reqMock.body.Body, cookieMock, actionMock]]);
   expectMockToBeCalledWith(tcMock.setSmsCookie, 1, [[resMock, cookieMock]]);
   expectMockToBeCalledWith(tcMock.sendEmptyResponse, 1, [[resMock]]);
   expectMockToBeCalledWith(
@@ -1129,7 +1129,7 @@ test(
     );
     expectMockToBeCalledWith(tcMock.handleAction, 1, [[reqMock.body.From, actionMock]]);
     expectMockToBeCalledWith(
-      fcMock.resolveNextStateFromAction, 1, [[reqMock, cookieMock, actionMock]]);
+      fcMock.resolveNextStateFromAction, 1, [[reqMock.body.Body, cookieMock, actionMock]]);
     expectMockToBeCalledWith(tcMock.setSmsCookie, 1, [[resMock, cookieMock]]);
     expectMockToBeCalledWith(tcMock.sendEmptyResponse, 1, [[resMock]]);
     expectMockToBeCalledWith(
