@@ -235,6 +235,7 @@ const checkFn = (name: string, fn: AnyFunc): void => {
   }
 };
 
+// TODO: Attempt to write function for executing shared code between triggerFlow and handleSmsWebhook.
 export async function triggerFlow(to: string, flow: Flow, {
   getUserContext = defaultTriggerFlowParameters.getUserContext,
   onCatchError = defaultTriggerFlowParameters.onCatchError,
