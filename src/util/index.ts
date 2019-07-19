@@ -23,7 +23,7 @@ export function randomFlow(): Flow {
 }
 
 
-type AnyFunc =
+export type AnyFunc =
   (...args: any[]) => any;
 
 export function compose(...fns: AnyFunc[]): AnyFunc {
@@ -56,8 +56,4 @@ export function deepCopy<T>(obj: T): T {
       }
     });
   return result;
-}
-
-export function warn(...args: any[]): void {
-  console.warn(args);
 }
