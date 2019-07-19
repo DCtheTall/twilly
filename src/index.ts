@@ -54,25 +54,14 @@ type OnMessageHook =
 type OnCatchErrorHook =
   (context?: InteractionContext, user?: any, err?: Error) => any;
 
-type UserContextGetter = (from: string) => any;
-
-interface HooksTable {
-  onCatchError?: OnCatchErrorHook;
-  getUserContext?: UserContextGetter;
-  onMessage?: OnMessageHook;
-}
-
-interface LocalTwillyVariables {
-  flowController?: FlowController;
-  twilioController?: TwilioController;
-  hooks?: HooksTable;
-}
-
-const twillyLocals = new Map<string, LocalTwillyVariables>();
-
+type UserContextGetter = (phoneNumber: string) => any;
 
 async function handleIncomingSmsWebhook(
-  locals: LocalTwillyVariables,
+  getUserContext: UserContextGetter,
+  onCatchError: OnCatchErrorHook,
+  onMessage: OnMessageHook,
+  fc: FlowController,
+  tc: TwilioController,
   req: TwilioWebhookRequest,
   res: Response,
 ) {
@@ -80,27 +69,27 @@ async function handleIncomingSmsWebhook(
   let userCtx: any = null;
 
   try {
-    state = locals.twilioController.getSmsCookieFromRequest(req);
-    userCtx = await locals.hooks.getUserContext(req.body.From); // will throw any errors not caught in promise
-    let action = await locals.flowController.resolveActionFromState(req.body.Body, state, userCtx);
+    state = tc.getSmsCookieFromRequest(req);
+    userCtx = await getUserContext(req.body.From); // will throw any errors not caught in promise
+    let action = await fc.resolveActionFromState(req.body.Body, state, userCtx);
 
-    if (locals.hooks.onMessage) {
+    if (onMessage) {
       try {
-        const result = await locals.hooks.onMessage(
+        const result = await onMessage(
           state.interactionContext, userCtx, req.body.Body);
         if (result instanceof Message) {
-          await locals.twilioController.sendMessageNotification(result);
+          await tc.sendMessageNotification(result);
         }
       } catch (err) {
-        locals.hooks.onCatchError(state.interactionContext, userCtx, err);
+        onCatchError(state.interactionContext, userCtx, err);
       }
     }
 
     while (action !== null) {
-      await locals.twilioController.handleAction(req.body.From, action);
+      await tc.handleAction(req.body.From, action);
       await new Promise(
         resolve => setTimeout(resolve, DELAY)); // for preserving message order
-      state = await locals.flowController.resolveNextStateFromAction(req.body.Body, state, action);
+      state = await fc.resolveNextStateFromAction(req.body.Body, state, action);
 
       if (
         (state.isComplete)
@@ -109,50 +98,50 @@ async function handleIncomingSmsWebhook(
           && !(<Question>action).isComplete
         )
       ) break;
-      action = await locals.flowController.resolveActionFromState(req.body.Body, state, userCtx);
+      action = await fc.resolveActionFromState(req.body.Body, state, userCtx);
     }
 
     if (state.isComplete) {
-      if (locals.flowController.onInteractionEnd !== null) {
+      if (fc.onInteractionEnd !== null) {
         try {
           const result =
-            await locals.flowController.onInteractionEnd(state.interactionContext, userCtx);
+            await fc.onInteractionEnd(state.interactionContext, userCtx);
           if (result instanceof Message) {
-            await locals.twilioController.sendMessageNotification(result);
+            await tc.sendMessageNotification(result);
           }
         } catch (err) {
-          locals.hooks.onCatchError(state.interactionContext, userCtx, err);
+          onCatchError(state.interactionContext, userCtx, err);
         }
       }
 
-      locals.twilioController.clearSmsCookie(res);
+      tc.clearSmsCookie(res);
     } else {
-      locals.twilioController.setSmsCookie(res, state);
+      tc.setSmsCookie(res, state);
     }
 
-    locals.twilioController.sendEmptyResponse(res);
+    tc.sendEmptyResponse(res);
   } catch (err) {
-    const result = await locals.hooks.onCatchError(
+    const result = await onCatchError(
       state.interactionContext, userCtx, err);
 
     try {
       if (result instanceof Reply) {
-        await locals.twilioController.handleAction(req.body.From, result);
+        await tc.handleAction(req.body.From, result);
         state = updateContext(
           state,
-          locals.flowController.getCurrentFlow(state),
+          fc.getCurrentFlow(state),
           result);
       }
-      if (locals.flowController.onInteractionEnd !== null) {
-        await locals.flowController.onInteractionEnd(state.interactionContext, userCtx);
+      if (fc.onInteractionEnd !== null) {
+        await fc.onInteractionEnd(state.interactionContext, userCtx);
       }
     } catch (innerErr) {
-      await locals.hooks.onCatchError(
+      await onCatchError(
         state.interactionContext, userCtx, innerErr);
     }
 
-    locals.twilioController.clearSmsCookie(res);
-    locals.twilioController.sendEmptyResponse(res);
+    tc.clearSmsCookie(res);
+    tc.sendEmptyResponse(res);
   }
 }
 
@@ -181,6 +170,7 @@ const defaultTwillyParameters = <TwillyParameters>{
   testForExit: defaultTestForExit,
 };
 
+// TODO: Add test to type check hooks
 export function twilly({
   accountSid,
   authToken,
@@ -203,14 +193,6 @@ export function twilly({
 
   name = defaultTwillyParameters.name,
 }: TwillyParameters): Router {
-  if (twillyLocals.has(name)) {
-    warn(`There already exists a Twilly instance with the name: ${name}`);
-  }
-  const locals: LocalTwillyVariables = {
-    hooks: { getUserContext, onCatchError, onMessage },
-  };
-  twillyLocals.set(name, locals);
-
   if (!cookieKey) {
     cookieKey = getSha256Hash(accountSid, accountSid).slice(0, 16);
   }
@@ -218,11 +200,11 @@ export function twilly({
     cookieSecret = getSha256Hash(accountSid, authToken);
   }
 
-  locals.flowController = new FlowController(root, schema, {
+  const fc = new FlowController(root, schema, {
     onInteractionEnd,
     testForExit,
   });
-  locals.twilioController = new TwilioController({
+  const tc = new TwilioController({
     accountSid,
     authToken,
     cookieKey,
@@ -233,24 +215,26 @@ export function twilly({
 
   router.use(cookieParser(cookieSecret));
   router.post(
-    ROUTE_REGEXP, handleIncomingSmsWebhook.bind(null, locals));
+    ROUTE_REGEXP, handleIncomingSmsWebhook.bind(
+      null, getUserContext, onCatchError, onMessage, fc, tc));
   return router;
 }
 
 
 interface TriggerFlowParameters {
-  twillyName?: string;
+  getUserContext?: UserContextGetter;
+  onCatchError?: OnCatchErrorHook;
 }
 
 const defaultTriggerFlowParameters = {
-  twillyName: DEFAULT_TWILLY_NAME,
+  getUserContext: (phoneNumber: string) => null,
+  onCatchError: (ctx: InteractionContext, user: any, err: Error) => {},
 };
 
 export async function triggerFlow(to: string, flow: Flow, {
-  twillyName = defaultTriggerFlowParameters.twillyName,
+  getUserContext = defaultTriggerFlowParameters.getUserContext,
+  onCatchError = defaultTriggerFlowParameters.onCatchError,
 } = defaultTriggerFlowParameters) {
-  const locals = twillyLocals.get(twillyName);
-
   // TODO: refactor to have it just evaluate this Flow in the function. Disallow Exit, Trigger, and Question actions.
   // let state: SmsCookie = createSmsCookie(flow.name);
   // let userCtx: any = null;
