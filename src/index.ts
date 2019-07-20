@@ -1,6 +1,11 @@
 import { Router, Response, RequestHandler } from 'express';
 
-import { AnyFunc, getSha256Hash } from './util';
+import {
+  assertFlow,
+  assertFn,
+  assertString,
+  getSha256Hash,
+} from './util';
 import {
   TwilioController,
   TwilioControllerArgs,
@@ -229,12 +234,6 @@ const defaultTriggerFlowParameters = {
   messagingServiceSid: null,
 } as TriggerFlowParameters;
 
-const checkFn = (name: string, fn: AnyFunc): void => {
-  if (!fn || typeof fn !== 'function') {
-    throw new TypeError(`You must provide a function to the ${name} parameter`);
-  }
-};
-
 // TODO: Attempt to write function for executing shared code between triggerFlow and handleSmsWebhook.
 export async function triggerFlow(to: string, flow: Flow, {
   getUserContext = defaultTriggerFlowParameters.getUserContext,
@@ -244,8 +243,15 @@ export async function triggerFlow(to: string, flow: Flow, {
   authToken = defaultTriggerFlowParameters.authToken,
   messagingServiceSid = defaultTriggerFlowParameters.messagingServiceSid,
 } = defaultTriggerFlowParameters) {
-  checkFn('getUserContext', getUserContext);
-  checkFn('onCatchError', onCatchError);
+  assertString('first', to);
+  assertFlow('second', flow);
+
+  assertFn('getUserContext', getUserContext);
+  assertFn('onCatchError', onCatchError);
+
+  assertString('accountSid', accountSid);
+  assertString('authToken', authToken);
+  assertString('messagingServiceSid', messagingServiceSid);
 
   let state: SmsCookie = createSmsCookie();
   let userCtx: any = null;

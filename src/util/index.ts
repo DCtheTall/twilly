@@ -23,8 +23,7 @@ export function randomFlow(): Flow {
 }
 
 
-export type AnyFunc =
-  (...args: any[]) => any;
+type AnyFunc = (...args: any[]) => any;
 
 export function compose(...fns: AnyFunc[]): AnyFunc {
   return fns.reduce(
@@ -57,3 +56,21 @@ export function deepCopy<T>(obj: T): T {
     });
   return result;
 }
+
+function assertType<T>(paramName: string, typename: string, t: T) {
+  if (!t || typeof t !== typename) {
+    throw new TypeError(`You must use ${typename} for the ${paramName} parameter`);
+  }
+}
+
+function assertInstanceof<T>(paramName: string, ctor: any, obj: any) {
+  if (! obj || !(obj instanceof ctor)) {
+    throw new TypeError(`You must provide an instanceof ${ctor.name} for the ${paramName} parameter`);
+  }
+}
+
+export const assertFn = (paramName: string, fn: AnyFunc) => assertType(paramName, 'function', fn);
+
+export const assertString = (paramNane: string, str: string) => assertType(paramNane, 'string', str);
+
+export const assertFlow = (paramName: string, flow: Flow) => assertInstanceof(paramName, Flow, flow);
