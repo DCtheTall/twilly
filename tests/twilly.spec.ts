@@ -1,11 +1,9 @@
 import { uniqueString, randomFlow, getSha256Hash } from '../src/util';
 import {
-  Flow,
   FlowSchema,
   Message,
   Question,
   Reply,
-  Trigger,
   twilly,
 } from '../src'; // tests should fail if not all objects in build are exported
 import {
