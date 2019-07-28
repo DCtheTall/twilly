@@ -40,7 +40,7 @@
     "cookie-parser": "^1.4.4",
     "express": "^4.17.1",
     "lodash": "^4.17.13",
-    "twilio": "^3.33.0"
+    "twilio": "^3.33.2"
   },
   "devDependencies": {
     "@types/es6-promise": "^3.3.0",

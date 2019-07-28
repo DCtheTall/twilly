@@ -1,6 +1,8 @@
 const bp = require('body-parser');
 const express = require('express');
 
+require('dotenv').load();
+
 const { twilly, Flow, Reply } = require('../dist');
 
 const app = express();
