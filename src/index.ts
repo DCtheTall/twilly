@@ -261,6 +261,7 @@ export async function triggerFlow(to: string, flow: Flow, {
     authToken,
     cookieKey: null,
     messagingServiceSid,
+    sendOnExit: null,
   });
 
   try {
@@ -268,8 +269,8 @@ export async function triggerFlow(to: string, flow: Flow, {
     let action = await fc.resolveActionFromState(null, state, userCtx);
 
     while (action !== null) {
-      if (!(action instanceof Message)) {
-        throw new Error('You can only use Message actions in triggerFlow');
+      if (![Message, Reply].some(Ctor => action instanceof Ctor)) {
+        throw new Error('You can only use Reply or Message actions in triggerFlow');
       }
       await tc.handleAction(to, action);
       await new Promise(

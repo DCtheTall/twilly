@@ -22,6 +22,7 @@ type TwilioFactory = (accountSid: string, authToken: string) => TwilioClient;
 
 const twilio = <TwilioFactory>require('twilio');
 
+const KeysNotSetInTriggerFlow = new Set(['cookieKey', 'sendOnExit']);
 
 export interface TwilioControllerArgs {
   accountSid: string;
@@ -39,6 +40,9 @@ export default class TwilioController {
 
   static typeCheckArguments(args: TwilioControllerArgs) {
     Object.keys(args).map((option: string) => {
+      if (KeysNotSetInTriggerFlow.has(option) && args[option] === null) {
+        return;
+      }
       if (!TwilioController.isValidString(args[option])) {
         throw new TypeError(
           `${option} twilly option must be a non-empty string`);
