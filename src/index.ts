@@ -1,10 +1,10 @@
 import { Router, Response, RequestHandler } from 'express';
 
 import {
-  assertFlow,
-  assertFn,
-  assertString,
-  getSha256Hash,
+  assertParameterIsFlow,
+  assertParameterIsFunction,
+  assertParameterIsString,
+  getSHA256Hash,
 } from './util';
 import {
   TwilioController,
@@ -194,10 +194,10 @@ export function twilly({
   testForExit = defaultTwillyParameters.testForExit,
 }: TwillyParameters): Router {
   if (!cookieKey) {
-    cookieKey = getSha256Hash(accountSid, accountSid).slice(0, 16);
+    cookieKey = getSHA256Hash(accountSid, accountSid).slice(0, 16);
   }
   if (!cookieSecret) {
-    cookieSecret = getSha256Hash(accountSid, authToken);
+    cookieSecret = getSHA256Hash(accountSid, authToken);
   }
 
   const fc = new FlowController(root, schema, {
@@ -234,7 +234,6 @@ const defaultTriggerFlowParameters = {
   messagingServiceSid: null,
 } as TriggerFlowParameters;
 
-// TODO: Attempt to write function for executing shared code between triggerFlow and handleSmsWebhook.
 export async function triggerFlow(to: string, flow: Flow, {
   getUserContext = defaultTriggerFlowParameters.getUserContext,
   onCatchError = defaultTriggerFlowParameters.onCatchError,
@@ -243,15 +242,15 @@ export async function triggerFlow(to: string, flow: Flow, {
   authToken = defaultTriggerFlowParameters.authToken,
   messagingServiceSid = defaultTriggerFlowParameters.messagingServiceSid,
 } = defaultTriggerFlowParameters) {
-  assertString('first', to);
-  assertFlow('second', flow);
+  assertParameterIsString('first', to);
+  assertParameterIsFlow('second', flow);
 
-  assertFn('getUserContext', getUserContext);
-  assertFn('onCatchError', onCatchError);
+  assertParameterIsFunction('getUserContext', getUserContext);
+  assertParameterIsFunction('onCatchError', onCatchError);
 
-  assertString('accountSid', accountSid);
-  assertString('authToken', authToken);
-  assertString('messagingServiceSid', messagingServiceSid);
+  assertParameterIsString('accountSid', accountSid);
+  assertParameterIsString('authToken', authToken);
+  assertParameterIsString('messagingServiceSid', messagingServiceSid);
 
   let state: SmsCookie = createSmsCookie();
   let userCtx: any = null;
@@ -269,18 +268,13 @@ export async function triggerFlow(to: string, flow: Flow, {
     let action = await fc.resolveActionFromState(null, state, userCtx);
 
     while (action !== null) {
+      if (!(action instanceof Message)) {
+        throw new Error('You can only use Message actions in triggerFlow');
+      }
       await tc.handleAction(to, action);
       await new Promise(
         resolve => setTimeout(resolve, DELAY));
       state = await fc.resolveNextStateFromAction(null, state, action);
-
-      if (
-        (state.isComplete)
-        || (
-          action instanceof Question
-          && !(<Question>action).isComplete
-        )
-      ) break;
       action = await fc.resolveActionFromState(null, state, userCtx);
     }
   } catch (err) {

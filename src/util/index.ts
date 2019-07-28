@@ -3,7 +3,7 @@ import Flow from '../Flows/Flow';
 import Reply from '../Actions/Reply';
 
 
-export function getSha256Hash(secret: string, key: string): string {
+export function getSHA256Hash(secret: string, key: string): string {
   const hmac = createHmac('sha256', secret);
   hmac.update(key);
   return hmac.digest('hex');
@@ -69,8 +69,11 @@ function assertInstanceof<T>(paramName: string, ctor: any, obj: any) {
   }
 }
 
-export const assertFn = (paramName: string, fn: AnyFunc) => assertType(paramName, 'function', fn);
+export const assertParameterIsFunction =
+    (paramName: string, fn: AnyFunc) => assertType(paramName, 'function', fn);
 
-export const assertString = (paramNane: string, str: string) => assertType(paramNane, 'string', str);
+export const assertParameterIsString =
+    (paramNane: string, str: string) => assertType(paramNane, 'string', str);
 
-export const assertFlow = (paramName: string, flow: Flow) => assertInstanceof(paramName, Flow, flow);
+export const assertParameterIsFlow =
+    (paramName: string, flow: Flow) => assertInstanceof(paramName, Flow, flow);
