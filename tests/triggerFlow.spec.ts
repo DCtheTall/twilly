@@ -11,6 +11,7 @@ import {
 import { TwilioController } from '../src/twllio';
 import { triggerFlow, Reply } from '../src';
 import { SmsCookie } from '../src/SmsCookie';
+import { Action } from '../src/Actions';
 
 jest.mock('../src/Flows/Controller');
 jest.mock('../src/twllio/Controller');
@@ -37,7 +38,7 @@ const tcConstructorMock = jest.fn();
 let userMock: any;
 let flowMock: Flow;
 let cookieMock: SmsCookie;
-let actionMock: any;
+let actionMock: Action;
 let errorMock: Error;
 
 let getUserContextMock: jest.Mock;
@@ -45,7 +46,7 @@ let onCatchErrorMock: jest.Mock;
 
 const to = uniqueString();
 
-const defaultParameters = <any>{
+const defaultParameters = {
   accountSid: uniqueString(),
   authToken: uniqueString(),
   messagingServiceSid: uniqueString(),
@@ -110,3 +111,11 @@ test('base case: triggerFlow with an empty flow', async () => {
   fcMock.resolveActionFromState.mockResolvedValueOnce(null);
   await triggerFlow(to, flowMock, defaultParameters);
 });
+
+// Test with 1 Reply, 1 Message, one of each
+
+// Test type checking or arguments
+
+// Test action type checking
+
+// Test errors with and without onCatchError
