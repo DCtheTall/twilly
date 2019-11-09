@@ -1,4 +1,8 @@
-import { uniqueString, randomFlow, getSha256Hash } from '../src/util';
+import {
+  uniqueString,
+  randomFlow,
+  getSHA256Hash,
+} from '../src/util';
 import {
   FlowSchema,
   Message,
@@ -23,6 +27,7 @@ import {
   QuestionSetIsAnswered,
   QuestionSetIsFailed,
 } from '../src/Actions';
+import { expectMockToBeCalledWith } from './testutil';
 
 
 jest.mock('cookie-parser');
@@ -75,14 +80,6 @@ const defaultArgs = <any>{
   messagingServiceSid: uniqueString(),
   root: randomFlow(),
 };
-
-
-function expectMockToBeCalledWith(fn: jest.Mock, n: number, args: any[][]) {
-  expect(fn).toBeCalledTimes(n);
-  [...Array(n)].map(
-    (_, i: number) =>
-      expect(fn.mock.calls[i]).toEqual(args[i]));
-}
 
 
 function baseCaseTest(user = null) {
@@ -175,12 +172,11 @@ function onCatchErrorReplyFailureTest(callback: jest.Mock, err: Error) {
 
 beforeEach(() => {
   reqMock = getMockTwilioWebhookRequest();
-  cookieMock = <SmsCookie>{
+  cookieMock = {
     createdAt: new Date(),
     flow: null,
     flowContext: {},
     flowKey: 0,
-    from: reqMock.body.From,
     interactionComplete: false,
     interactionContext: [],
     interactionId: uniqueString(),
@@ -253,14 +249,14 @@ test('twilly base case: all default parameters', () => {
   expect(tcConstructorMock).toBeCalledWith({
     accountSid: defaultArgs.accountSid,
     authToken: defaultArgs.authToken,
-    cookieKey: getSha256Hash(defaultArgs.accountSid, defaultArgs.accountSid).slice(0, 16),
+    cookieKey: getSHA256Hash(defaultArgs.accountSid, defaultArgs.accountSid).slice(0, 16),
     messagingServiceSid: defaultArgs.messagingServiceSid,
     sendOnExit: 'Goodbye.',
   });
 
   expect(cookieParserMock).toBeCalledTimes(1);
   expect(cookieParserMock).toBeCalledWith(
-    getSha256Hash(defaultArgs.accountSid, defaultArgs.authToken));
+    getSHA256Hash(defaultArgs.accountSid, defaultArgs.authToken));
 
   expect(router.constructor).toBe(Router().constructor);
   expect(router.stack.length).toBe(2);
@@ -342,7 +338,7 @@ test('twilly test: sendOnExit parameter', () => {
   expect(tcConstructorMock).toBeCalledWith({
     accountSid: defaultArgs.accountSid,
     authToken: defaultArgs.authToken,
-    cookieKey: getSha256Hash(defaultArgs.accountSid, defaultArgs.accountSid).slice(0, 16),
+    cookieKey: getSHA256Hash(defaultArgs.accountSid, defaultArgs.accountSid).slice(0, 16),
     messagingServiceSid: defaultArgs.messagingServiceSid,
     sendOnExit,
   });

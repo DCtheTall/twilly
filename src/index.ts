@@ -20,7 +20,6 @@ import {
   defaultTestForExit,
 } from './Flows';
 import {
-  Action,
   Message,
   Question,
   Reply,
@@ -226,13 +225,13 @@ interface TriggerFlowParameters extends TwilioControllerArgs {
   onCatchError?: OnCatchErrorHook;
 }
 
-const defaultTriggerFlowParameters = {
+const defaultTriggerFlowParameters: TriggerFlowParameters = {
   getUserContext: (phoneNumber: string) => null,
   onCatchError: (ctx: InteractionContext, user: any, err: Error) => {},
   accountSid: null,
   authToken: null,
   messagingServiceSid: null,
-} as TriggerFlowParameters;
+};
 
 export async function triggerFlow(to: string, flow: Flow, {
   getUserContext = defaultTriggerFlowParameters.getUserContext,
@@ -269,7 +268,7 @@ export async function triggerFlow(to: string, flow: Flow, {
     let action = await fc.resolveActionFromState(null, state, userCtx);
 
     while (action !== null) {
-      if (![Message, Reply].some(Ctor => action instanceof Ctor)) {
+      if (!([Message, Reply].some(Ctor => action instanceof Ctor))) {
         throw new Error('You can only use Reply or Message actions in triggerFlow');
       }
       await tc.handleAction(to, action);
@@ -279,6 +278,7 @@ export async function triggerFlow(to: string, flow: Flow, {
       action = await fc.resolveActionFromState(null, state, userCtx);
     }
   } catch (err) {
+    console.log(err);
     const result = await onCatchError(
       state.interactionContext, userCtx, err);
 

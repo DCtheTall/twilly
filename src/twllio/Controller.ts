@@ -38,9 +38,9 @@ export default class TwilioController {
     return typeof s === 'string' && Boolean(s.length);
   }
 
-  static typeCheckArguments(args: TwilioControllerArgs) {
+  static typeCheckArguments(args: TwilioControllerArgs, triggerFlow: boolean = false) {
     Object.keys(args).map((option: string) => {
-      if (KeysNotSetInTriggerFlow.has(option) && args[option] === null) {
+      if (triggerFlow && KeysNotSetInTriggerFlow.has(option) && args[option] === null) {
         return;
       }
       if (!TwilioController.isValidString(args[option])) {
