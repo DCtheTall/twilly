@@ -92,7 +92,7 @@ async function handleIncomingSmsWebhook(
       state = await fc.resolveNextStateFromAction(req, state, action);
 
       if (
-        (state.isComplete)
+        state.isComplete
         || (
           action instanceof Question
           && !(<Question>action).isComplete
