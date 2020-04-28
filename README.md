@@ -70,7 +70,7 @@ const app = express();
 app.use(bp.urlencoded({ extended: false, limit: '2mb' }));
 app.use(bp.json({ limit: '5mb' }));
 
-// Twilio requires your site have a GET to your index return an HTML response
+// Twilio requires a text/html MIME-type in the response to a GET request to your server's "/" endpoint.
 app.get('/', (req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/html' });
   res.end('<html><body>Hello world!</body></html>');
