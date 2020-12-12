@@ -1,6 +1,11 @@
 import { Router, Response, RequestHandler } from 'express';
 
-import { getSha256Hash } from './util';
+import {
+  assertParameterIsFlow,
+  assertParameterIsFunction,
+  assertParameterIsString,
+  getSHA256Hash,
+} from './util';
 import {
   TwilioController,
   TwilioControllerArgs,
@@ -22,6 +27,7 @@ import {
 import {
   InteractionContext,
   SmsCookie,
+  createSmsCookie,
   updateContext,
 } from './SmsCookie';
 
@@ -51,8 +57,7 @@ type OnMessageHook =
 type OnCatchErrorHook =
   (context?: InteractionContext, user?: any, err?: Error) => any;
 
-type UserContextGetter = (from: string) => any;
-
+type UserContextGetter = (phoneNumber: string) => any;
 
 async function handleIncomingSmsWebhook(
   getUserContext: UserContextGetter,
@@ -69,8 +74,7 @@ async function handleIncomingSmsWebhook(
   try {
     state = tc.getSmsCookieFromRequest(req);
     userCtx = await getUserContext(req.body.From); // will throw any errors not caught in promise
-
-    let action = await fc.resolveActionFromState(req, state, userCtx);
+    let action = await fc.resolveActionFromState(req.body.Body, state, userCtx);
 
     if (onMessage) {
       try {
@@ -85,11 +89,10 @@ async function handleIncomingSmsWebhook(
     }
 
     while (action !== null) {
-      await tc.handleAction(req, action);
+      await tc.handleAction(req.body.From, action);
       await new Promise(
         resolve => setTimeout(resolve, DELAY)); // for preserving message order
-
-      state = await fc.resolveNextStateFromAction(req, state, action);
+      state = await fc.resolveNextStateFromAction(req.body.Body, state, action);
 
       if (
         state.isComplete
@@ -98,8 +101,7 @@ async function handleIncomingSmsWebhook(
           && !(<Question>action).isComplete
         )
       ) break;
-      action = await fc.resolveActionFromState(req, state, userCtx);
-      if (action === null) break;
+      action = await fc.resolveActionFromState(req.body.Body, state, userCtx);
     }
 
     if (state.isComplete) {
@@ -127,12 +129,11 @@ async function handleIncomingSmsWebhook(
 
     try {
       if (result instanceof Reply) {
-        await tc.handleAction(req, result);
+        await tc.handleAction(req.body.From, result);
         state = updateContext(
           state,
           fc.getCurrentFlow(state),
-          result,
-        );
+          result);
       }
       if (fc.onInteractionEnd !== null) {
         await fc.onInteractionEnd(state.interactionContext, userCtx);
@@ -158,7 +159,7 @@ interface TwillyParameters extends TwilioControllerArgs {
   testForExit?: ExitKeywordTest;
 }
 
-const defaultParameters = <TwillyParameters>{
+const defaultTwillyParameters = <TwillyParameters>{
   cookieKey: null,
   cookieSecret: null,
   getUserContext: <UserContextGetter>(() => null),
@@ -170,31 +171,32 @@ const defaultParameters = <TwillyParameters>{
   testForExit: defaultTestForExit,
 };
 
+// TODO: Add test to type check hooks
 export function twilly({
   accountSid,
   authToken,
   messagingServiceSid,
 
   root,
-  schema = defaultParameters.schema,
+  schema = defaultTwillyParameters.schema,
 
-  cookieKey = defaultParameters.cookieKey,
-  cookieSecret = defaultParameters.cookieSecret,
+  cookieKey = defaultTwillyParameters.cookieKey,
+  cookieSecret = defaultTwillyParameters.cookieSecret,
 
-  getUserContext = defaultParameters.getUserContext,
+  getUserContext = defaultTwillyParameters.getUserContext,
 
-  onCatchError = defaultParameters.onCatchError,
-  onInteractionEnd = defaultParameters.onInteractionEnd,
-  onMessage = defaultParameters.onMessage,
+  onCatchError = defaultTwillyParameters.onCatchError,
+  onInteractionEnd = defaultTwillyParameters.onInteractionEnd,
+  onMessage = defaultTwillyParameters.onMessage,
 
-  sendOnExit = defaultParameters.sendOnExit,
-  testForExit = defaultParameters.testForExit,
+  sendOnExit = defaultTwillyParameters.sendOnExit,
+  testForExit = defaultTwillyParameters.testForExit,
 }: TwillyParameters): Router {
   if (!cookieKey) {
-    cookieKey = getSha256Hash(accountSid, accountSid).slice(0, 16);
+    cookieKey = getSHA256Hash(accountSid, accountSid).slice(0, 16);
   }
   if (!cookieSecret) {
-    cookieSecret = getSha256Hash(accountSid, authToken);
+    cookieSecret = getSHA256Hash(accountSid, authToken);
   }
 
   const fc = new FlowController(root, schema, {
@@ -212,8 +214,88 @@ export function twilly({
 
   router.use(cookieParser(cookieSecret));
   router.post(
-    ROUTE_REGEXP,
-    handleIncomingSmsWebhook.bind(
+    ROUTE_REGEXP, handleIncomingSmsWebhook.bind(
       null, getUserContext, onCatchError, onMessage, fc, tc));
   return router;
+}
+
+
+interface TriggerFlowParameters extends TwilioControllerArgs {
+  getUserContext?: UserContextGetter;
+  onCatchError?: OnCatchErrorHook;
+}
+
+const defaultTriggerFlowParameters: TriggerFlowParameters = {
+  getUserContext: (phoneNumber: string) => null,
+  onCatchError: (ctx: InteractionContext, user: any, err: Error) => {},
+  accountSid: null,
+  authToken: null,
+  messagingServiceSid: null,
+};
+
+export async function triggerFlow(to: string, flow: Flow, {
+  getUserContext = defaultTriggerFlowParameters.getUserContext,
+  onCatchError = defaultTriggerFlowParameters.onCatchError,
+
+  accountSid = defaultTriggerFlowParameters.accountSid,
+  authToken = defaultTriggerFlowParameters.authToken,
+  messagingServiceSid = defaultTriggerFlowParameters.messagingServiceSid,
+} = defaultTriggerFlowParameters) {
+  assertParameterIsString('first', to);
+  assertParameterIsFlow('second', flow);
+
+  assertParameterIsFunction('getUserContext', getUserContext);
+  assertParameterIsFunction('onCatchError', onCatchError);
+
+  assertParameterIsString('accountSid', accountSid);
+  assertParameterIsString('authToken', authToken);
+  assertParameterIsString('messagingServiceSid', messagingServiceSid);
+
+  let state: SmsCookie = createSmsCookie();
+  let userCtx: any = null;
+
+  const fc = new FlowController(flow);
+  const tc = new TwilioController({
+    accountSid,
+    authToken,
+    cookieKey: null,
+    messagingServiceSid,
+    sendOnExit: null,
+  });
+
+  try {
+    userCtx = await getUserContext(to);
+    let action = await fc.resolveActionFromState(null, state, userCtx);
+
+    while (action !== null) {
+      if (!([Message, Reply].some(Ctor => action instanceof Ctor))) {
+        throw new Error('You can only use Reply or Message actions in triggerFlow');
+      }
+      await tc.handleAction(to, action);
+      await new Promise(
+        resolve => setTimeout(resolve, DELAY));
+      state = await fc.resolveNextStateFromAction(null, state, action);
+      action = await fc.resolveActionFromState(null, state, userCtx);
+    }
+  } catch (err) {
+    console.log(err);
+    const result = await onCatchError(
+      state.interactionContext, userCtx, err);
+
+    try {
+      if (result instanceof Reply) {
+        await tc.handleAction(to, result);
+        state = updateContext(
+          state,
+          fc.getCurrentFlow(state),
+          result);
+      }
+      if (fc.onInteractionEnd !== null) {
+        await fc.onInteractionEnd(state.interactionContext, userCtx);
+      }
+    } catch (innerErr) {
+      await onCatchError(
+        state.interactionContext, userCtx, innerErr);
+    }
+  }
 }

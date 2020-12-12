@@ -3,7 +3,7 @@ import Flow from '../Flows/Flow';
 import Reply from '../Actions/Reply';
 
 
-export function getSha256Hash(secret: string, key: string): string {
+export function getSHA256Hash(secret: string, key: string): string {
   const hmac = createHmac('sha256', secret);
   hmac.update(key);
   return hmac.digest('hex');
@@ -23,8 +23,7 @@ export function randomFlow(): Flow {
 }
 
 
-type AnyFunc =
-  (...args: any[]) => any;
+type AnyFunc = (...args: any[]) => any;
 
 export function compose(...fns: AnyFunc[]): AnyFunc {
   return fns.reduce(
@@ -38,7 +37,7 @@ export function randInt(): number {
 
 
 /**
- * Create a static deep copy of a serealizable object
+ * Create a static deep copy of a JSON serealizable object.
  */
 export function deepCopy<T>(obj: T): T {
   const result = <T>{};
@@ -57,3 +56,24 @@ export function deepCopy<T>(obj: T): T {
     });
   return result;
 }
+
+function assertType<T>(paramName: string, typename: string, t: T) {
+  if (!t || typeof t !== typename) {
+    throw new TypeError(`You must use ${typename} for the ${paramName} parameter`);
+  }
+}
+
+function assertInstanceof<T>(paramName: string, ctor: any, obj: any) {
+  if (! obj || !(obj instanceof ctor)) {
+    throw new TypeError(`You must provide an instanceof ${ctor.name} for the ${paramName} parameter`);
+  }
+}
+
+export const assertParameterIsFunction =
+    (paramName: string, fn: AnyFunc) => assertType(paramName, 'function', fn);
+
+export const assertParameterIsString =
+    (paramNane: string, str: string) => assertType(paramNane, 'string', str);
+
+export const assertParameterIsFlow =
+    (paramName: string, flow: Flow) => assertInstanceof(paramName, Flow, flow);

@@ -23,6 +23,10 @@ app.use('/twilly', twilly({
   authToken: TWILIO_AUTH_TOKEN,
   messagingServiceSid: TWILIO_MESSAGE_SERVICE_ID,
   root,
+  onCatchError(ctx, userCtx, err) {
+    /* It is generally good practice to always include this hook. */
+    console.log(err);
+  },
 }));
 
 require('http')

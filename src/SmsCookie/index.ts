@@ -1,4 +1,4 @@
-import { uniqueString, compose } from '../util';
+import { compose, uniqueString } from '../util';
 import {
   Action,
   ActionContext,
@@ -8,9 +8,6 @@ import {
   ActionGetContext,
 } from '../Actions';
 import { Flow, FlowActionNames } from '../Flows';
-import {
-  TwilioWebhookRequest,
-} from '../twllio';
 
 
 export type FlowContext = { [index: string]: ActionContext };
@@ -18,7 +15,6 @@ export type InteractionContext = ActionContext[];
 
 export interface SmsCookie {
   createdAt: Date;
-  from: string;
   flow: string;
   flowContext: FlowContext;
   flowKey: string | number;
@@ -48,14 +44,13 @@ export function completeInteraction(state: SmsCookie) {
   return { ...state, isComplete: true };
 }
 
-
-export function createSmsCookie(req: TwilioWebhookRequest): SmsCookie {
+// TODO: test when flow name is supplied.
+export function createSmsCookie(flowName: string = null): SmsCookie {
   return {
     createdAt: new Date(),
-    flow: null,
+    flow: flowName,
     flowContext: {},
     flowKey: 0,
-    from: req.body.From,
     interactionComplete: false,
     interactionContext: [],
     interactionId: uniqueString(),
@@ -147,4 +142,12 @@ export function updateContext(
       },
     ],
   };
+}
+
+type SmsCookieUpdate = (state?: SmsCookie) => SmsCookie;
+
+export function pipeSmsCookieUpdates(...funcs: SmsCookieUpdate[]): SmsCookieUpdate {
+  return (
+    cookie: SmsCookie = createSmsCookie(),
+  ): SmsCookie => compose(...funcs)(cookie);
 }

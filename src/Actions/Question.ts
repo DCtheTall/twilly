@@ -254,15 +254,15 @@ export default class Question extends Action {
   }
 
   public async [QuestionEvaluate](
-    req: TwilioWebhookRequest,
+    messageBody: string,
     state: SmsCookie,
   ) {
     if (!state.question.isAnswering) return;
     if (
       (this.type === Question.Types.Text)
-        && (await this.validateAnswer(req.body.Body))
+        && (await this.validateAnswer(messageBody))
     ) {
-      this.setAnswer(req.body.Body);
+      this.setAnswer(messageBody);
       return;
     }
 
@@ -270,7 +270,7 @@ export default class Question extends Action {
       const choices =
         await Promise.all(
           this.choices.map(
-            (validate: AnswerValidator) => validate(req.body.Body)));
+            (validate: AnswerValidator) => validate(messageBody)));
       const validChoices =
         choices.map((_, i) => i)
                 .filter(i => choices[i]);
